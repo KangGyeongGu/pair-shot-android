@@ -1,0 +1,31 @@
+style:
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  WildcardImport:
+    active: true
+  DataClassShouldBeImmutable:
+    active: true
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 40
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+
+potential-bugs:
+  UnsafeCast:
+    active: true
+
+performance:
+  SpreadOperator:
+    active: true
