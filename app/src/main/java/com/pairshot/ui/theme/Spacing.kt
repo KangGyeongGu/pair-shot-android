@@ -1,0 +1,11 @@
+package com.pairshot.ui.theme
+
+import androidx.compose.ui.unit.dp
+
+object PairShotSpacing {
+    val screenPadding = 20.dp
+    val sectionGap = 32.dp
+    val cardPadding = 16.dp
+    val itemGap = 12.dp
+    val iconTextGap = 8.dp
+}
