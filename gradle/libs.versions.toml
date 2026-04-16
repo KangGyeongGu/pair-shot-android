@@ -39,6 +39,9 @@ camerax-extensions = { group = "androidx.camera", name = "camera-extensions", ve
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version = "1.7.3" }
 
+# Location
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.3.0" }
+
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.4" }
 

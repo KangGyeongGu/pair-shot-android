@@ -24,4 +24,9 @@ interface PhotoPairRepository {
         zoomLevel: Float?,
         lensId: String?,
     ): Long
+
+    suspend fun saveAfterPhoto(
+        pairId: Long,
+        tempFileUri: String,
+    )
 }

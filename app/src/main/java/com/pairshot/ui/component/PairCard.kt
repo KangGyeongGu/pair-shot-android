@@ -18,8 +18,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.size.Size
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.ui.theme.Warning
@@ -39,6 +42,8 @@ fun PairCard(
             -> MaterialTheme.colorScheme.primary
         }
 
+    val context = LocalContext.current
+
     Card(
         modifier =
             modifier
@@ -53,7 +58,12 @@ fun PairCard(
             Row(modifier = Modifier.fillMaxWidth()) {
                 // Before image
                 AsyncImage(
-                    model = pair.beforePhotoUri,
+                    model =
+                        ImageRequest
+                            .Builder(context)
+                            .data(pair.beforePhotoUri)
+                            .size(Size.ORIGINAL)
+                            .build(),
                     contentDescription = "Before 사진",
                     contentScale = ContentScale.Fit,
                     modifier =
@@ -85,7 +95,12 @@ fun PairCard(
 
                     PairStatus.PAIRED -> {
                         AsyncImage(
-                            model = pair.afterPhotoUri,
+                            model =
+                                ImageRequest
+                                    .Builder(context)
+                                    .data(pair.afterPhotoUri)
+                                    .size(Size.ORIGINAL)
+                                    .build(),
                             contentDescription = "After 사진",
                             contentScale = ContentScale.Fit,
                             modifier =
@@ -97,7 +112,12 @@ fun PairCard(
 
                     PairStatus.COMBINED -> {
                         AsyncImage(
-                            model = pair.combinedPhotoUri ?: pair.afterPhotoUri,
+                            model =
+                                ImageRequest
+                                    .Builder(context)
+                                    .data(pair.combinedPhotoUri ?: pair.afterPhotoUri)
+                                    .size(Size.ORIGINAL)
+                                    .build(),
                             contentDescription = "합성 사진",
                             contentScale = ContentScale.Fit,
                             modifier =

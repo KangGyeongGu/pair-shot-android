@@ -2,6 +2,8 @@ package com.pairshot.ui.project
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pairshot.data.local.location.LocationProvider
+import com.pairshot.data.local.location.LocationResult
 import com.pairshot.domain.model.Project
 import com.pairshot.domain.repository.ProjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,9 +31,13 @@ class ProjectViewModel
     @Inject
     constructor(
         private val projectRepository: ProjectRepository,
+        private val locationProvider: LocationProvider,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<ProjectUiState>(ProjectUiState.Loading)
         val uiState: StateFlow<ProjectUiState> = _uiState.asStateFlow()
+
+        private val _currentLocation = MutableStateFlow<LocationResult?>(null)
+        val currentLocation: StateFlow<LocationResult?> = _currentLocation.asStateFlow()
 
         init {
             loadProjects()
@@ -48,25 +54,32 @@ class ProjectViewModel
             }
         }
 
-        fun createProject(
-            name: String,
-            address: String? = null,
-            latitude: Double? = null,
-            longitude: Double? = null,
-        ) {
+        fun fetchCurrentLocation() {
+            viewModelScope.launch {
+                _currentLocation.value = locationProvider.getCurrentLocation()
+            }
+        }
+
+        fun createProject(name: String) {
+            val location = _currentLocation.value
+            val projectName =
+                name.ifBlank {
+                    location?.shortAddress ?: "새 프로젝트"
+                }
+
             viewModelScope.launch {
                 val now = System.currentTimeMillis()
-                val projectName = name.ifBlank { address ?: "새 프로젝트" }
                 projectRepository.insert(
                     Project(
                         name = projectName,
-                        address = address,
-                        latitude = latitude,
-                        longitude = longitude,
+                        address = location?.address,
+                        latitude = location?.latitude,
+                        longitude = location?.longitude,
                         createdAt = now,
                         updatedAt = now,
                     ),
                 )
+                _currentLocation.value = null
             }
         }
 

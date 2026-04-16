@@ -75,6 +75,9 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
 
+    // Location
+    implementation(libs.play.services.location)
+
     // DataStore
     implementation(libs.datastore.preferences)
 

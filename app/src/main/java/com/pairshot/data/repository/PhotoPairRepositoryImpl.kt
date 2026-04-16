@@ -97,4 +97,39 @@ class PhotoPairRepositoryImpl
                     )
                 photoPairDao.insert(entity)
             }
+
+        override suspend fun saveAfterPhoto(
+            pairId: Long,
+            tempFileUri: String,
+        ) = withContext(Dispatchers.IO) {
+            val entity =
+                photoPairDao.getById(pairId)
+                    ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
+            val project =
+                projectDao.getById(entity.projectId)
+                    ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
+
+            val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
+            val fileName = fileNameGenerator.generateAfterFileName(sequenceNumber)
+
+            val savedUri =
+                mediaStoreManager.saveToGallery(
+                    tempFileUri = Uri.parse(tempFileUri),
+                    projectName = project.name,
+                    displayName = fileName,
+                )
+
+            photoPairDao.update(
+                entity.copy(
+                    afterPhotoUri = savedUri.toString(),
+                    afterTimestamp = System.currentTimeMillis(),
+                    status = PairStatus.PAIRED.name,
+                ),
+            )
+        }
+
+        private fun extractSequenceNumber(beforePhotoUri: String): Int {
+            val match = Regex("BEFORE_(\\d+)_").find(beforePhotoUri)
+            return match?.groupValues?.get(1)?.toIntOrNull() ?: 1
+        }
     }
