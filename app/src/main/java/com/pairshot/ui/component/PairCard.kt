@@ -18,11 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.size.Size
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.ui.theme.Warning
@@ -42,8 +39,6 @@ fun PairCard(
             -> MaterialTheme.colorScheme.primary
         }
 
-    val context = LocalContext.current
-
     Card(
         modifier =
             modifier
@@ -56,16 +51,10 @@ fun PairCard(
     ) {
         Box {
             Row(modifier = Modifier.fillMaxWidth()) {
-                // Before image
                 AsyncImage(
-                    model =
-                        ImageRequest
-                            .Builder(context)
-                            .data(pair.beforePhotoUri)
-                            .size(Size.ORIGINAL)
-                            .build(),
+                    model = pair.beforePhotoUri,
                     contentDescription = "Before 사진",
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Crop,
                     modifier =
                         Modifier
                             .weight(1f)
@@ -74,7 +63,6 @@ fun PairCard(
 
                 Spacer(modifier = Modifier.width(2.dp))
 
-                // After slot
                 when (pair.status) {
                     PairStatus.BEFORE_ONLY -> {
                         Box(
@@ -95,14 +83,9 @@ fun PairCard(
 
                     PairStatus.PAIRED -> {
                         AsyncImage(
-                            model =
-                                ImageRequest
-                                    .Builder(context)
-                                    .data(pair.afterPhotoUri)
-                                    .size(Size.ORIGINAL)
-                                    .build(),
+                            model = pair.afterPhotoUri,
                             contentDescription = "After 사진",
-                            contentScale = ContentScale.Fit,
+                            contentScale = ContentScale.Crop,
                             modifier =
                                 Modifier
                                     .weight(1f)
@@ -112,14 +95,9 @@ fun PairCard(
 
                     PairStatus.COMBINED -> {
                         AsyncImage(
-                            model =
-                                ImageRequest
-                                    .Builder(context)
-                                    .data(pair.combinedPhotoUri ?: pair.afterPhotoUri)
-                                    .size(Size.ORIGINAL)
-                                    .build(),
+                            model = pair.combinedPhotoUri ?: pair.afterPhotoUri,
                             contentDescription = "합성 사진",
-                            contentScale = ContentScale.Fit,
+                            contentScale = ContentScale.Crop,
                             modifier =
                                 Modifier
                                     .weight(1f)
@@ -129,7 +107,6 @@ fun PairCard(
                 }
             }
 
-            // "✓ 합성됨" overlay — COMBINED only
             if (pair.status == PairStatus.COMBINED) {
                 Text(
                     text = "✓ 합성됨",

@@ -87,6 +87,9 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
             CompareScreen(
                 pairId = route.pairId,
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToPairing = { projectId, pairId ->
+                    navController.navigate(Pairing(projectId, pairId))
+                },
             )
         }
         composable<Export> { backStackEntry ->

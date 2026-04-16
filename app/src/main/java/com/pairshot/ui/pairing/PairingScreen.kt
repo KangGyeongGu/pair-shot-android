@@ -83,7 +83,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import com.pairshot.ui.component.OverlayGuide
 import com.pairshot.ui.component.ShutterButton
 import kotlinx.coroutines.delay
@@ -541,11 +540,7 @@ private fun PairingContent(
                     ) { index, pair ->
                         val isSelected = index == currentIndex
                         AsyncImage(
-                            model =
-                                ImageRequest
-                                    .Builder(context)
-                                    .data(pair.beforePhotoUri)
-                                    .build(),
+                            model = pair.beforePhotoUri,
                             contentDescription = "Before 썸네일 ${index + 1}",
                             contentScale = ContentScale.Crop,
                             modifier =

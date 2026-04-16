@@ -18,6 +18,8 @@ interface PhotoPairRepository {
 
     fun countByProject(projectId: Long): Flow<Int>
 
+    suspend fun resetAfterPhoto(pairId: Long)
+
     suspend fun saveBeforePhoto(
         projectId: Long,
         tempFileUri: String,

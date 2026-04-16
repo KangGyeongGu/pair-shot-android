@@ -53,7 +53,27 @@ class PhotoPairRepositoryImpl
 
         override suspend fun delete(pair: PhotoPair) =
             withContext(Dispatchers.IO) {
+                mediaStoreManager.deleteFromGallery(Uri.parse(pair.beforePhotoUri))
+                pair.afterPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                pair.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
                 photoPairDao.delete(pair.toEntity())
+            }
+
+        override suspend fun resetAfterPhoto(pairId: Long) =
+            withContext(Dispatchers.IO) {
+                val entity =
+                    photoPairDao.getById(pairId)
+                        ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
+                entity.afterPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                entity.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                photoPairDao.update(
+                    entity.copy(
+                        afterPhotoUri = null,
+                        afterTimestamp = null,
+                        combinedPhotoUri = null,
+                        status = PairStatus.BEFORE_ONLY.name,
+                    ),
+                )
             }
 
         override fun countByProject(projectId: Long): Flow<Int> = photoPairDao.countByProject(projectId)

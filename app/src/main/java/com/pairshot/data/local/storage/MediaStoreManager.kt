@@ -71,6 +71,13 @@ class MediaStoreManager
         /**
          * Bitmap을 MediaStore에 직접 저장 (합성 이미지용).
          */
+        fun deleteFromGallery(contentUri: Uri): Boolean =
+            try {
+                context.contentResolver.delete(contentUri, null, null) > 0
+            } catch (e: Exception) {
+                false
+            }
+
         fun saveBitmapToGallery(
             bitmap: Bitmap,
             projectName: String,
