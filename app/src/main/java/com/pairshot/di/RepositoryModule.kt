@@ -1,6 +1,8 @@
 package com.pairshot.di
 
+import com.pairshot.data.repository.PhotoPairRepositoryImpl
 import com.pairshot.data.repository.ProjectRepositoryImpl
+import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.domain.repository.ProjectRepository
 import dagger.Binds
 import dagger.Module
@@ -12,4 +14,7 @@ import dagger.hilt.components.SingletonComponent
 abstract class RepositoryModule {
     @Binds
     abstract fun bindProjectRepository(impl: ProjectRepositoryImpl): ProjectRepository
+
+    @Binds
+    abstract fun bindPhotoPairRepository(impl: PhotoPairRepositoryImpl): PhotoPairRepository
 }

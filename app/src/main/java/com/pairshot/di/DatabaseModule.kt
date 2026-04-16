@@ -3,6 +3,7 @@ package com.pairshot.di
 import android.content.Context
 import androidx.room.Room
 import com.pairshot.data.local.db.PairShotDatabase
+import com.pairshot.data.local.db.dao.PhotoPairDao
 import com.pairshot.data.local.db.dao.ProjectDao
 import dagger.Module
 import dagger.Provides
@@ -27,4 +28,8 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideProjectDao(db: PairShotDatabase): ProjectDao = db.projectDao()
+
+    @Provides
+    @Singleton
+    fun providePhotoPairDao(db: PairShotDatabase): PhotoPairDao = db.photoPairDao()
 }

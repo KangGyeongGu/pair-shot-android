@@ -1,3 +1,23 @@
 package com.pairshot.domain.usecase.capture
 
-// TODO: Step 1-5
+import com.pairshot.domain.repository.PhotoPairRepository
+import javax.inject.Inject
+
+class SaveBeforePhotoUseCase
+    @Inject
+    constructor(
+        private val photoPairRepository: PhotoPairRepository,
+    ) {
+        suspend operator fun invoke(
+            projectId: Long,
+            tempFileUri: String,
+            zoomLevel: Float?,
+            lensId: String?,
+        ): Long =
+            photoPairRepository.saveBeforePhoto(
+                projectId = projectId,
+                tempFileUri = tempFileUri,
+                zoomLevel = zoomLevel,
+                lensId = lensId,
+            )
+    }
