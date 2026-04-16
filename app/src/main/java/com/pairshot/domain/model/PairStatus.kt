@@ -1,3 +1,7 @@
 package com.pairshot.domain.model
 
-// TODO: Step 1-5
+enum class PairStatus {
+    BEFORE_ONLY,
+    PAIRED,
+    COMBINED,
+}

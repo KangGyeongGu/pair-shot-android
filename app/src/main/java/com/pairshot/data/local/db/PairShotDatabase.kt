@@ -1,3 +1,15 @@
 package com.pairshot.data.local.db
 
-// TODO: Step 1-3
+import androidx.room.Database
+import androidx.room.RoomDatabase
+import com.pairshot.data.local.db.dao.ProjectDao
+import com.pairshot.data.local.db.entity.PhotoPairEntity
+import com.pairshot.data.local.db.entity.ProjectEntity
+
+@Database(
+    entities = [ProjectEntity::class, PhotoPairEntity::class],
+    version = 1,
+)
+abstract class PairShotDatabase : RoomDatabase() {
+    abstract fun projectDao(): ProjectDao
+}

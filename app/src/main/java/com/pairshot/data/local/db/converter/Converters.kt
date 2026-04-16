@@ -1,3 +1,12 @@
 package com.pairshot.data.local.db.converter
 
-// TODO: Step 1-3
+import androidx.room.TypeConverter
+import com.pairshot.domain.model.PairStatus
+
+class Converters {
+    @TypeConverter
+    fun fromPairStatus(value: String): PairStatus = PairStatus.valueOf(value)
+
+    @TypeConverter
+    fun toPairStatus(status: PairStatus): String = status.name
+}
