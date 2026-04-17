@@ -1,5 +1,7 @@
 package com.pairshot.domain.repository
 
+import com.pairshot.domain.model.WatermarkConfig
+
 interface ExportRepository {
     /**
      * 사진 쌍을 ZIP으로 내보낸다 (기기 저장 — SAF URI).
@@ -17,6 +19,7 @@ interface ExportRepository {
         includeBefore: Boolean,
         includeAfter: Boolean,
         includeCombined: Boolean,
+        watermarkConfig: WatermarkConfig? = null,
         onProgress: (current: Int, total: Int) -> Unit,
     )
 
@@ -37,6 +40,7 @@ interface ExportRepository {
         includeBefore: Boolean,
         includeAfter: Boolean,
         includeCombined: Boolean,
+        watermarkConfig: WatermarkConfig? = null,
         onProgress: (current: Int, total: Int) -> Unit,
     ): String
 
@@ -56,6 +60,7 @@ interface ExportRepository {
         includeBefore: Boolean,
         includeAfter: Boolean,
         includeCombined: Boolean,
+        watermarkConfig: WatermarkConfig? = null,
         onProgress: (current: Int, total: Int) -> Unit,
     ): List<String>
 
@@ -75,6 +80,7 @@ interface ExportRepository {
         includeBefore: Boolean,
         includeAfter: Boolean,
         includeCombined: Boolean,
+        watermarkConfig: WatermarkConfig? = null,
         onProgress: (current: Int, total: Int) -> Unit,
     )
 }

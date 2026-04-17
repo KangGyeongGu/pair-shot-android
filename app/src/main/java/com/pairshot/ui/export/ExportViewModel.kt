@@ -5,9 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.pairshot.domain.model.PairStatus
+import com.pairshot.domain.model.WatermarkConfig
 import com.pairshot.domain.repository.ExportRepository
 import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.domain.repository.ProjectRepository
+import com.pairshot.domain.repository.WatermarkRepository
 import com.pairshot.ui.navigation.Export
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -56,6 +58,7 @@ class ExportViewModel
         private val projectRepository: ProjectRepository,
         private val photoPairRepository: PhotoPairRepository,
         private val exportRepository: ExportRepository,
+        private val watermarkRepository: WatermarkRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<Export>()
@@ -86,11 +89,26 @@ class ExportViewModel
         private val _snackbarMessage = MutableSharedFlow<String>()
         val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
 
+        private val _applyWatermark = MutableStateFlow(false)
+        val applyWatermark: StateFlow<Boolean> = _applyWatermark.asStateFlow()
+
         private val _exportAction = MutableSharedFlow<ExportAction>()
         val exportAction: SharedFlow<ExportAction> = _exportAction.asSharedFlow()
 
         init {
             loadSelectedPairsInfo()
+            loadWatermarkDefault()
+        }
+
+        private fun loadWatermarkDefault() {
+            viewModelScope.launch {
+                val config = watermarkRepository.getConfig()
+                _applyWatermark.value = config.enabled
+            }
+        }
+
+        fun setApplyWatermark(value: Boolean) {
+            _applyWatermark.update { value }
         }
 
         private fun loadSelectedPairsInfo() {
@@ -173,6 +191,9 @@ class ExportViewModel
             loadSelectedPairsInfo()
         }
 
+        private suspend fun resolveWatermarkConfig(): WatermarkConfig? =
+            if (_applyWatermark.value) watermarkRepository.getConfig() else null
+
         fun saveToDevice(outputUri: String? = null) {
             viewModelScope.launch {
                 if (!validateSelection()) return@launch
@@ -180,6 +201,7 @@ class ExportViewModel
                 _exportProgress.value = 0f
                 try {
                     ensureCombined()
+                    val wmConfig = resolveWatermarkConfig()
                     when (_exportFormat.value) {
                         ExportFormat.ZIP -> {
                             if (outputUri == null) return@launch
@@ -189,6 +211,7 @@ class ExportViewModel
                                 includeBefore = _includeBefore.value,
                                 includeAfter = _includeAfter.value,
                                 includeCombined = _includeCombined.value,
+                                watermarkConfig = wmConfig,
                                 onProgress = { current, total ->
                                     _exportProgress.value =
                                         if (total > 0) current.toFloat() / total else 0f
@@ -205,6 +228,7 @@ class ExportViewModel
                                 includeBefore = _includeBefore.value,
                                 includeAfter = _includeAfter.value,
                                 includeCombined = _includeCombined.value,
+                                watermarkConfig = wmConfig,
                                 onProgress = { current, total ->
                                     _exportProgress.value =
                                         if (total > 0) current.toFloat() / total else 0f
@@ -229,6 +253,7 @@ class ExportViewModel
                 _exportProgress.value = 0f
                 try {
                     ensureCombined()
+                    val wmConfig = resolveWatermarkConfig()
                     when (_exportFormat.value) {
                         ExportFormat.ZIP -> {
                             val state = _uiState.value as? ExportUiState.Success ?: return@launch
@@ -239,6 +264,7 @@ class ExportViewModel
                                     includeBefore = _includeBefore.value,
                                     includeAfter = _includeAfter.value,
                                     includeCombined = _includeCombined.value,
+                                    watermarkConfig = wmConfig,
                                     onProgress = { current, total ->
                                         _exportProgress.value =
                                             if (total > 0) current.toFloat() / total else 0f
@@ -254,6 +280,7 @@ class ExportViewModel
                                     includeBefore = _includeBefore.value,
                                     includeAfter = _includeAfter.value,
                                     includeCombined = _includeCombined.value,
+                                    watermarkConfig = wmConfig,
                                     onProgress = { current, total ->
                                         _exportProgress.value =
                                             if (total > 0) current.toFloat() / total else 0f

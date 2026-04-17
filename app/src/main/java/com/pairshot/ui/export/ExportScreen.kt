@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
@@ -57,6 +58,9 @@ fun ExportScreen(
     onIncludeCombinedChange: (Boolean) -> Unit,
     exportFormat: ExportFormat,
     onExportFormatChange: (ExportFormat) -> Unit,
+    applyWatermark: Boolean = false,
+    onApplyWatermarkChange: (Boolean) -> Unit = {},
+    onWatermarkSettingsClick: () -> Unit = {},
     onSaveToDevice: () -> Unit,
     onShare: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -181,6 +185,39 @@ fun ExportScreen(
             }
 
             item(key = "divider_after_format") {
+                Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+            }
+
+            // 워터마크 섹션
+            item(key = "watermark_section") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "워터마크",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = onWatermarkSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "워터마크 설정",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(PairShotSpacing.iconSize),
+                        )
+                    }
+                }
+                CheckboxRow(
+                    label = "워터마크 적용",
+                    checked = applyWatermark,
+                    onCheckedChange = onApplyWatermarkChange,
+                )
+            }
+
+            item(key = "divider_after_watermark") {
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
                 HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))

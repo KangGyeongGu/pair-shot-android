@@ -2,6 +2,7 @@ package com.pairshot.ui.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,18 +12,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -33,15 +33,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.pairshot.domain.model.WatermarkConfig
 import com.pairshot.ui.theme.PairShotSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
+    watermarkConfig: WatermarkConfig,
     onClearCache: () -> Unit,
     onLicenseClick: () -> Unit,
     onNavigateBack: () -> Unit,
+    onWatermarkConfigChange: (WatermarkConfig) -> Unit,
+    onWatermarkSettingsClick: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     var showClearCacheDialog by remember { mutableStateOf(false) }
@@ -130,154 +134,98 @@ fun SettingsScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(innerPadding),
+                    contentPadding =
+                        PaddingValues(
+                            horizontal = PairShotSpacing.screenPadding,
+                            vertical = PairShotSpacing.cardPadding,
+                        ),
                 ) {
-                    // 저장 group header
-                    item(key = "header_storage") {
-                        Text(
-                            text = "저장",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        horizontal = PairShotSpacing.screenPadding,
-                                        vertical = PairShotSpacing.cardPadding,
-                                    ),
-                        )
-                        HorizontalDivider()
-                    }
-
-                    // 저장 공간 사용량
-                    item(key = "storage_used") {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        horizontal = PairShotSpacing.screenPadding,
-                                        vertical = PairShotSpacing.cardPadding,
-                                    ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "사진 용량",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
+                    // ── 카드 1: 촬영 ──
+                    item(key = "card_capture") {
+                        SettingsCard {
+                            SettingsItem(
+                                label = "이미지 품질",
+                                trailing = "높음 (85%)",
                             )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = formatBytes(uiState.usedStorageBytes),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            SettingsDivider()
+                            SettingsItem(
+                                label = "오버레이 기본 투명도",
+                                trailing = "30%",
                             )
                         }
-                        HorizontalDivider()
                     }
 
-                    // 캐시 정리
-                    item(key = "cache_clear") {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { showClearCacheDialog = true }
-                                    .padding(
-                                        horizontal = PairShotSpacing.screenPadding,
-                                        vertical = PairShotSpacing.cardPadding,
-                                    ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "캐시",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
+                    item(key = "gap_1") {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                    }
+
+                    // ── 카드 2: 워터마크 ──
+                    item(key = "card_watermark") {
+                        SettingsCard {
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable(onClick = onWatermarkSettingsClick)
+                                        .padding(
+                                            horizontal = PairShotSpacing.cardPadding,
+                                            vertical = PairShotSpacing.cardPadding,
+                                        ),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "워터마크 사용",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                Switch(
+                                    checked = watermarkConfig.enabled,
+                                    onCheckedChange = { checked ->
+                                        onWatermarkConfigChange(watermarkConfig.copy(enabled = checked))
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    item(key = "gap_2") {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                    }
+
+                    // ── 카드 3: 저장 ──
+                    item(key = "card_storage") {
+                        SettingsCard {
+                            SettingsItem(
+                                label = "사진 용량",
+                                trailing = formatBytes(uiState.usedStorageBytes),
                             )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = formatBytes(uiState.cacheBytes),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            SettingsDivider()
+                            SettingsItem(
+                                label = "캐시",
+                                trailing = formatBytes(uiState.cacheBytes),
+                                onClick = { showClearCacheDialog = true },
                             )
                         }
-                        HorizontalDivider()
                     }
 
-                    // section gap between groups
-                    item(key = "gap_info") {
-                        Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    item(key = "gap_3") {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                     }
 
-                    // 정보 group header
-                    item(key = "header_info") {
-                        Text(
-                            text = "정보",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        horizontal = PairShotSpacing.screenPadding,
-                                        vertical = PairShotSpacing.cardPadding,
-                                    ),
-                        )
-                        HorizontalDivider()
-                    }
-
-                    // 앱 버전
-                    item(key = "app_version") {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        horizontal = PairShotSpacing.screenPadding,
-                                        vertical = PairShotSpacing.cardPadding,
-                                    ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "앱 버전",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
+                    // ── 카드 4: 정보 ──
+                    item(key = "card_info") {
+                        SettingsCard {
+                            SettingsItem(
+                                label = "앱 버전",
+                                trailing = uiState.appVersion,
                             )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = uiState.appVersion,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            SettingsDivider()
+                            SettingsItem(
+                                label = "라이선스",
+                                onClick = onLicenseClick,
                             )
                         }
-                        HorizontalDivider()
-                    }
-
-                    // 라이선스
-                    item(key = "licenses") {
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable(onClick = onLicenseClick)
-                                    .padding(
-                                        horizontal = PairShotSpacing.screenPadding,
-                                        vertical = PairShotSpacing.cardPadding,
-                                    ),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                text = "라이선스",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onBackground,
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        HorizontalDivider()
                     }
                 }
             }

@@ -46,6 +46,7 @@ import com.pairshot.ui.pairing.PairingScreen
 import com.pairshot.ui.project.ProjectListScreen
 import com.pairshot.ui.settings.SettingsScreen
 import com.pairshot.ui.settings.SettingsViewModel
+import com.pairshot.ui.settings.WatermarkSettingsScreen
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -80,6 +81,9 @@ data class Export(
 
 @Serializable
 data object Settings
+
+@Serializable
+data object WatermarkSettings
 
 @Composable
 fun PairShotNavGraph(navController: NavHostController = rememberNavController()) {
@@ -188,6 +192,7 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
             val exportFormat by viewModel.exportFormat.collectAsStateWithLifecycle()
             val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
             val exportProgress by viewModel.exportProgress.collectAsStateWithLifecycle()
+            val applyWatermark by viewModel.applyWatermark.collectAsStateWithLifecycle()
 
             val safLauncher =
                 rememberLauncherForActivityResult(
@@ -302,6 +307,9 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                         onIncludeCombinedChange = viewModel::setIncludeCombined,
                         exportFormat = exportFormat,
                         onExportFormatChange = viewModel::setExportFormat,
+                        applyWatermark = applyWatermark,
+                        onApplyWatermarkChange = viewModel::setApplyWatermark,
+                        onWatermarkSettingsClick = { navController.navigate(Settings) },
                         onSaveToDevice = onSaveToDevice,
                         onShare = viewModel::share,
                         onNavigateBack = { navController.popBackStack() },
@@ -324,6 +332,9 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                         onIncludeCombinedChange = viewModel::setIncludeCombined,
                         exportFormat = exportFormat,
                         onExportFormatChange = viewModel::setExportFormat,
+                        applyWatermark = applyWatermark,
+                        onApplyWatermarkChange = viewModel::setApplyWatermark,
+                        onWatermarkSettingsClick = { navController.navigate(Settings) },
                         onSaveToDevice = onSaveToDevice,
                         onShare = viewModel::share,
                         onNavigateBack = { navController.popBackStack() },
@@ -337,6 +348,7 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
         composable<Settings> {
             val viewModel: SettingsViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
             val snackbarHostState = remember { SnackbarHostState() }
             val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
 
@@ -354,12 +366,34 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
 
             SettingsScreen(
                 uiState = uiState,
+                watermarkConfig = watermarkConfig,
                 onClearCache = viewModel::clearCache,
                 onLicenseClick = {
                     viewModel.showMessage("준비 중")
                 },
                 onNavigateBack = { navController.popBackStack() },
+                onWatermarkConfigChange = viewModel::updateWatermarkConfig,
+                onWatermarkSettingsClick = { navController.navigate(WatermarkSettings) },
                 snackbarHostState = snackbarHostState,
+            )
+        }
+        composable<WatermarkSettings> {
+            val viewModel: SettingsViewModel = hiltViewModel()
+            val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
+
+            val logoPickerLauncher =
+                rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument(),
+                ) { uri: Uri? ->
+                    uri?.let { viewModel.saveLogoFile(it.toString()) }
+                }
+
+            WatermarkSettingsScreen(
+                watermarkConfig = watermarkConfig,
+                onWatermarkConfigChange = viewModel::updateWatermarkConfig,
+                onSelectLogo = { logoPickerLauncher.launch(arrayOf("image/*")) },
+                onNavigateBack = { navController.popBackStack() },
+                watermarkManager = viewModel.watermarkManager,
             )
         }
     }
