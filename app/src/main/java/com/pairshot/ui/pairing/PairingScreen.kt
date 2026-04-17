@@ -22,7 +22,6 @@ import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,13 +35,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FlipCameraAndroid
@@ -60,6 +57,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +70,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -81,9 +78,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.ui.component.BeforePreviewStrip
 import com.pairshot.ui.component.OverlayGuide
 import com.pairshot.ui.component.ShutterButton
+import com.pairshot.ui.component.ZoomControls
 import kotlinx.coroutines.delay
 import java.io.File
-import kotlin.math.roundToInt
 
 @Composable
 fun PairingScreen(
@@ -194,7 +191,8 @@ private fun PairingContent(
     val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
     val lensFacing by viewModel.lensFacing.collectAsStateWithLifecycle()
-    val zoomRatio by viewModel.zoomRatio.collectAsStateWithLifecycle()
+    val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
+    val latestZoomRatio by rememberUpdatedState(zoomUiState.currentRatio)
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
 
@@ -257,12 +255,12 @@ private fun PairingContent(
         }
     }
 
-    // 현재 pair 변경 시 해당 Before의 zoomLevel을 카메라에 적용
+    // 현재 pair 변경 시 해당 Before의 zoomLevel을 카메라에 적용 + 다이얼에도 반영
     LaunchedEffect(currentIndex, unpairedPhotos) {
         val pair = unpairedPhotos.getOrNull(currentIndex) ?: return@LaunchedEffect
-        val zoom = pair.zoomLevel ?: 1f
-        cameraControl?.setZoomRatio(zoom)
-        viewModel.updateZoomRatio(zoom)
+        viewModel.restoreZoomForPair(pair.zoomLevel)
+        val restored = viewModel.zoomUiState.value.currentRatio
+        cameraControl?.setZoomRatio(restored)
     }
 
     // 이벤트 수신
@@ -318,10 +316,18 @@ private fun PairingContent(
             )
         cameraControl = camera.cameraControl
 
-        // 카메라 전환 시 현재 pair의 zoom 비율 적용
+        // ZoomState LiveData observe: 최초 non-null 값이 도착하면 ViewModel에 범위를 전달한다.
+        camera.cameraInfo.zoomState.observe(lifecycleOwner) { zoomState ->
+            if (zoomState != null) {
+                viewModel.initFromZoomState(zoomState.minZoomRatio, zoomState.maxZoomRatio)
+            }
+        }
+
+        // 렌즈 전환 시 현재 pair의 zoom 복원 (1x가 범위 내이면 1x, 아니면 minRatio)
         val zoom = unpairedPhotos.getOrNull(currentIndex)?.zoomLevel ?: 1f
-        camera.cameraControl.setZoomRatio(zoom)
-        viewModel.updateZoomRatio(zoom)
+        viewModel.restoreZoomForPair(zoom)
+        val restored = viewModel.zoomUiState.value.currentRatio
+        camera.cameraControl.setZoomRatio(restored)
     }
 
     // 화면 이탈 시 카메라 리소스 해제
@@ -423,10 +429,12 @@ private fun PairingContent(
                         Modifier
                             .fillMaxWidth()
                             .height(previewSectionHeight)
-                            .pointerInput(cameraControl) {
+                            .pointerInput(cameraControl, zoomUiState.minRatio, zoomUiState.maxRatio) {
                                 detectTransformGestures { _, _, zoom, _ ->
                                     val control = cameraControl ?: return@detectTransformGestures
-                                    val newRatio = (zoomRatio * zoom).coerceIn(1f, 10f)
+                                    val newRatio =
+                                        (latestZoomRatio * zoom)
+                                            .coerceIn(zoomUiState.minRatio, zoomUiState.maxRatio)
                                     control.setZoomRatio(newRatio)
                                     viewModel.updateZoomRatio(newRatio)
                                 }
@@ -456,12 +464,6 @@ private fun PairingContent(
                         modifier = Modifier.fillMaxSize(),
                     )
 
-                    val zoomText =
-                        if (zoomRatio == 1f) {
-                            "1.0x"
-                        } else {
-                            "${(zoomRatio * 10).roundToInt() / 10f}x"
-                        }
                     BoxWithConstraints(
                         modifier =
                             Modifier
@@ -501,19 +503,24 @@ private fun PairingContent(
                             }
 
                         Box(modifier = previewFrameModifier.align(Alignment.Center)) {
-                            Text(
-                                text = zoomText,
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
+                            // 배율 프리셋 버튼 + 수평 줌 다이얼
+                            ZoomControls(
+                                zoomUiState = zoomUiState,
+                                onZoomRatioChanged = { newRatio ->
+                                    cameraControl?.setZoomRatio(newRatio)
+                                    viewModel.updateZoomRatio(newRatio)
+                                },
+                                onPresetTapped = { preset ->
+                                    viewModel.onPresetTapped(preset)
+                                    cameraControl?.setZoomRatio(
+                                        viewModel.zoomUiState.value.currentRatio,
+                                    )
+                                },
+                                onDragEnd = { viewModel.applyCustomRatio() },
                                 modifier =
                                     Modifier
                                         .align(Alignment.BottomCenter)
-                                        .padding(bottom = 12.dp)
-                                        .background(
-                                            color = Color.Black.copy(alpha = 0.45f),
-                                            shape = RoundedCornerShape(10.dp),
-                                        ).padding(horizontal = 10.dp, vertical = 4.dp),
+                                        .padding(bottom = 12.dp),
                             )
                         }
                     }

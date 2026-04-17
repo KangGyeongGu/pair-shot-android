@@ -22,7 +22,6 @@ import androidx.camera.lifecycle.awaitInstance
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,13 +35,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FlipCameraAndroid
@@ -54,13 +51,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,9 +68,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -81,6 +76,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.ui.component.BeforePreviewStrip
 import com.pairshot.ui.component.ShutterButton
+import com.pairshot.ui.component.ZoomControls
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -198,7 +194,8 @@ private fun CameraPreviewContent(
     val haptic = LocalHapticFeedback.current
 
     val lensFacing by viewModel.lensFacing.collectAsStateWithLifecycle()
-    val zoomRatio by viewModel.zoomRatio.collectAsStateWithLifecycle()
+    val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
+    val latestZoomRatio by rememberUpdatedState(zoomUiState.currentRatio)
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
 
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
@@ -290,9 +287,18 @@ private fun CameraPreviewContent(
             )
         cameraControl = camera.cameraControl
 
-        // 카메라 전환 시 줌 비율 초기화
-        camera.cameraControl.setZoomRatio(1f)
-        viewModel.updateZoomRatio(1f)
+        // ZoomState LiveData observe: 최초 non-null 값이 도착하면 ViewModel에 범위를 전달한다.
+        // zoomState.value가 바인딩 직후 null일 수 있으므로 observer를 등록해 안전하게 처리한다.
+        camera.cameraInfo.zoomState.observe(lifecycleOwner) { zoomState ->
+            if (zoomState != null) {
+                viewModel.initFromZoomState(zoomState.minZoomRatio, zoomState.maxZoomRatio)
+            }
+        }
+
+        // 렌즈 전환 시 줌 리셋 (1x가 범위 내이면 1x, 아니면 minRatio)
+        viewModel.resetZoomForLensSwitch()
+        val resetRatio = viewModel.zoomUiState.value.currentRatio
+        camera.cameraControl.setZoomRatio(resetRatio)
     }
 
     LaunchedEffect(beforePreviewUris.size) {
@@ -371,10 +377,12 @@ private fun CameraPreviewContent(
                         Modifier
                             .fillMaxWidth()
                             .height(previewSectionHeight)
-                            .pointerInput(cameraControl) {
+                            .pointerInput(cameraControl, zoomUiState.minRatio, zoomUiState.maxRatio) {
                                 detectTransformGestures { _, _, zoom, _ ->
                                     val control = cameraControl ?: return@detectTransformGestures
-                                    val newRatio = (zoomRatio * zoom).coerceIn(1f, 10f)
+                                    val newRatio =
+                                        (latestZoomRatio * zoom)
+                                            .coerceIn(zoomUiState.minRatio, zoomUiState.maxRatio)
                                     control.setZoomRatio(newRatio)
                                     viewModel.updateZoomRatio(newRatio)
                                 }
@@ -398,12 +406,6 @@ private fun CameraPreviewContent(
                         }
                     }
 
-                    val zoomText =
-                        if (zoomRatio == 1f) {
-                            "1.0x"
-                        } else {
-                            "${(zoomRatio * 10).roundToInt() / 10f}x"
-                        }
                     BoxWithConstraints(
                         modifier =
                             Modifier
@@ -443,19 +445,24 @@ private fun CameraPreviewContent(
                             }
 
                         Box(modifier = previewFrameModifier.align(Alignment.Center)) {
-                            Text(
-                                text = zoomText,
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
+                            // 배율 프리셋 버튼 + 수평 줌 다이얼
+                            ZoomControls(
+                                zoomUiState = zoomUiState,
+                                onZoomRatioChanged = { newRatio ->
+                                    cameraControl?.setZoomRatio(newRatio)
+                                    viewModel.updateZoomRatio(newRatio)
+                                },
+                                onPresetTapped = { preset ->
+                                    viewModel.onPresetTapped(preset)
+                                    cameraControl?.setZoomRatio(
+                                        viewModel.zoomUiState.value.currentRatio,
+                                    )
+                                },
+                                onDragEnd = { viewModel.applyCustomRatio() },
                                 modifier =
                                     Modifier
                                         .align(Alignment.BottomCenter)
-                                        .padding(bottom = 12.dp)
-                                        .background(
-                                            color = Color.Black.copy(alpha = 0.45f),
-                                            shape = RoundedCornerShape(10.dp),
-                                        ).padding(horizontal = 10.dp, vertical = 4.dp),
+                                        .padding(bottom = 12.dp),
                             )
                         }
                     }
@@ -578,24 +585,24 @@ private fun PermissionRationaleContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
+        androidx.compose.material3.Text(
             text = "카메라 권한 필요",
             color = Color.White,
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Text(
+        androidx.compose.material3.Text(
             text = "PairShot은 사진 촬영을 위해 카메라 접근 권한이 필요합니다.",
             color = Color.White.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(32.dp))
         androidx.compose.material3.Button(onClick = onRequestPermission) {
-            Text(text = "권한 허용")
+            androidx.compose.material3.Text(text = "권한 허용")
         }
         Spacer(modifier = Modifier.height(12.dp))
         androidx.compose.material3.TextButton(onClick = onNavigateBack) {
-            Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
+            androidx.compose.material3.Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
         }
     }
 }
@@ -613,24 +620,24 @@ private fun PermissionDeniedContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
+        androidx.compose.material3.Text(
             text = "카메라 권한이 거부되었습니다",
             color = Color.White,
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Text(
+        androidx.compose.material3.Text(
             text = "설정 앱에서 PairShot의 카메라 권한을 직접 허용해 주세요.",
             color = Color.White.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(32.dp))
         androidx.compose.material3.Button(onClick = onOpenSettings) {
-            Text(text = "설정으로 이동")
+            androidx.compose.material3.Text(text = "설정으로 이동")
         }
         Spacer(modifier = Modifier.height(12.dp))
         androidx.compose.material3.TextButton(onClick = onNavigateBack) {
-            Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
+            androidx.compose.material3.Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
         }
     }
 }

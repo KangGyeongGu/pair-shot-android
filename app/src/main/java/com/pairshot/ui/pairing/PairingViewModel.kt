@@ -9,6 +9,8 @@ import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.usecase.capture.SaveAfterPhotoUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.domain.usecase.pair.GetUnpairedPhotosUseCase
+import com.pairshot.ui.component.ZoomStateHolder
+import com.pairshot.ui.component.ZoomUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,8 +70,8 @@ class PairingViewModel
         private val _lensFacing = MutableStateFlow(CameraSelector.LENS_FACING_BACK)
         val lensFacing: StateFlow<Int> = _lensFacing.asStateFlow()
 
-        private val _zoomRatio = MutableStateFlow(1f)
-        val zoomRatio: StateFlow<Float> = _zoomRatio.asStateFlow()
+        private val zoomHolder = ZoomStateHolder()
+        val zoomUiState: StateFlow<ZoomUiState> = zoomHolder.zoomUiState
 
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
@@ -91,6 +93,37 @@ class PairingViewModel
 
         // 초기 인덱스 설정 (initialPairId가 있으면 해당 pair로 이동)
         private var initialIndexSet = false
+
+        /**
+         * Screen에서 cameraInfo.zoomState를 observe해 최초 non-null 값을 이 함수에 전달한다.
+         * min/max만 받아 Android 의존성을 ViewModel에서 제거한다.
+         */
+        fun initFromZoomState(
+            minRatio: Float,
+            maxRatio: Float,
+        ) {
+            zoomHolder.initFromZoomState(minRatio, maxRatio)
+        }
+
+        fun updateZoomRatio(ratio: Float) {
+            zoomHolder.updateZoomRatio(ratio)
+        }
+
+        fun onPresetTapped(preset: Float) {
+            zoomHolder.onPresetTapped(preset)
+        }
+
+        fun applyCustomRatio() {
+            zoomHolder.applyCustomRatio()
+        }
+
+        fun resetZoomForLensSwitch() {
+            zoomHolder.resetZoomForLensSwitch()
+        }
+
+        fun restoreZoomForPair(zoomLevel: Float?) {
+            zoomHolder.restoreZoomForPair(zoomLevel)
+        }
 
         fun onUnpairedPhotosUpdated(photos: List<PhotoPair>) {
             if (!initialIndexSet && photos.isNotEmpty() && initialPairId != null) {
@@ -160,10 +193,6 @@ class PairingViewModel
             viewModelScope.launch {
                 _events.emit(PairingEvent.AllCompleted)
             }
-        }
-
-        fun updateZoomRatio(ratio: Float) {
-            _zoomRatio.value = ratio
         }
 
         fun updateOverlayAlpha(alpha: Float) {

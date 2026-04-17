@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.domain.usecase.capture.SaveBeforePhotoUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
+import com.pairshot.ui.component.ZoomStateHolder
+import com.pairshot.ui.component.ZoomUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,8 +46,8 @@ class CameraViewModel
         private val _lensFacing = MutableStateFlow(CameraSelector.LENS_FACING_BACK)
         val lensFacing: StateFlow<Int> = _lensFacing.asStateFlow()
 
-        private val _zoomRatio = MutableStateFlow(1f)
-        val zoomRatio: StateFlow<Float> = _zoomRatio.asStateFlow()
+        private val zoomHolder = ZoomStateHolder()
+        val zoomUiState: StateFlow<ZoomUiState> = zoomHolder.zoomUiState
 
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
@@ -63,6 +65,33 @@ class CameraViewModel
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build()
 
+        /**
+         * Screen에서 cameraInfo.zoomState를 observe해 최초 non-null 값을 이 함수에 전달한다.
+         * min/max만 받아 Android 의존성을 ViewModel에서 제거한다.
+         */
+        fun initFromZoomState(
+            minRatio: Float,
+            maxRatio: Float,
+        ) {
+            zoomHolder.initFromZoomState(minRatio, maxRatio)
+        }
+
+        fun updateZoomRatio(ratio: Float) {
+            zoomHolder.updateZoomRatio(ratio)
+        }
+
+        fun onPresetTapped(preset: Float) {
+            zoomHolder.onPresetTapped(preset)
+        }
+
+        fun applyCustomRatio() {
+            zoomHolder.applyCustomRatio()
+        }
+
+        fun resetZoomForLensSwitch() {
+            zoomHolder.resetZoomForLensSwitch()
+        }
+
         fun onShutterClick(
             projectId: Long,
             tempFileUri: String,
@@ -75,7 +104,7 @@ class CameraViewModel
                         saveBeforePhotoUseCase(
                             projectId = projectId,
                             tempFileUri = tempFileUri,
-                            zoomLevel = _zoomRatio.value,
+                            zoomLevel = zoomHolder.zoomUiState.value.currentRatio,
                             lensId = null,
                         )
                     _events.emit(CameraEvent.PhotoSaved(pairId))
@@ -107,10 +136,6 @@ class CameraViewModel
                 } else {
                     CameraSelector.LENS_FACING_BACK
                 }
-        }
-
-        fun updateZoomRatio(ratio: Float) {
-            _zoomRatio.value = ratio
         }
 
         fun observeProject(projectId: Long) {
