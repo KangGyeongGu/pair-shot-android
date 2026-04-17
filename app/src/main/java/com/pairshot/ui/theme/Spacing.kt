@@ -8,4 +8,5 @@ object PairShotSpacing {
     val cardPadding = 16.dp
     val itemGap = 12.dp
     val iconTextGap = 8.dp
+    val iconSize = 24.dp
 }

@@ -82,7 +82,7 @@ class MediaStoreManager
             bitmap: Bitmap,
             projectName: String,
             displayName: String,
-            quality: Int = 85,
+            quality: Int = 95,
         ): Uri {
             val resolver = context.contentResolver
 

@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -62,7 +64,7 @@ fun GalleryScreen(
     onNavigateToCamera: () -> Unit = {},
     onNavigateToPairing: (Long) -> Unit = {},
     onNavigateToCompare: (Long) -> Unit = {},
-    onNavigateToExport: () -> Unit = {},
+    onNavigateToExport: (Set<Long>) -> Unit = {},
     viewModel: GalleryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,6 +81,7 @@ fun GalleryScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessage.collect { message ->
@@ -122,11 +125,30 @@ fun GalleryScreen(
                         TextButton(onClick = { viewModel.enterSelectionMode() }) {
                             Text(text = "선택")
                         }
-                        IconButton(onClick = onNavigateToExport) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "더보기",
-                            )
+                        Box {
+                            IconButton(onClick = { showMoreMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "더보기",
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMoreMenu,
+                                onDismissRequest = { showMoreMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("프로젝트명 수정") },
+                                    onClick = {
+                                        showMoreMenu = false // Step 2-4
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("프로젝트 삭제") },
+                                    onClick = {
+                                        showMoreMenu = false // Step 2-4
+                                    },
+                                )
+                            }
                         }
                     }
                 },
@@ -168,7 +190,7 @@ fun GalleryScreen(
                                 )
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                IconButton(onClick = { /* TODO: Step 2-3 공유 */ }) {
+                                IconButton(onClick = { onNavigateToExport(selectedIds) }) {
                                     Icon(
                                         imageVector = Icons.Default.Share,
                                         contentDescription = "공유",
@@ -377,7 +399,7 @@ fun GalleryScreen(
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     Text(
                         text = "${progress.current}/${progress.total} 처리 중...",
                         style = MaterialTheme.typography.bodyMedium,
