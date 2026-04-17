@@ -62,7 +62,7 @@ import java.util.Locale
 @Composable
 fun CompareScreen(
     onNavigateBack: () -> Unit = {},
-    onNavigateToPairing: (projectId: Long, pairId: Long) -> Unit = { _, _ -> },
+    onNavigateToAfterCamera: (projectId: Long, pairId: Long) -> Unit = { _, _ -> },
     viewModel: CompareViewModel = hiltViewModel(),
 ) {
     val pair by viewModel.pair.collectAsStateWithLifecycle()
@@ -88,7 +88,7 @@ fun CompareScreen(
 
     LaunchedEffect(Unit) {
         viewModel.retakeReady.collect { selectedPair ->
-            onNavigateToPairing(selectedPair.projectId, selectedPair.id)
+            onNavigateToAfterCamera(selectedPair.projectId, selectedPair.id)
         }
     }
 

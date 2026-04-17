@@ -71,7 +71,7 @@ fun GalleryScreen(
     projectId: Long,
     onNavigateBack: () -> Unit = {},
     onNavigateToCamera: () -> Unit = {},
-    onNavigateToPairing: (Long) -> Unit = {},
+    onNavigateToAfterCamera: (Long) -> Unit = {},
     onNavigateToCompare: (Long) -> Unit = {},
     onNavigateToExport: (Set<Long>) -> Unit = {},
     viewModel: GalleryViewModel = hiltViewModel(),
@@ -412,7 +412,7 @@ fun GalleryScreen(
                                                 viewModel.toggleSelection(pair.id)
                                             } else {
                                                 when (pair.status) {
-                                                    PairStatus.BEFORE_ONLY -> onNavigateToPairing(pair.id)
+                                                    PairStatus.BEFORE_ONLY -> onNavigateToAfterCamera(pair.id)
 
                                                     PairStatus.PAIRED,
                                                     PairStatus.COMBINED,

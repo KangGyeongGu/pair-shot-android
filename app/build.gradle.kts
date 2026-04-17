@@ -95,6 +95,9 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
 
+    // Concurrent Futures (ListenableFuture.await())
+    implementation(libs.concurrent.futures.ktx)
+
     // Test
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

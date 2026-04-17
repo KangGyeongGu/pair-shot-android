@@ -13,14 +13,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
+import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -69,15 +75,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.concurrent.futures.await
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.ui.component.BeforePreviewStrip
+import com.pairshot.ui.component.CameraSettingsPanel
+import com.pairshot.ui.component.FocusExposureOverlay
+import com.pairshot.ui.component.GridOverlay
+import com.pairshot.ui.component.LevelOverlay
 import com.pairshot.ui.component.ShutterButton
 import com.pairshot.ui.component.ZoomControls
 import java.io.File
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 @Composable
@@ -197,10 +209,14 @@ private fun CameraPreviewContent(
     val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
     val latestZoomRatio by rememberUpdatedState(zoomUiState.currentRatio)
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
+    val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
+    val roll by viewModel.levelSensorManager.roll.collectAsStateWithLifecycle()
 
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    var extensionsManager by remember { mutableStateOf<ExtensionsManager?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val thumbnailListState = rememberLazyListState()
@@ -262,21 +278,27 @@ private fun CameraPreviewContent(
         }
     }
 
-    LaunchedEffect(lensFacing) {
+    // ExtensionsManager 초기화 — ProcessCameraProvider당 1회만 수행
+    LaunchedEffect(Unit) {
         val provider = ProcessCameraProvider.awaitInstance(context)
         cameraProvider = provider
+        extensionsManager = ExtensionsManager.getInstanceAsync(context, provider).await()
+    }
+
+    // 렌즈 전환 / Extension 토글 시 카메라 재바인딩 — 단일 LaunchedEffect로 race condition 방지
+    LaunchedEffect(lensFacing, settingsState.nightModeEnabled, settingsState.hdrEnabled) {
+        val provider = cameraProvider ?: ProcessCameraProvider.awaitInstance(context).also { cameraProvider = it }
+        val extManager = extensionsManager ?: ExtensionsManager.getInstanceAsync(context, provider).await().also { extensionsManager = it }
         provider.unbindAll()
 
-        val cameraSelector =
-            CameraSelector
-                .Builder()
-                .requireLensFacing(lensFacing)
-                .build()
+        val cameraSelector = viewModel.getExtensionCameraSelector(extManager)
 
         val preview = Preview.Builder().build()
         preview.setSurfaceProvider { request ->
             surfaceRequest = request
         }
+
+        viewModel.applyFlashMode(viewModel.imageCapture)
 
         val camera =
             provider.bindToLifecycle(
@@ -287,18 +309,41 @@ private fun CameraPreviewContent(
             )
         cameraControl = camera.cameraControl
 
-        // ZoomState LiveData observe: 최초 non-null 값이 도착하면 ViewModel에 범위를 전달한다.
-        // zoomState.value가 바인딩 직후 null일 수 있으므로 observer를 등록해 안전하게 처리한다.
+        viewModel.updateCapabilities(camera.cameraInfo, extManager)
+
+        if (viewModel.settingsState.value.flashMode == FlashMode.TORCH) {
+            camera.cameraControl.enableTorch(true)
+        }
+
+        // 노출 보정 복원
+        if (viewModel.settingsState.value.exposureIndex != 0) {
+            camera.cameraControl.setExposureCompensationIndex(viewModel.settingsState.value.exposureIndex)
+        }
+
+        // 기존 observer 제거 후 재등록 — observer 누적 방지
+        camera.cameraInfo.zoomState.removeObservers(lifecycleOwner)
         camera.cameraInfo.zoomState.observe(lifecycleOwner) { zoomState ->
             if (zoomState != null) {
                 viewModel.initFromZoomState(zoomState.minZoomRatio, zoomState.maxZoomRatio)
             }
         }
 
-        // 렌즈 전환 시 줌 리셋 (1x가 범위 내이면 1x, 아니면 minRatio)
         viewModel.resetZoomForLensSwitch()
         val resetRatio = viewModel.zoomUiState.value.currentRatio
         camera.cameraControl.setZoomRatio(resetRatio)
+    }
+
+    // 플래시 모드 변경 반영
+    LaunchedEffect(settingsState.flashMode) {
+        val control = cameraControl ?: return@LaunchedEffect
+        viewModel.applyFlashMode(viewModel.imageCapture)
+        // Torch 모드 on/off
+        control.enableTorch(settingsState.flashMode == FlashMode.TORCH)
+    }
+
+    // 노출 보정 변경 반영
+    LaunchedEffect(settingsState.exposureIndex) {
+        cameraControl?.setExposureCompensationIndex(settingsState.exposureIndex)
     }
 
     LaunchedEffect(beforePreviewUris.size) {
@@ -406,6 +451,37 @@ private fun CameraPreviewContent(
                         }
                     }
 
+                    // 탭-투-포커스 + 드래그 노출 보정 오버레이
+                    FocusExposureOverlay(
+                        onTapToFocus = { x, y, viewWidth, viewHeight ->
+                            val control = cameraControl ?: return@FocusExposureOverlay
+                            val factory =
+                                SurfaceOrientedMeteringPointFactory(
+                                    viewWidth.toFloat(),
+                                    viewHeight.toFloat(),
+                                )
+                            val point = factory.createPoint(x, y)
+                            val action =
+                                FocusMeteringAction
+                                    .Builder(point)
+                                    .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                                    .build()
+                            control.startFocusAndMetering(action)
+                        },
+                        onExposureReset = {
+                            viewModel.setExposureIndex(0)
+                            cameraControl?.setExposureCompensationIndex(0)
+                        },
+                        onExposureAdjust = { index ->
+                            viewModel.setExposureIndex(index)
+                            cameraControl?.setExposureCompensationIndex(index)
+                        },
+                        exposureRange = capabilities.exposureRange,
+                        currentExposureIndex = settingsState.exposureIndex,
+                        exposureStep = capabilities.exposureStep,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
                     BoxWithConstraints(
                         modifier =
                             Modifier
@@ -466,6 +542,13 @@ private fun CameraPreviewContent(
                             )
                         }
                     }
+
+                    // 격자선 + 수평계 오버레이
+                    CameraPreviewOverlays(
+                        gridEnabled = settingsState.gridEnabled,
+                        levelEnabled = settingsState.levelEnabled,
+                        roll = roll,
+                    )
                 }
 
                 BeforePreviewStrip(
@@ -496,7 +579,7 @@ private fun CameraPreviewContent(
                                 modifier = Modifier.size(28.dp),
                             )
                         }
-                        IconButton(onClick = { /* 설정 — 추후 구현 */ }) {
+                        IconButton(onClick = { viewModel.toggleSettingsPanel() }) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
                                 contentDescription = "설정",
@@ -553,6 +636,18 @@ private fun CameraPreviewContent(
                 Spacer(modifier = Modifier.height(bottomSpacerHeight))
             }
 
+            CameraSettingsPanel(
+                visible = settingsState.showPanel,
+                settingsState = settingsState,
+                capabilities = capabilities,
+                onToggleGrid = viewModel::toggleGrid,
+                onCycleFlash = viewModel::cycleFlash,
+                onToggleNightMode = viewModel::toggleNightMode,
+                onToggleHdr = viewModel::toggleHdr,
+                onToggleLevel = viewModel::toggleLevel,
+                onDismiss = viewModel::dismissSettingsPanel,
+            )
+
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier =
@@ -568,6 +663,31 @@ private fun CameraPreviewContent(
                     )
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun CameraPreviewOverlays(
+    gridEnabled: Boolean,
+    levelEnabled: Boolean,
+    roll: Float,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = gridEnabled,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            GridOverlay()
+        }
+
+        AnimatedVisibility(
+            visible = levelEnabled,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            LevelOverlay(roll = roll)
         }
     }
 }

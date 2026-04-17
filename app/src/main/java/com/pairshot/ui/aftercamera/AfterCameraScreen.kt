@@ -1,4 +1,4 @@
-package com.pairshot.ui.pairing
+package com.pairshot.ui.aftercamera
 
 import android.Manifest
 import android.content.Intent
@@ -13,14 +13,20 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
+import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.lifecycle.awaitInstance
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -70,24 +76,31 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.concurrent.futures.await
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.ui.camera.FlashMode
 import com.pairshot.ui.component.BeforePreviewStrip
+import com.pairshot.ui.component.CameraSettingsPanel
+import com.pairshot.ui.component.FocusExposureOverlay
+import com.pairshot.ui.component.GridOverlay
+import com.pairshot.ui.component.LevelOverlay
 import com.pairshot.ui.component.OverlayGuide
 import com.pairshot.ui.component.ShutterButton
 import com.pairshot.ui.component.ZoomControls
 import kotlinx.coroutines.delay
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @Composable
-fun PairingScreen(
+fun AfterCameraScreen(
     projectId: Long,
     initialPairId: Long? = null,
     onNavigateBack: () -> Unit = {},
-    viewModel: PairingViewModel = hiltViewModel(),
+    viewModel: AfterCameraViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -142,14 +155,14 @@ fun PairingScreen(
     ) {
         when {
             hasCameraPermission -> {
-                PairingContent(
+                AfterCameraContent(
                     viewModel = viewModel,
                     onNavigateBack = onNavigateBack,
                 )
             }
 
             permissionPermanentlyDenied -> {
-                PairingPermissionDeniedContent(
+                AfterCameraPermissionDeniedContent(
                     onOpenSettings = {
                         val intent =
                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -162,7 +175,7 @@ fun PairingScreen(
             }
 
             showRationale -> {
-                PairingPermissionRationaleContent(
+                AfterCameraPermissionRationaleContent(
                     onRequestPermission = {
                         showRationale = false
                         permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -179,8 +192,8 @@ fun PairingScreen(
 }
 
 @Composable
-private fun PairingContent(
-    viewModel: PairingViewModel,
+private fun AfterCameraContent(
+    viewModel: AfterCameraViewModel,
     onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -195,6 +208,9 @@ private fun PairingContent(
     val latestZoomRatio by rememberUpdatedState(zoomUiState.currentRatio)
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
+    val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
+    val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
+    val roll by viewModel.levelSensorManager.roll.collectAsStateWithLifecycle()
 
     val currentPair = unpairedPhotos.getOrNull(currentIndex)
     val totalCount = unpairedPhotos.size
@@ -267,21 +283,21 @@ private fun PairingContent(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is PairingEvent.AfterSaved -> {
+                is AfterCameraEvent.AfterSaved -> {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
 
-                is PairingEvent.AllCompleted -> {
+                is AfterCameraEvent.AllCompleted -> {
                     snackbarHostState.showSnackbar("모든 After 촬영이 완료되었습니다!")
                     delay(2000L)
                     onNavigateBack()
                 }
 
-                is PairingEvent.CaptureError -> {
+                is AfterCameraEvent.CaptureError -> {
                     snackbarHostState.showSnackbar("촬영에 실패했습니다. 다시 시도해주세요.")
                 }
 
-                is PairingEvent.SaveError -> {
+                is AfterCameraEvent.SaveError -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
             }
@@ -290,22 +306,29 @@ private fun PairingContent(
 
     // CameraX 바인딩
     var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    var extensionsManager by remember { mutableStateOf<ExtensionsManager?>(null) }
 
-    LaunchedEffect(lensFacing) {
+    // ExtensionsManager 초기화 — ProcessCameraProvider당 1회만 수행
+    LaunchedEffect(Unit) {
         val provider = ProcessCameraProvider.awaitInstance(context)
         cameraProvider = provider
+        extensionsManager = ExtensionsManager.getInstanceAsync(context, provider).await()
+    }
+
+    // 렌즈 전환 / Extension 토글 시 카메라 재바인딩 — 단일 LaunchedEffect로 race condition 방지
+    LaunchedEffect(lensFacing, settingsState.nightModeEnabled, settingsState.hdrEnabled) {
+        val provider = cameraProvider ?: ProcessCameraProvider.awaitInstance(context).also { cameraProvider = it }
+        val extManager = extensionsManager ?: ExtensionsManager.getInstanceAsync(context, provider).await().also { extensionsManager = it }
         provider.unbindAll()
 
-        val cameraSelector =
-            CameraSelector
-                .Builder()
-                .requireLensFacing(lensFacing)
-                .build()
+        val cameraSelector = viewModel.getExtensionCameraSelector(extManager)
 
         val preview = Preview.Builder().build()
         preview.setSurfaceProvider { request ->
             surfaceRequest = request
         }
+
+        viewModel.applyFlashMode(viewModel.imageCapture)
 
         val camera =
             provider.bindToLifecycle(
@@ -316,23 +339,50 @@ private fun PairingContent(
             )
         cameraControl = camera.cameraControl
 
-        // ZoomState LiveData observe: 최초 non-null 값이 도착하면 ViewModel에 범위를 전달한다.
+        viewModel.updateCapabilities(camera.cameraInfo, extManager)
+
+        if (viewModel.settingsState.value.flashMode == FlashMode.TORCH) {
+            camera.cameraControl.enableTorch(true)
+        }
+
+        if (viewModel.settingsState.value.exposureIndex != 0) {
+            camera.cameraControl.setExposureCompensationIndex(viewModel.settingsState.value.exposureIndex)
+        }
+
+        // 기존 observer 제거 후 재등록 — observer 누적 방지
+        camera.cameraInfo.zoomState.removeObservers(lifecycleOwner)
         camera.cameraInfo.zoomState.observe(lifecycleOwner) { zoomState ->
             if (zoomState != null) {
                 viewModel.initFromZoomState(zoomState.minZoomRatio, zoomState.maxZoomRatio)
             }
         }
 
-        // 렌즈 전환 시 현재 pair의 zoom 복원 (1x가 범위 내이면 1x, 아니면 minRatio)
         val zoom = unpairedPhotos.getOrNull(currentIndex)?.zoomLevel ?: 1f
         viewModel.restoreZoomForPair(zoom)
         val restored = viewModel.zoomUiState.value.currentRatio
         camera.cameraControl.setZoomRatio(restored)
     }
 
+    // 플래시 모드 변경 반영
+    LaunchedEffect(settingsState.flashMode) {
+        val control = cameraControl ?: return@LaunchedEffect
+        viewModel.applyFlashMode(viewModel.imageCapture)
+        control.enableTorch(settingsState.flashMode == FlashMode.TORCH)
+    }
+
+    // 노출 보정 변경 반영
+    LaunchedEffect(settingsState.exposureIndex) {
+        cameraControl?.setExposureCompensationIndex(settingsState.exposureIndex)
+    }
+
     // 화면 이탈 시 카메라 리소스 해제
     DisposableEffect(Unit) {
-        onDispose { cameraProvider?.unbindAll() }
+        onDispose {
+            cameraProvider?.unbindAll()
+            cameraProvider = null
+            surfaceRequest = null
+            cameraControl = null
+        }
     }
 
     val density = LocalDensity.current
@@ -412,16 +462,6 @@ private fun PairingContent(
                             fontWeight = FontWeight.Medium,
                         )
                     }
-                    IconButton(
-                        onClick = { /* 설정 — 추후 구현 */ },
-                        modifier = Modifier.size(40.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "설정",
-                            tint = Color.White,
-                        )
-                    }
                 }
 
                 Box(
@@ -461,6 +501,43 @@ private fun PairingContent(
                     OverlayGuide(
                         imageUri = currentPair?.beforePhotoUri,
                         alpha = overlayAlpha,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    AfterCameraPreviewOverlays(
+                        gridEnabled = settingsState.gridEnabled,
+                        levelEnabled = settingsState.levelEnabled,
+                        roll = roll,
+                    )
+
+                    // 탭-투-포커스 + 드래그 노출 보정 오버레이
+                    FocusExposureOverlay(
+                        onTapToFocus = { x, y, viewWidth, viewHeight ->
+                            val control = cameraControl ?: return@FocusExposureOverlay
+                            val factory =
+                                SurfaceOrientedMeteringPointFactory(
+                                    viewWidth.toFloat(),
+                                    viewHeight.toFloat(),
+                                )
+                            val point = factory.createPoint(x, y)
+                            val action =
+                                FocusMeteringAction
+                                    .Builder(point)
+                                    .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                                    .build()
+                            control.startFocusAndMetering(action)
+                        },
+                        onExposureReset = {
+                            viewModel.setExposureIndex(0)
+                            cameraControl?.setExposureCompensationIndex(0)
+                        },
+                        onExposureAdjust = { index ->
+                            viewModel.setExposureIndex(index)
+                            cameraControl?.setExposureCompensationIndex(index)
+                        },
+                        exposureRange = capabilities.exposureRange,
+                        currentExposureIndex = settingsState.exposureIndex,
+                        exposureStep = capabilities.exposureStep,
                         modifier = Modifier.fillMaxSize(),
                     )
 
@@ -564,6 +641,14 @@ private fun PairingContent(
                                 modifier = Modifier.size(28.dp),
                             )
                         }
+                        IconButton(onClick = { viewModel.toggleSettingsPanel() }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "설정",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
                     }
 
                     ShutterButton(
@@ -610,6 +695,20 @@ private fun PairingContent(
                 Spacer(modifier = Modifier.height(bottomSpacerHeight))
             }
 
+            CameraSettingsPanel(
+                visible = settingsState.showPanel,
+                settingsState = settingsState,
+                capabilities = capabilities,
+                onToggleGrid = viewModel::toggleGrid,
+                onCycleFlash = viewModel::cycleFlash,
+                onToggleNightMode = viewModel::toggleNightMode,
+                onToggleHdr = viewModel::toggleHdr,
+                onToggleLevel = viewModel::toggleLevel,
+                onDismiss = viewModel::dismissSettingsPanel,
+                overlayAlpha = overlayAlpha,
+                onOverlayAlphaChange = viewModel::updateOverlayAlpha,
+            )
+
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier =
@@ -630,7 +729,32 @@ private fun PairingContent(
 }
 
 @Composable
-private fun PairingPermissionRationaleContent(
+private fun AfterCameraPreviewOverlays(
+    gridEnabled: Boolean,
+    levelEnabled: Boolean,
+    roll: Float,
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = gridEnabled,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            GridOverlay()
+        }
+
+        AnimatedVisibility(
+            visible = levelEnabled,
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            LevelOverlay(roll = roll)
+        }
+    }
+}
+
+@Composable
+private fun AfterCameraPermissionRationaleContent(
     onRequestPermission: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {
@@ -665,7 +789,7 @@ private fun PairingPermissionRationaleContent(
 }
 
 @Composable
-private fun PairingPermissionDeniedContent(
+private fun AfterCameraPermissionDeniedContent(
     onOpenSettings: () -> Unit,
     onNavigateBack: () -> Unit,
 ) {

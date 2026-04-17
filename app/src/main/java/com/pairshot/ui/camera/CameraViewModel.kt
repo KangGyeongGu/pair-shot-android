@@ -1,7 +1,10 @@
 package com.pairshot.ui.camera
 
+import android.content.Context
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.domain.usecase.capture.SaveBeforePhotoUseCase
@@ -9,6 +12,7 @@ import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.ui.component.ZoomStateHolder
 import com.pairshot.ui.component.ZoomUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +41,7 @@ sealed interface CameraEvent {
 class CameraViewModel
     @Inject
     constructor(
+        @ApplicationContext context: Context,
         private val saveBeforePhotoUseCase: SaveBeforePhotoUseCase,
         private val getPairsByProjectUseCase: GetPairsByProjectUseCase,
     ) : ViewModel() {
@@ -54,6 +59,14 @@ class CameraViewModel
 
         private val _beforePreviewUris = MutableStateFlow<List<String>>(emptyList())
         val beforePreviewUris: StateFlow<List<String>> = _beforePreviewUris.asStateFlow()
+
+        // 카메라 설정 상태 — CameraSettingsStateHolder로 위임
+        private val settingsHolder = CameraSettingsStateHolder()
+        val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
+        val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
+
+        // 수평계 센서
+        val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
 
         private var observedProjectId: Long? = null
         private var observeProjectJob: Job? = null
@@ -149,5 +162,83 @@ class CameraViewModel
                         _beforePreviewUris.value = pairs.map { it.beforePhotoUri }
                     }
                 }
+        }
+
+        // --- 카메라 설정 ---
+
+        /**
+         * 카메라 바인딩 완료 후 CameraInfo와 ExtensionsManager를 전달해 capabilities를 갱신한다.
+         * 렌즈 전환 시에도 재호출해야 한다.
+         */
+        fun updateCapabilities(
+            cameraInfo: CameraInfo,
+            extensionsManager: ExtensionsManager,
+        ) {
+            settingsHolder.updateCapabilities(cameraInfo, extensionsManager, _lensFacing.value)
+        }
+
+        fun toggleGrid() {
+            settingsHolder.toggleGrid()
+        }
+
+        /**
+         * 수평계 ON/OFF. 활성화 시 센서 리스너를 등록하고 비활성화 시 해제한다.
+         */
+        fun toggleLevel() {
+            val active = settingsHolder.toggleLevel()
+            if (active) levelSensorManager.start() else levelSensorManager.stop()
+        }
+
+        /** OFF → AUTO → ON → TORCH → OFF 순환 */
+        fun cycleFlash() {
+            settingsHolder.cycleFlash()
+        }
+
+        /**
+         * 야간모드 토글. HDR과 동시 활성화 불가 — 야간모드를 켜면 HDR은 자동 OFF.
+         * Extension 재바인딩은 Screen에서 settingsState를 collect해 처리한다.
+         */
+        fun toggleNightMode() {
+            settingsHolder.toggleNightMode()
+        }
+
+        /**
+         * HDR 토글. 야간모드와 동시 활성화 불가 — HDR을 켜면 야간모드는 자동 OFF.
+         * Extension 재바인딩은 Screen에서 settingsState를 collect해 처리한다.
+         */
+        fun toggleHdr() {
+            settingsHolder.toggleHdr()
+        }
+
+        fun setExposureIndex(index: Int) {
+            settingsHolder.setExposureIndex(index)
+        }
+
+        fun toggleSettingsPanel() {
+            settingsHolder.toggleSettingsPanel()
+        }
+
+        fun dismissSettingsPanel() {
+            settingsHolder.dismissSettingsPanel()
+        }
+
+        /**
+         * 현재 활성화된 Extension에 따라 적절한 CameraSelector를 반환한다.
+         * 야간모드/HDR 비활성 시에는 기본 selector를 반환한다.
+         */
+        fun getExtensionCameraSelector(extensionsManager: ExtensionsManager): CameraSelector =
+            settingsHolder.getExtensionCameraSelector(extensionsManager, _lensFacing.value)
+
+        /**
+         * 현재 flashMode에 따라 ImageCapture의 flashMode를 설정한다.
+         * TORCH는 CameraControl.enableTorch(true)로 처리하므로 Screen에서 별도 처리 필요.
+         */
+        fun applyFlashMode(imageCapture: ImageCapture) {
+            settingsHolder.applyFlashMode(imageCapture)
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            levelSensorManager.stop()
         }
     }

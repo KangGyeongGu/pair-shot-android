@@ -33,6 +33,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.pairshot.ui.aftercamera.AfterCameraScreen
 import com.pairshot.ui.camera.CameraScreen
 import com.pairshot.ui.compare.CompareScreen
 import com.pairshot.ui.export.ExportAction
@@ -42,7 +43,6 @@ import com.pairshot.ui.export.ExportScreen
 import com.pairshot.ui.export.ExportUiState
 import com.pairshot.ui.export.ExportViewModel
 import com.pairshot.ui.gallery.GalleryScreen
-import com.pairshot.ui.pairing.PairingScreen
 import com.pairshot.ui.project.ProjectListScreen
 import com.pairshot.ui.settings.SettingsScreen
 import com.pairshot.ui.settings.SettingsViewModel
@@ -63,7 +63,7 @@ data class Camera(
 )
 
 @Serializable
-data class Pairing(
+data class AfterCamera(
     val projectId: Long,
     val initialPairId: Long? = null,
 )
@@ -146,7 +146,7 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                 projectId = route.projectId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToCamera = { navController.navigate(Camera(route.projectId)) },
-                onNavigateToPairing = { pairId -> navController.navigate(Pairing(route.projectId, pairId)) },
+                onNavigateToAfterCamera = { pairId -> navController.navigate(AfterCamera(route.projectId, pairId)) },
                 onNavigateToCompare = { pairId -> navController.navigate(Compare(pairId)) },
                 onNavigateToExport = { selectedIds ->
                     navController.navigate(Export(route.projectId, selectedIds.joinToString(",")))
@@ -160,9 +160,9 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                 onNavigateBack = { navController.popBackStack() },
             )
         }
-        composable<Pairing> { backStackEntry ->
-            val route = backStackEntry.toRoute<Pairing>()
-            PairingScreen(
+        composable<AfterCamera> { backStackEntry ->
+            val route = backStackEntry.toRoute<AfterCamera>()
+            AfterCameraScreen(
                 projectId = route.projectId,
                 initialPairId = route.initialPairId,
                 onNavigateBack = { navController.popBackStack() },
@@ -177,8 +177,8 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
         ) {
             CompareScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToPairing = { projectId, pairId ->
-                    navController.navigate(Pairing(projectId, pairId))
+                onNavigateToAfterCamera = { projectId, pairId ->
+                    navController.navigate(AfterCamera(projectId, pairId))
                 },
             )
         }

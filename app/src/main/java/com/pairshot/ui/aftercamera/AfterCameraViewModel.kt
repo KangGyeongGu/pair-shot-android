@@ -1,7 +1,10 @@
-package com.pairshot.ui.pairing
+package com.pairshot.ui.aftercamera
 
+import android.content.Context
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
+import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,9 +12,14 @@ import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.usecase.capture.SaveAfterPhotoUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.domain.usecase.pair.GetUnpairedPhotosUseCase
+import com.pairshot.ui.camera.CameraCapabilities
+import com.pairshot.ui.camera.CameraSettingsState
+import com.pairshot.ui.camera.CameraSettingsStateHolder
+import com.pairshot.ui.camera.LevelSensorManager
 import com.pairshot.ui.component.ZoomStateHolder
 import com.pairshot.ui.component.ZoomUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,26 +32,27 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-sealed interface PairingEvent {
-    data object AllCompleted : PairingEvent
+sealed interface AfterCameraEvent {
+    data object AllCompleted : AfterCameraEvent
 
     data class AfterSaved(
         val pairId: Long,
-    ) : PairingEvent
+    ) : AfterCameraEvent
 
     data class CaptureError(
         val message: String,
-    ) : PairingEvent
+    ) : AfterCameraEvent
 
     data class SaveError(
         val message: String,
-    ) : PairingEvent
+    ) : AfterCameraEvent
 }
 
 @HiltViewModel
-class PairingViewModel
+class AfterCameraViewModel
     @Inject
     constructor(
+        @ApplicationContext context: Context,
         savedStateHandle: SavedStateHandle,
         getPairsByProjectUseCase: GetPairsByProjectUseCase,
         getUnpairedPhotosUseCase: GetUnpairedPhotosUseCase,
@@ -80,9 +89,17 @@ class PairingViewModel
         private val _overlayAlpha = MutableStateFlow(0.3f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
+        // 카메라 설정 상태 — CameraSettingsStateHolder로 위임
+        private val settingsHolder = CameraSettingsStateHolder()
+        val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
+        val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
+
+        // 수평계 센서
+        val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
+
         // 이벤트
-        private val _events = MutableSharedFlow<PairingEvent>()
-        val events: SharedFlow<PairingEvent> = _events.asSharedFlow()
+        private val _events = MutableSharedFlow<AfterCameraEvent>()
+        val events: SharedFlow<AfterCameraEvent> = _events.asSharedFlow()
 
         // CameraScreen에서 bindToLifecycle 시 함께 바인딩
         val imageCapture: ImageCapture =
@@ -166,11 +183,11 @@ class PairingViewModel
                         pairId = currentPair.id,
                         tempFileUri = tempFileUri,
                     )
-                    _events.emit(PairingEvent.AfterSaved(currentPair.id))
+                    _events.emit(AfterCameraEvent.AfterSaved(currentPair.id))
                     // 촬영 완료 후 → unpairedPhotos Flow 자동 갱신
                     // 인덱스 범위 보정은 onUnpairedPhotosUpdated에서 처리됨
                 } catch (e: Exception) {
-                    _events.emit(PairingEvent.SaveError(e.message ?: "저장에 실패했습니다."))
+                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
                 } finally {
                     try {
                         val path = java.net.URI(tempFileUri).path
@@ -185,13 +202,13 @@ class PairingViewModel
 
         fun emitCaptureError(message: String) {
             viewModelScope.launch {
-                _events.emit(PairingEvent.CaptureError(message))
+                _events.emit(AfterCameraEvent.CaptureError(message))
             }
         }
 
         fun emitAllCompleted() {
             viewModelScope.launch {
-                _events.emit(PairingEvent.AllCompleted)
+                _events.emit(AfterCameraEvent.AllCompleted)
             }
         }
 
@@ -206,5 +223,59 @@ class PairingViewModel
                 } else {
                     CameraSelector.LENS_FACING_BACK
                 }
+        }
+
+        // --- 카메라 설정 ---
+
+        fun updateCapabilities(
+            cameraInfo: CameraInfo,
+            extensionsManager: ExtensionsManager,
+        ) {
+            settingsHolder.updateCapabilities(cameraInfo, extensionsManager, _lensFacing.value)
+        }
+
+        fun toggleGrid() {
+            settingsHolder.toggleGrid()
+        }
+
+        fun toggleLevel() {
+            val active = settingsHolder.toggleLevel()
+            if (active) levelSensorManager.start() else levelSensorManager.stop()
+        }
+
+        fun cycleFlash() {
+            settingsHolder.cycleFlash()
+        }
+
+        fun toggleNightMode() {
+            settingsHolder.toggleNightMode()
+        }
+
+        fun toggleHdr() {
+            settingsHolder.toggleHdr()
+        }
+
+        fun setExposureIndex(index: Int) {
+            settingsHolder.setExposureIndex(index)
+        }
+
+        fun toggleSettingsPanel() {
+            settingsHolder.toggleSettingsPanel()
+        }
+
+        fun dismissSettingsPanel() {
+            settingsHolder.dismissSettingsPanel()
+        }
+
+        fun getExtensionCameraSelector(extensionsManager: ExtensionsManager): CameraSelector =
+            settingsHolder.getExtensionCameraSelector(extensionsManager, _lensFacing.value)
+
+        fun applyFlashMode(imageCapture: ImageCapture) {
+            settingsHolder.applyFlashMode(imageCapture)
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            levelSensorManager.stop()
         }
     }
