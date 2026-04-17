@@ -1,8 +1,9 @@
 package com.pairshot.ui.component
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,40 +20,62 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
+import com.pairshot.ui.theme.Success
 import com.pairshot.ui.theme.Warning
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PairCard(
     pair: PhotoPair,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    selectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
 ) {
-    val borderColor =
-        when (pair.status) {
-            PairStatus.BEFORE_ONLY -> Warning
+    val borderStroke =
+        when {
+            selectionMode && isSelected -> {
+                BorderStroke(2.dp, Success)
+            }
 
-            PairStatus.PAIRED,
-            PairStatus.COMBINED,
-            -> MaterialTheme.colorScheme.primary
+            selectionMode -> {
+                BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
+            }
+
+            else -> {
+                val borderColor =
+                    when (pair.status) {
+                        PairStatus.BEFORE_ONLY -> Warning
+
+                        PairStatus.PAIRED,
+                        PairStatus.COMBINED,
+                        -> MaterialTheme.colorScheme.primary
+                    }
+                BorderStroke(0.5.dp, borderColor)
+            }
         }
 
     Card(
         modifier =
             modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(0.5.dp, borderColor),
+        border = borderStroke,
     ) {
         Box {
             Row(modifier = Modifier.fillMaxWidth()) {
-                AsyncImage(
-                    model = pair.beforePhotoUri,
+                ProfiledAsyncImage(
+                    data = pair.beforePhotoUri,
+                    profile = ImageProfile.THUMBNAIL,
                     contentDescription = "Before 사진",
                     contentScale = ContentScale.Crop,
                     modifier =
@@ -81,22 +104,13 @@ fun PairCard(
                         }
                     }
 
-                    PairStatus.PAIRED -> {
-                        AsyncImage(
-                            model = pair.afterPhotoUri,
+                    PairStatus.PAIRED,
+                    PairStatus.COMBINED,
+                    -> {
+                        ProfiledAsyncImage(
+                            data = pair.afterPhotoUri,
+                            profile = ImageProfile.THUMBNAIL,
                             contentDescription = "After 사진",
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .weight(1f)
-                                    .aspectRatio(3f / 4f),
-                        )
-                    }
-
-                    PairStatus.COMBINED -> {
-                        AsyncImage(
-                            model = pair.combinedPhotoUri ?: pair.afterPhotoUri,
-                            contentDescription = "합성 사진",
                             contentScale = ContentScale.Crop,
                             modifier =
                                 Modifier
@@ -119,5 +133,48 @@ fun PairCard(
                 )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CombinedCard(
+    pair: PhotoPair,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    selectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+) {
+    val borderStroke =
+        when {
+            selectionMode && isSelected -> BorderStroke(2.dp, Success)
+            selectionMode -> BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
+            else -> BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary)
+        }
+
+    Card(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = borderStroke,
+    ) {
+        ProfiledAsyncImage(
+            data = pair.combinedPhotoUri,
+            profile = ImageProfile.THUMBNAIL,
+            contentDescription = "합성 사진",
+            contentScale = ContentScale.Crop,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(3f / 2f),
+        )
     }
 }

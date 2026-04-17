@@ -31,4 +31,8 @@ interface PhotoPairRepository {
         pairId: Long,
         tempFileUri: String,
     )
+
+    suspend fun removeCombinedPhoto(pairId: Long)
+
+    suspend fun combinePair(pairId: Long): String
 }

@@ -11,6 +11,7 @@ import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.util.FileNameGenerator
+import com.pairshot.util.ImageUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -25,6 +26,7 @@ class PhotoPairRepositoryImpl
         private val projectDao: ProjectDao,
         private val mediaStoreManager: MediaStoreManager,
         private val fileNameGenerator: FileNameGenerator,
+        private val imageUtils: ImageUtils,
     ) : PhotoPairRepository {
         override fun getPairsByProject(projectId: Long): Flow<List<PhotoPair>> =
             photoPairDao.getPairsByProject(projectId).map { entities ->
@@ -72,6 +74,20 @@ class PhotoPairRepositoryImpl
                         afterTimestamp = null,
                         combinedPhotoUri = null,
                         status = PairStatus.BEFORE_ONLY.name,
+                    ),
+                )
+            }
+
+        override suspend fun removeCombinedPhoto(pairId: Long) =
+            withContext(Dispatchers.IO) {
+                val entity =
+                    photoPairDao.getById(pairId)
+                        ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
+                entity.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                photoPairDao.update(
+                    entity.copy(
+                        combinedPhotoUri = null,
+                        status = PairStatus.PAIRED.name,
                     ),
                 )
             }
@@ -147,6 +163,46 @@ class PhotoPairRepositoryImpl
                 ),
             )
         }
+
+        override suspend fun combinePair(pairId: Long): String =
+            withContext(Dispatchers.IO) {
+                val entity =
+                    photoPairDao.getById(pairId)
+                        ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
+                val project =
+                    projectDao.getById(entity.projectId)
+                        ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
+
+                val beforeUri = Uri.parse(entity.beforePhotoUri)
+                val afterUri =
+                    Uri.parse(
+                        entity.afterPhotoUri
+                            ?: throw IllegalStateException("After photo missing for pair: $pairId"),
+                    )
+
+                // combineSideBySide는 내부에서 EXIF 보정 + recycle 처리
+                val combined = imageUtils.combineSideBySide(beforeUri, afterUri)
+
+                val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
+                val fileName = fileNameGenerator.generatePairFileName(sequenceNumber)
+
+                val savedUri =
+                    try {
+                        mediaStoreManager.saveBitmapToGallery(combined, project.name, fileName)
+                    } finally {
+                        combined.recycle()
+                    }
+
+                val uriString = savedUri.toString()
+                photoPairDao.update(
+                    entity.copy(
+                        combinedPhotoUri = uriString,
+                        status = PairStatus.COMBINED.name,
+                    ),
+                )
+
+                uriString
+            }
 
         private fun extractSequenceNumber(beforePhotoUri: String): Int {
             val match = Regex("BEFORE_(\\d+)_").find(beforePhotoUri)

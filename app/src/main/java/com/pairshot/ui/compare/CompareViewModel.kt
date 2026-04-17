@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.PhotoPairRepository
+import com.pairshot.domain.usecase.combine.CombineImagesUseCase
 import com.pairshot.ui.navigation.Compare
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -24,6 +25,7 @@ class CompareViewModel
     constructor(
         savedStateHandle: SavedStateHandle,
         private val photoPairRepository: PhotoPairRepository,
+        private val combineImagesUseCase: CombineImagesUseCase,
     ) : ViewModel() {
         private val pairId: Long = savedStateHandle.toRoute<Compare>().pairId
 
@@ -38,6 +40,12 @@ class CompareViewModel
 
         private val _retakeReady = MutableSharedFlow<PhotoPair>()
         val retakeReady: SharedFlow<PhotoPair> = _retakeReady.asSharedFlow()
+
+        private val _combineComplete = MutableSharedFlow<String>()
+        val combineComplete: SharedFlow<String> = _combineComplete.asSharedFlow()
+
+        private val _isCombining = MutableStateFlow(false)
+        val isCombining: StateFlow<Boolean> = _isCombining.asStateFlow()
 
         init {
             loadPair()
@@ -60,6 +68,21 @@ class CompareViewModel
                 _pair.value?.let { pair ->
                     photoPairRepository.resetAfterPhoto(pair.id)
                     _retakeReady.emit(pair)
+                }
+            }
+        }
+
+        fun combinePair() {
+            viewModelScope.launch {
+                _isCombining.value = true
+                try {
+                    combineImagesUseCase(pairId)
+                    _pair.value = photoPairRepository.getById(pairId)
+                    _combineComplete.emit("합성 완료")
+                } catch (_: Exception) {
+                    _combineComplete.emit("합성 실패")
+                } finally {
+                    _isCombining.value = false
                 }
             }
         }
