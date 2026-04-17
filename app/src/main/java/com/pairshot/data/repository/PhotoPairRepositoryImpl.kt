@@ -1,6 +1,8 @@
 package com.pairshot.data.repository
 
+import android.content.Context
 import android.net.Uri
+import android.provider.MediaStore
 import com.pairshot.data.local.db.dao.PhotoPairDao
 import com.pairshot.data.local.db.dao.ProjectDao
 import com.pairshot.data.local.db.entity.PhotoPairEntity
@@ -12,6 +14,7 @@ import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.util.FileNameGenerator
 import com.pairshot.util.ImageUtils
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -22,6 +25,7 @@ import javax.inject.Inject
 class PhotoPairRepositoryImpl
     @Inject
     constructor(
+        @ApplicationContext private val context: Context,
         private val photoPairDao: PhotoPairDao,
         private val projectDao: ProjectDao,
         private val mediaStoreManager: MediaStoreManager,
@@ -97,6 +101,36 @@ class PhotoPairRepositoryImpl
         override suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPair> =
             withContext(Dispatchers.IO) {
                 photoPairDao.getAllByProjectOnce(projectId).map { it.toDomain() }
+            }
+
+        override suspend fun getAll(): List<PhotoPair> =
+            withContext(Dispatchers.IO) {
+                photoPairDao.getAll().map { it.toDomain() }
+            }
+
+        override suspend fun checkUrisExist(uris: List<String>): Set<String> =
+            withContext(Dispatchers.IO) {
+                val existingUris = mutableSetOf<String>()
+                uris.forEach { uri ->
+                    try {
+                        val contentUri = Uri.parse(uri)
+                        context.contentResolver
+                            .query(
+                                contentUri,
+                                arrayOf(MediaStore.Images.Media._ID),
+                                null,
+                                null,
+                                null,
+                            )?.use { cursor ->
+                                if (cursor.moveToFirst()) {
+                                    existingUris.add(uri)
+                                }
+                            }
+                    } catch (_: Exception) {
+                        // URI invalid or inaccessible
+                    }
+                }
+                existingUris
             }
 
         override suspend fun saveBeforePhoto(

@@ -40,4 +40,7 @@ interface PhotoPairDao {
 
     @Query("SELECT * FROM photo_pairs WHERE projectId = :projectId")
     suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPairEntity>
+
+    @Query("SELECT * FROM photo_pairs")
+    suspend fun getAll(): List<PhotoPairEntity>
 }

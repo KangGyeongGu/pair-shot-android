@@ -24,7 +24,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -43,6 +45,7 @@ import com.pairshot.ui.gallery.GalleryScreen
 import com.pairshot.ui.pairing.PairingScreen
 import com.pairshot.ui.project.ProjectListScreen
 import com.pairshot.ui.settings.SettingsScreen
+import com.pairshot.ui.settings.SettingsViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -332,8 +335,31 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
             }
         }
         composable<Settings> {
+            val viewModel: SettingsViewModel = hiltViewModel()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val snackbarHostState = remember { SnackbarHostState() }
+            val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+
+            LaunchedEffect(lifecycleOwner) {
+                lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                    viewModel.refresh()
+                }
+            }
+
+            LaunchedEffect("snackbar") {
+                viewModel.snackbarMessage.collect { message ->
+                    snackbarHostState.showSnackbar(message)
+                }
+            }
+
             SettingsScreen(
+                uiState = uiState,
+                onClearCache = viewModel::clearCache,
+                onLicenseClick = {
+                    viewModel.showMessage("준비 중")
+                },
                 onNavigateBack = { navController.popBackStack() },
+                snackbarHostState = snackbarHostState,
             )
         }
     }

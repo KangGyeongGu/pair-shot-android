@@ -37,4 +37,8 @@ interface PhotoPairRepository {
     suspend fun combinePair(pairId: Long): String
 
     suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPair>
+
+    suspend fun getAll(): List<PhotoPair>
+
+    suspend fun checkUrisExist(uris: List<String>): Set<String>
 }

@@ -1,19 +1,24 @@
 package com.pairshot.ui.component
 
 import android.content.Context
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.size.Precision
 import kotlin.math.max
@@ -50,6 +55,8 @@ fun ProfiledAsyncImage(
             )
         }
 
+    var isError by remember { mutableStateOf(false) }
+
     Box(
         modifier =
             modifier.onSizeChanged { size ->
@@ -57,6 +64,7 @@ fun ProfiledAsyncImage(
                     slotSize = size
                 }
             },
+        contentAlignment = Alignment.Center,
     ) {
         if (request != null) {
             AsyncImage(
@@ -64,7 +72,35 @@ fun ProfiledAsyncImage(
                 contentDescription = contentDescription,
                 contentScale = contentScale,
                 modifier = Modifier.fillMaxSize(),
+                onState = { state ->
+                    when (state) {
+                        is AsyncImagePainter.State.Loading -> {
+                            isError = false
+                        }
+
+                        is AsyncImagePainter.State.Error -> {
+                            isError = true
+                        }
+
+                        else -> {}
+                    }
+                },
             )
+        }
+        if (isError) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "파일 없음",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                )
+            }
         }
     }
 }
