@@ -26,22 +26,27 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -64,6 +69,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,6 +79,8 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.ui.component.BeforePreviewStrip
+import com.pairshot.ui.component.ShutterButton
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -93,6 +101,11 @@ fun CameraScreen(
     }
     var showRationale by remember { mutableStateOf(false) }
     var permissionPermanentlyDenied by remember { mutableStateOf(false) }
+    val beforePreviewUris by viewModel.beforePreviewUris.collectAsStateWithLifecycle()
+
+    LaunchedEffect(projectId) {
+        viewModel.observeProject(projectId)
+    }
 
     val permissionLauncher =
         rememberLauncherForActivityResult(
@@ -138,6 +151,7 @@ fun CameraScreen(
                 CameraPreviewContent(
                     projectId = projectId,
                     viewModel = viewModel,
+                    beforePreviewUris = beforePreviewUris,
                     onNavigateBack = onNavigateBack,
                 )
             }
@@ -176,6 +190,7 @@ fun CameraScreen(
 private fun CameraPreviewContent(
     projectId: Long,
     viewModel: CameraViewModel,
+    beforePreviewUris: List<String>,
     onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -188,8 +203,10 @@ private fun CameraPreviewContent(
 
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val thumbnailListState = rememberLazyListState()
 
     val audioManager =
         remember {
@@ -212,7 +229,13 @@ private fun CameraPreviewContent(
             }
         }
     DisposableEffect(Unit) {
-        onDispose { shutterPlayer?.release() }
+        onDispose {
+            shutterPlayer?.release()
+            cameraProvider?.unbindAll()
+            cameraProvider = null
+            surfaceRequest = null
+            cameraControl = null
+        }
     }
 
     var showBlackout by remember { mutableStateOf(false) }
@@ -243,8 +266,9 @@ private fun CameraPreviewContent(
     }
 
     LaunchedEffect(lensFacing) {
-        val cameraProvider = ProcessCameraProvider.awaitInstance(context)
-        cameraProvider.unbindAll()
+        val provider = ProcessCameraProvider.awaitInstance(context)
+        cameraProvider = provider
+        provider.unbindAll()
 
         val cameraSelector =
             CameraSelector
@@ -258,7 +282,7 @@ private fun CameraPreviewContent(
         }
 
         val camera =
-            cameraProvider.bindToLifecycle(
+            provider.bindToLifecycle(
                 lifecycleOwner,
                 cameraSelector,
                 preview,
@@ -271,178 +295,273 @@ private fun CameraPreviewContent(
         viewModel.updateZoomRatio(1f)
     }
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .pointerInput(cameraControl) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        val control = cameraControl ?: return@detectTransformGestures
-                        val newRatio = (zoomRatio * zoom).coerceIn(1f, 10f)
-                        control.setZoomRatio(newRatio)
-                        viewModel.updateZoomRatio(newRatio)
-                    }
-                },
+    LaunchedEffect(beforePreviewUris.size) {
+        if (beforePreviewUris.isNotEmpty()) {
+            thumbnailListState.animateScrollToItem(beforePreviewUris.lastIndex)
+        }
+    }
+
+    val density = LocalDensity.current
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
     ) {
-        surfaceRequest?.let { request ->
-            Box {
-                CameraXViewfinder(
-                    surfaceRequest = request,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                if (blackoutAlpha > 0f) {
-                    Box(
+        val safeTopPx = WindowInsets.safeDrawing.getTop(density)
+        val safeBottomPx = WindowInsets.safeDrawing.getBottom(density)
+        val fullHeightPx = with(density) { maxHeight.roundToPx() }
+        val safeAvailableHeightPx = (fullHeightPx - safeTopPx - safeBottomPx).coerceAtLeast(0)
+        val safeAvailableHeightDp = with(density) { safeAvailableHeightPx.toDp() }
+        val topSectionHeight = 56.dp
+        val stripSectionHeight = 120.dp
+        val shutterSectionHeight = 116.dp
+        val bottomSpacerDesired = 32.dp
+        val minPreviewHeight = 180.dp
+
+        val reservedHeight =
+            topSectionHeight + stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
+        val previewHeightRaw = safeAvailableHeightDp - reservedHeight
+        val previewSectionHeight =
+            if (previewHeightRaw >= minPreviewHeight) {
+                previewHeightRaw
+            } else {
+                minPreviewHeight
+            }
+        val bottomSpacerHeight =
+            if (previewHeightRaw >= minPreviewHeight) {
+                bottomSpacerDesired
+            } else {
+                (
+                    safeAvailableHeightDp -
+                        (topSectionHeight + stripSectionHeight + shutterSectionHeight + previewSectionHeight)
+                ).coerceAtLeast(0.dp)
+            }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(topSectionHeight)
+                            .background(Color.Black),
+                ) {
+                    Row(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .background(Color.Black.copy(alpha = blackoutAlpha)),
-                    )
-                }
-            }
-        }
-
-        // 줌 비율 표시 — 프리뷰 하단 중앙
-        val zoomText =
-            if (zoomRatio == 1f) {
-                "1.0x"
-            } else {
-                "${(zoomRatio * 10).roundToInt() / 10f}x"
-            }
-        Text(
-            text = zoomText,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 104.dp),
-        )
-
-        // 뒤로가기 버튼 — 좌상단
-        Box(
-            modifier =
-                Modifier
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .size(40.dp)
-                    .background(
-                        color = Color.Black.copy(alpha = 0.45f),
-                        shape = CircleShape,
-                    ),
-            contentAlignment = Alignment.Center,
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "뒤로가기",
-                    tint = Color.White,
-                )
-            }
-        }
-
-        // 하단 컨트롤 바
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
-                        color = Color.White.copy(alpha = 0.1f),
-                    ).background(
-                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                    ).windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(vertical = 20.dp, horizontal = 32.dp),
-        ) {
-            // 오른쪽: 카메라 전환 + 설정
-            Row(
-                modifier = Modifier.align(Alignment.CenterEnd),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = { viewModel.toggleLensFacing() }) {
-                    Icon(
-                        imageVector = Icons.Default.FlipCameraAndroid,
-                        contentDescription = "카메라 전환",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-                IconButton(onClick = { /* 설정 — 추후 구현 */ }) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "설정",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-            }
-
-            // 가운데: 셔터 버튼
-            com.pairshot.ui.component.ShutterButton(
-                onClick = {
-                    shutterPlayer?.let { player ->
-                        val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                        val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                        val ratio = if (max > 0) current.toFloat() / max else 0f
-                        val vol = ratio * 0.10f
-                        player.setVolume(vol, vol)
-                        if (player.isPlaying) player.seekTo(0) else player.start()
+                                .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowLeft,
+                                contentDescription = "뒤로가기",
+                                tint = Color.White,
+                            )
+                        }
                     }
-                    showBlackout = true
+                }
 
-                    val tempDir = File(context.cacheDir, "temp").also { it.mkdirs() }
-                    val tempFile = File(tempDir, "capture_${System.currentTimeMillis()}.jpg")
-                    val outputFileOptions =
-                        ImageCapture.OutputFileOptions
-                            .Builder(tempFile)
-                            .build()
-                    viewModel.imageCapture.takePicture(
-                        outputFileOptions,
-                        ContextCompat.getMainExecutor(context),
-                        object : ImageCapture.OnImageSavedCallback {
-                            override fun onError(exception: ImageCaptureException) {
-                                tempFile.delete()
-                                viewModel.emitCaptureError(exception.message ?: "촬영 실패")
-                            }
-
-                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                val savedUri =
-                                    outputFileResults.savedUri
-                                        ?: Uri.fromFile(tempFile)
-                                viewModel.onShutterClick(
-                                    projectId = projectId,
-                                    tempFileUri = savedUri.toString(),
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(previewSectionHeight)
+                            .pointerInput(cameraControl) {
+                                detectTransformGestures { _, _, zoom, _ ->
+                                    val control = cameraControl ?: return@detectTransformGestures
+                                    val newRatio = (zoomRatio * zoom).coerceIn(1f, 10f)
+                                    control.setZoomRatio(newRatio)
+                                    viewModel.updateZoomRatio(newRatio)
+                                }
+                            },
+                ) {
+                    surfaceRequest?.let { request ->
+                        Box {
+                            CameraXViewfinder(
+                                surfaceRequest = request,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            if (blackoutAlpha > 0f) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = blackoutAlpha)),
                                 )
                             }
+                        }
+                    }
+
+                    val zoomText =
+                        if (zoomRatio == 1f) {
+                            "1.0x"
+                        } else {
+                            "${(zoomRatio * 10).roundToInt() / 10f}x"
+                        }
+                    BoxWithConstraints(
+                        modifier =
+                            Modifier
+                                .align(Alignment.Center)
+                                .fillMaxSize(),
+                    ) {
+                        val containerRatio =
+                            if (maxHeight.value > 0f) {
+                                maxWidth.value / maxHeight.value
+                            } else {
+                                3f / 4f
+                            }
+                        val requestedRatioRaw =
+                            surfaceRequest?.resolution?.let { size ->
+                                if (size.height > 0) {
+                                    size.width.toFloat() / size.height.toFloat()
+                                } else {
+                                    containerRatio
+                                }
+                            } ?: containerRatio
+                        val requestedRatio =
+                            when {
+                                requestedRatioRaw <= 0f -> containerRatio
+                                (requestedRatioRaw > 1f) != (containerRatio > 1f) -> 1f / requestedRatioRaw
+                                else -> requestedRatioRaw
+                            }
+
+                        val previewFrameModifier =
+                            if (containerRatio > requestedRatio) {
+                                Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(requestedRatio)
+                            } else {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(requestedRatio)
+                            }
+
+                        Box(modifier = previewFrameModifier.align(Alignment.Center)) {
+                            Text(
+                                text = zoomText,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .padding(bottom = 12.dp)
+                                        .background(
+                                            color = Color.Black.copy(alpha = 0.45f),
+                                            shape = RoundedCornerShape(10.dp),
+                                        ).padding(horizontal = 10.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+                }
+
+                BeforePreviewStrip(
+                    beforePreviewUris = beforePreviewUris,
+                    modifier = Modifier.height(stripSectionHeight),
+                    listState = thumbnailListState,
+                    stripHeight = stripSectionHeight,
+                )
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(shutterSectionHeight)
+                            .background(Color.Black)
+                            .padding(horizontal = 32.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(onClick = { viewModel.toggleLensFacing() }) {
+                            Icon(
+                                imageVector = Icons.Default.FlipCameraAndroid,
+                                contentDescription = "카메라 전환",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
+                        IconButton(onClick = { /* 설정 — 추후 구현 */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "설정",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
+                    }
+
+                    ShutterButton(
+                        onClick = {
+                            shutterPlayer?.let { player ->
+                                val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                                val ratio = if (max > 0) current.toFloat() / max else 0f
+                                val vol = ratio * 0.10f
+                                player.setVolume(vol, vol)
+                                if (player.isPlaying) player.seekTo(0) else player.start()
+                            }
+                            showBlackout = true
+
+                            val tempDir = File(context.cacheDir, "temp").also { it.mkdirs() }
+                            val tempFile = File(tempDir, "capture_${System.currentTimeMillis()}.jpg")
+                            val outputFileOptions =
+                                ImageCapture.OutputFileOptions
+                                    .Builder(tempFile)
+                                    .build()
+                            viewModel.imageCapture.takePicture(
+                                outputFileOptions,
+                                ContextCompat.getMainExecutor(context),
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onError(exception: ImageCaptureException) {
+                                        tempFile.delete()
+                                        viewModel.emitCaptureError(exception.message ?: "촬영 실패")
+                                    }
+
+                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                        val savedUri =
+                                            outputFileResults.savedUri
+                                                ?: Uri.fromFile(tempFile)
+                                        viewModel.onShutterClick(
+                                            projectId = projectId,
+                                            tempFileUri = savedUri.toString(),
+                                        )
+                                    }
+                                },
+                            )
                         },
+                        enabled = !isSaving,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(bottomSpacerHeight))
+            }
+
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp, vertical = 112.dp),
+                snackbar = { snackbarData ->
+                    Snackbar(
+                        snackbarData = snackbarData,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        shape = RoundedCornerShape(16.dp),
                     )
                 },
-                enabled = !isSaving,
-                modifier = Modifier.align(Alignment.Center),
             )
         }
-
-        // Snackbar — 촬영 실패 시 표시 (architecture.md 6.5: surfaceVariant 배경 + medium 모서리, 하단에서 나타남)
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(horizontal = 16.dp, vertical = 120.dp),
-            snackbar = { snackbarData ->
-                Snackbar(
-                    snackbarData = snackbarData,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    shape = RoundedCornerShape(16.dp),
-                )
-            },
-        )
     }
 }
 

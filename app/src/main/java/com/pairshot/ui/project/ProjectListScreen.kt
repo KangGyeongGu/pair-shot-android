@@ -5,10 +5,12 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,22 +24,33 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,18 +59,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.domain.model.Project
+import com.pairshot.ui.component.PairShotTopMenu
+import com.pairshot.ui.component.PairShotTopMenuDivider
+import com.pairshot.ui.component.PairShotTopMenuItemText
 import com.pairshot.ui.theme.PairShotSpacing
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProjectListScreen(
     onNavigateToSettings: () -> Unit = {},
@@ -65,48 +82,157 @@ fun ProjectListScreen(
     viewModel: ProjectViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectionMode by viewModel.selectionMode.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+
     var showCreateDialog by remember { mutableStateOf(false) }
-    var renameTarget by remember { mutableStateOf<Project?>(null) }
-    var deleteTarget by remember { mutableStateOf<Project?>(null) }
+    var showDeleteSelectedDialog by remember { mutableStateOf(false) }
+    var showTopMenu by remember { mutableStateOf(false) }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .statusBarsPadding()
-                        .padding(horizontal = PairShotSpacing.screenPadding)
-                        .height(56.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "PairShot",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = onNavigateToSettings) {
-                    Icon(
-                        imageVector = Icons.Outlined.Settings,
-                        contentDescription = "설정",
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (selectionMode) "${selectedIds.size}개 선택됨" else "PairShot",
+                        style =
+                            if (selectionMode) {
+                                MaterialTheme.typography.titleLarge
+                            } else {
+                                MaterialTheme.typography.headlineMedium
+                            },
                     )
-                }
-            }
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                },
+                navigationIcon = {
+                    if (selectionMode) {
+                        IconButton(onClick = viewModel::exitSelectionMode) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "선택 해제",
+                            )
+                        }
+                    }
+                },
+                actions = {
+                    if (selectionMode) {
+                        TextButton(onClick = viewModel::selectAll) {
+                            Text(text = "전체선택")
+                        }
+                    } else {
+                        Box {
+                            IconButton(onClick = { showTopMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "메뉴",
+                                )
+                            }
+                            PairShotTopMenu(
+                                expanded = showTopMenu,
+                                onDismissRequest = { showTopMenu = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = {
+                                        PairShotTopMenuItemText(
+                                            title = "선택",
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Checklist,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    onClick = {
+                                        showTopMenu = false
+                                        viewModel.enterSelectionMode()
+                                    },
+                                )
+                                PairShotTopMenuDivider()
+                                DropdownMenuItem(
+                                    text = {
+                                        PairShotTopMenuItemText(
+                                            title = "앱 설정",
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Settings,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    onClick = {
+                                        showTopMenu = false
+                                        onNavigateToSettings()
+                                    },
+                                )
+                            }
+                        }
+                    }
+                },
+                modifier = Modifier.statusBarsPadding(),
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
+            )
         },
         bottomBar = {
-            Box(modifier = Modifier.navigationBarsPadding()) {
-                Button(
-                    onClick = { showCreateDialog = true },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = PairShotSpacing.screenPadding, vertical = PairShotSpacing.itemGap)
-                            .height(52.dp),
+            if (selectionMode) {
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 0.dp,
                 ) {
-                    Text(
-                        text = "새 프로젝트 만들기",
-                        style = MaterialTheme.typography.labelLarge,
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    horizontal = PairShotSpacing.screenPadding,
+                                    vertical = PairShotSpacing.cardPadding,
+                                ),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement =
+                                Arrangement.spacedBy(
+                                    PairShotSpacing.sectionGap,
+                                    Alignment.CenterHorizontally,
+                                ),
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IconButton(
+                                    onClick = { showDeleteSelectedDialog = true },
+                                    enabled = selectedIds.isNotEmpty(),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteForever,
+                                        contentDescription = "선택 삭제",
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                                Text(
+                                    text = "삭제",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        floatingActionButton = {
+            if (!selectionMode) {
+                FloatingActionButton(
+                    onClick = { showCreateDialog = true },
+                    modifier = Modifier.navigationBarsPadding(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "새 프로젝트 만들기",
                     )
                 }
             }
@@ -162,6 +288,7 @@ fun ProjectListScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding),
+                        contentPadding = PaddingValues(bottom = 96.dp),
                     ) {
                         items(
                             items = state.projects,
@@ -169,9 +296,16 @@ fun ProjectListScreen(
                         ) { project ->
                             ProjectItem(
                                 project = project,
-                                onClick = { onNavigateToProject(project.id) },
-                                onRename = { renameTarget = project },
-                                onDelete = { deleteTarget = project },
+                                selectionMode = selectionMode,
+                                isSelected = project.id in selectedIds,
+                                onClick = {
+                                    if (selectionMode) {
+                                        viewModel.toggleSelection(project.id)
+                                    } else {
+                                        onNavigateToProject(project.id)
+                                    }
+                                },
+                                onToggleSelection = { viewModel.toggleSelection(project.id) },
                             )
                             HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                         }
@@ -194,24 +328,32 @@ fun ProjectListScreen(
         )
     }
 
-    renameTarget?.let { project ->
-        RenameProjectDialog(
-            currentName = project.name,
-            onDismiss = { renameTarget = null },
-            onRename = { newName ->
-                viewModel.renameProject(project, newName)
-                renameTarget = null
+    if (showDeleteSelectedDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteSelectedDialog = false },
+            shape = MaterialTheme.shapes.large,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("선택 프로젝트 삭제", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Text(
+                    text = "${selectedIds.size}개 프로젝트를 삭제하시겠습니까?",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
             },
-        )
-    }
-
-    deleteTarget?.let { project ->
-        DeleteProjectDialog(
-            projectName = project.name,
-            onDismiss = { deleteTarget = null },
-            onConfirm = {
-                viewModel.deleteProject(project)
-                deleteTarget = null
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteSelectedDialog = false
+                        viewModel.deleteSelected()
+                    },
+                ) {
+                    Text("삭제", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteSelectedDialog = false }) {
+                    Text("취소")
+                }
             },
         )
     }
@@ -221,70 +363,70 @@ fun ProjectListScreen(
 @Composable
 private fun ProjectItem(
     project: Project,
+    selectionMode: Boolean,
+    isSelected: Boolean,
     onClick: () -> Unit,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
+    onToggleSelection: () -> Unit,
 ) {
-    var showMenu by remember { mutableStateOf(false) }
     val dateFormat = remember { SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()) }
 
-    Box {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .combinedClickable(
-                        onClick = onClick,
-                        onLongClick = { showMenu = true },
-                    ).padding(horizontal = PairShotSpacing.screenPadding, vertical = PairShotSpacing.cardPadding),
-            verticalAlignment = Alignment.CenterVertically,
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onToggleSelection,
+                ).background(
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                        } else {
+                            Color.Transparent
+                        },
+                ).padding(horizontal = PairShotSpacing.screenPadding, vertical = PairShotSpacing.cardPadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = project.name,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text = "${project.pairCount}쌍 · 완료 ${project.completedCount}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = dateFormat.format(Date(project.updatedAt)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text = project.name,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text(
+                text = "${project.pairCount}쌍 · 완료 ${project.completedCount}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = dateFormat.format(Date(project.updatedAt)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (selectionMode) {
+            Icon(
+                imageVector =
+                    if (isSelected) {
+                        Icons.Default.CheckCircle
+                    } else {
+                        Icons.Outlined.RadioButtonUnchecked
+                    },
+                contentDescription = null,
+                tint =
+                    if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+            )
+        } else {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { showMenu = false },
-            containerColor = MaterialTheme.colorScheme.surface,
-            shape = MaterialTheme.shapes.medium,
-        ) {
-            DropdownMenuItem(
-                text = { Text("이름 변경") },
-                onClick = {
-                    showMenu = false
-                    onRename()
-                },
-            )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-            DropdownMenuItem(
-                text = { Text("삭제", color = MaterialTheme.colorScheme.error) },
-                onClick = {
-                    showMenu = false
-                    onDelete()
-                },
             )
         }
     }

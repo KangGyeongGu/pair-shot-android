@@ -14,20 +14,23 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.JoinRight
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -55,7 +58,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.ui.component.CombinedCard
+import com.pairshot.ui.component.MarqueeTitleText
 import com.pairshot.ui.component.PairCard
+import com.pairshot.ui.component.PairShotTopMenu
+import com.pairshot.ui.component.PairShotTopMenuDivider
+import com.pairshot.ui.component.PairShotTopMenuItemText
 import com.pairshot.ui.theme.PairShotSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,14 +107,19 @@ fun GalleryScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = if (selectionMode) "${selectedIds.size}개 선택됨" else projectName,
-                        style = MaterialTheme.typography.titleLarge,
-                    )
+                    if (selectionMode) {
+                        Text(
+                            text = "${selectedIds.size}개 선택됨",
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    } else {
+                        MarqueeTitleText(text = projectName)
+                    }
                 },
                 navigationIcon = {
                     if (selectionMode) {
@@ -120,7 +132,7 @@ fun GalleryScreen(
                     } else {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                imageVector = Icons.Default.KeyboardArrowLeft,
                                 contentDescription = "뒤로가기",
                             )
                         }
@@ -132,9 +144,6 @@ fun GalleryScreen(
                             Text(text = "전체선택")
                         }
                     } else {
-                        TextButton(onClick = { viewModel.enterSelectionMode() }) {
-                            Text(text = "선택")
-                        }
                         Box {
                             IconButton(onClick = { showMoreMenu = true }) {
                                 Icon(
@@ -142,19 +151,62 @@ fun GalleryScreen(
                                     contentDescription = "더보기",
                                 )
                             }
-                            DropdownMenu(
+                            PairShotTopMenu(
                                 expanded = showMoreMenu,
                                 onDismissRequest = { showMoreMenu = false },
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("프로젝트명 수정") },
+                                    text = {
+                                        PairShotTopMenuItemText(
+                                            title = "선택",
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Checklist,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        viewModel.enterSelectionMode()
+                                    },
+                                )
+                                PairShotTopMenuDivider()
+                                DropdownMenuItem(
+                                    text = {
+                                        PairShotTopMenuItemText(
+                                            title = "프로젝트 수정",
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.EditNote,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
                                     onClick = {
                                         showMoreMenu = false
                                         showRenameDialog = true
                                     },
                                 )
+                                PairShotTopMenuDivider()
                                 DropdownMenuItem(
-                                    text = { Text("프로젝트 삭제") },
+                                    text = {
+                                        PairShotTopMenuItemText(
+                                            title = "프로젝트 삭제",
+                                            titleColor = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.DeleteForever,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
                                     onClick = {
                                         showMoreMenu = false
                                         showProjectDeleteDialog = true
@@ -171,20 +223,20 @@ fun GalleryScreen(
             )
         },
         bottomBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.background,
-                tonalElevation = 0.dp,
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = PairShotSpacing.screenPadding,
-                                vertical = PairShotSpacing.cardPadding,
-                            ),
+            if (selectionMode) {
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 0.dp,
                 ) {
-                    if (selectionMode) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    horizontal = PairShotSpacing.screenPadding,
+                                    vertical = PairShotSpacing.cardPadding,
+                                ),
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
@@ -192,7 +244,7 @@ fun GalleryScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 IconButton(onClick = { viewModel.combineSelected() }) {
                                     Icon(
-                                        imageVector = Icons.Default.Layers,
+                                        imageVector = Icons.Default.JoinRight,
                                         contentDescription = "합성",
                                     )
                                 }
@@ -216,7 +268,7 @@ fun GalleryScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 IconButton(onClick = { showDeleteDialog = true }) {
                                     Icon(
-                                        imageVector = Icons.Default.Delete,
+                                        imageVector = Icons.Default.DeleteForever,
                                         contentDescription = "삭제",
                                         tint = MaterialTheme.colorScheme.error,
                                     )
@@ -228,24 +280,23 @@ fun GalleryScreen(
                                 )
                             }
                         }
-                    } else {
-                        Button(
-                            onClick = onNavigateToCamera,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CameraAlt,
-                                contentDescription = null,
-                            )
-                            Text(
-                                text = "Before 촬영",
-                                modifier = Modifier.padding(start = PairShotSpacing.iconTextGap),
-                            )
-                        }
                     }
                 }
             }
         },
+        floatingActionButton = {
+            if (!selectionMode) {
+                FloatingActionButton(
+                    onClick = onNavigateToCamera,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Camera,
+                        contentDescription = "Before 촬영",
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End,
     ) { innerPadding ->
         when (val state = uiState) {
             is GalleryUiState.Loading -> {
@@ -325,7 +376,13 @@ fun GalleryScreen(
                     } else {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
-                            contentPadding = PaddingValues(PairShotSpacing.screenPadding),
+                            contentPadding =
+                                PaddingValues(
+                                    start = PairShotSpacing.screenPadding,
+                                    top = PairShotSpacing.screenPadding,
+                                    end = PairShotSpacing.screenPadding,
+                                    bottom = if (selectionMode) PairShotSpacing.screenPadding else 96.dp,
+                                ),
                             horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.itemGap),
                             verticalArrangement = Arrangement.spacedBy(PairShotSpacing.itemGap),
                             modifier = Modifier.fillMaxSize(),

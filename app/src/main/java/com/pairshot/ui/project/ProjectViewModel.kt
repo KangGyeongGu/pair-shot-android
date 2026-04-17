@@ -41,6 +41,12 @@ class ProjectViewModel
         private val _currentLocation = MutableStateFlow<LocationResult?>(null)
         val currentLocation: StateFlow<LocationResult?> = _currentLocation.asStateFlow()
 
+        private val _selectionMode = MutableStateFlow(false)
+        val selectionMode: StateFlow<Boolean> = _selectionMode.asStateFlow()
+
+        private val _selectedIds = MutableStateFlow<Set<Long>>(emptySet())
+        val selectedIds: StateFlow<Set<Long>> = _selectedIds.asStateFlow()
+
         init {
             loadProjects()
         }
@@ -52,6 +58,11 @@ class ProjectViewModel
                     .catch { e -> _uiState.value = ProjectUiState.Error(e.message ?: "알 수 없는 오류") }
                     .collect { projects ->
                         _uiState.value = ProjectUiState.Success(projects)
+                        val validIds = projects.map { it.id }.toSet()
+                        _selectedIds.value = _selectedIds.value.intersect(validIds)
+                        if (_selectionMode.value && _selectedIds.value.isEmpty()) {
+                            _selectionMode.value = false
+                        }
                     }
             }
         }
@@ -102,6 +113,51 @@ class ProjectViewModel
         fun deleteProject(project: Project) {
             viewModelScope.launch {
                 deleteProjectUseCase(project)
+            }
+        }
+
+        fun enterSelectionMode() {
+            _selectionMode.value = true
+        }
+
+        fun exitSelectionMode() {
+            _selectionMode.value = false
+            _selectedIds.value = emptySet()
+        }
+
+        fun toggleSelection(projectId: Long) {
+            if (!_selectionMode.value) {
+                _selectionMode.value = true
+            }
+            val next =
+                _selectedIds.value.toMutableSet().apply {
+                    if (!add(projectId)) remove(projectId)
+                }
+            _selectedIds.value = next
+            if (next.isEmpty()) {
+                _selectionMode.value = false
+            }
+        }
+
+        fun selectAll() {
+            val projects = (_uiState.value as? ProjectUiState.Success)?.projects ?: return
+            _selectionMode.value = true
+            _selectedIds.value = projects.map { it.id }.toSet()
+        }
+
+        fun deleteSelected() {
+            val state = _uiState.value as? ProjectUiState.Success ?: return
+            val targets = state.projects.filter { it.id in _selectedIds.value }
+            if (targets.isEmpty()) {
+                exitSelectionMode()
+                return
+            }
+
+            viewModelScope.launch {
+                targets.forEach { project ->
+                    deleteProjectUseCase(project)
+                }
+                exitSelectionMode()
             }
         }
     }

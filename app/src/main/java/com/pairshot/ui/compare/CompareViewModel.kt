@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,13 +26,19 @@ class CompareViewModel
         private val photoPairRepository: PhotoPairRepository,
         private val combineImagesUseCase: CombineImagesUseCase,
     ) : ViewModel() {
-        private val pairId: Long = savedStateHandle.toRoute<Compare>().pairId
+        private val initialPairId: Long = savedStateHandle.toRoute<Compare>().pairId
 
         private val _pair = MutableStateFlow<PhotoPair?>(null)
         val pair: StateFlow<PhotoPair?> = _pair.asStateFlow()
 
         private val _pairNumber = MutableStateFlow(0)
         val pairNumber: StateFlow<Int> = _pairNumber.asStateFlow()
+
+        private val _pairs = MutableStateFlow<List<PhotoPair>>(emptyList())
+        val pairs: StateFlow<List<PhotoPair>> = _pairs.asStateFlow()
+
+        private val _currentPairId = MutableStateFlow(initialPairId)
+        val currentPairId: StateFlow<Long> = _currentPairId.asStateFlow()
 
         private val _deleteComplete = MutableSharedFlow<Unit>()
         val deleteComplete: SharedFlow<Unit> = _deleteComplete.asSharedFlow()
@@ -48,19 +53,41 @@ class CompareViewModel
         val isCombining: StateFlow<Boolean> = _isCombining.asStateFlow()
 
         init {
-            loadPair()
+            observePairs()
         }
 
-        private fun loadPair() {
+        private fun observePairs() {
             viewModelScope.launch {
-                val loaded = photoPairRepository.getById(pairId)
-                _pair.value = loaded
-                if (loaded != null) {
-                    val allPairs = photoPairRepository.getPairsByProject(loaded.projectId).first()
-                    val index = allPairs.indexOfFirst { it.id == pairId }
-                    _pairNumber.value = if (index >= 0) index + 1 else 0
+                val loaded = photoPairRepository.getById(initialPairId) ?: return@launch
+                _currentPairId.value = loaded.id
+
+                photoPairRepository.getPairsByProject(loaded.projectId).collect { allPairs ->
+                    _pairs.value = allPairs
+                    syncCurrentPair(allPairs)
                 }
             }
+        }
+
+        fun selectPair(pairId: Long) {
+            if (_currentPairId.value == pairId) return
+            _currentPairId.value = pairId
+            syncCurrentPair(_pairs.value)
+        }
+
+        private fun syncCurrentPair(allPairs: List<PhotoPair>) {
+            if (allPairs.isEmpty()) {
+                _pair.value = null
+                _pairNumber.value = 0
+                return
+            }
+
+            val currentId = _currentPairId.value
+            val index = allPairs.indexOfFirst { it.id == currentId }.takeIf { it >= 0 } ?: 0
+            val selectedPair = allPairs[index]
+
+            _currentPairId.value = selectedPair.id
+            _pair.value = selectedPair
+            _pairNumber.value = index + 1
         }
 
         fun prepareRetake() {
@@ -76,8 +103,8 @@ class CompareViewModel
             viewModelScope.launch {
                 _isCombining.value = true
                 try {
-                    combineImagesUseCase(pairId)
-                    _pair.value = photoPairRepository.getById(pairId)
+                    val targetPair = _pair.value ?: return@launch
+                    combineImagesUseCase(targetPair.id)
                     _combineComplete.emit("합성 완료")
                 } catch (_: Exception) {
                     _combineComplete.emit("합성 실패")

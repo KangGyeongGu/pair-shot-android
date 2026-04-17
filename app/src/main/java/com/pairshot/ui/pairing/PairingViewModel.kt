@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.usecase.capture.SaveAfterPhotoUseCase
+import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.domain.usecase.pair.GetUnpairedPhotosUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -41,11 +43,17 @@ class PairingViewModel
     @Inject
     constructor(
         savedStateHandle: SavedStateHandle,
+        getPairsByProjectUseCase: GetPairsByProjectUseCase,
         getUnpairedPhotosUseCase: GetUnpairedPhotosUseCase,
         private val saveAfterPhotoUseCase: SaveAfterPhotoUseCase,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle["projectId"] ?: 0L
         private val initialPairId: Long? = savedStateHandle["initialPairId"]
+
+        val totalPairCount: StateFlow<Int> =
+            getPairsByProjectUseCase(projectId)
+                .map { pairs -> pairs.size }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
         // 미완료 Before 목록 (Flow로 실시간 반영)
         val unpairedPhotos: StateFlow<List<PhotoPair>> =

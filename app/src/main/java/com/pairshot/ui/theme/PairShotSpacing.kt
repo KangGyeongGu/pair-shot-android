@@ -9,4 +9,8 @@ object PairShotSpacing {
     val itemGap = 12.dp
     val iconTextGap = 8.dp
     val iconSize = 24.dp
+    val menuMinWidth = 168.dp
+    val menuMaxWidth = 260.dp
+    val menuBorderWidth = 1.dp
+    val menuShadow = 6.dp
 }

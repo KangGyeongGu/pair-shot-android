@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import coil3.size.Precision
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -25,8 +26,8 @@ enum class ImageProfile(
     val oversample: Float,
     val maxLongEdgePx: Int? = null,
 ) {
-    THUMBNAIL(cacheKey = "thumbnail", oversample = 3.55f),
-    DETAIL(cacheKey = "detail", oversample = 2.0f, maxLongEdgePx = 1600),
+    THUMBNAIL(cacheKey = "thumbnail", oversample = 5.0f, maxLongEdgePx = 2048),
+    DETAIL(cacheKey = "detail", oversample = 2.5f, maxLongEdgePx = 2304),
 }
 
 @Composable
@@ -97,8 +98,9 @@ private fun buildProfiledRequest(
         .Builder(context)
         .data(data)
         .size(bucketedWidth, bucketedHeight)
+        .precision(Precision.EXACT)
         .memoryCacheKeyExtra("profile", profile.cacheKey)
-        .memoryCacheKeyExtra("bucket", "${bucketedWidth}x${bucketedHeight}")
+        .memoryCacheKeyExtra("bucket", "${bucketedWidth}x$bucketedHeight")
         .build()
 }
 

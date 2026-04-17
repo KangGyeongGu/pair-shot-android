@@ -1,3 +1,5 @@
 package com.pairshot.ui.settings
 
-// TODO: Step 3-3
+import androidx.lifecycle.ViewModel
+
+class SettingsViewModel : ViewModel()

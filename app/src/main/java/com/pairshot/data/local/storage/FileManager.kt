@@ -1,3 +1,3 @@
 package com.pairshot.data.local.storage
 
-// TODO: Step 2-5
+object FileManager

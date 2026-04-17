@@ -5,7 +5,9 @@ import androidx.camera.core.ImageCapture
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.domain.usecase.capture.SaveBeforePhotoUseCase
+import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -34,6 +36,7 @@ class CameraViewModel
     @Inject
     constructor(
         private val saveBeforePhotoUseCase: SaveBeforePhotoUseCase,
+        private val getPairsByProjectUseCase: GetPairsByProjectUseCase,
     ) : ViewModel() {
         private val _events = MutableSharedFlow<CameraEvent>()
         val events: SharedFlow<CameraEvent> = _events.asSharedFlow()
@@ -46,6 +49,12 @@ class CameraViewModel
 
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+        private val _beforePreviewUris = MutableStateFlow<List<String>>(emptyList())
+        val beforePreviewUris: StateFlow<List<String>> = _beforePreviewUris.asStateFlow()
+
+        private var observedProjectId: Long? = null
+        private var observeProjectJob: Job? = null
 
         // CameraScreen에서 bindToLifecycle 시 함께 바인딩
         val imageCapture: ImageCapture =
@@ -102,5 +111,18 @@ class CameraViewModel
 
         fun updateZoomRatio(ratio: Float) {
             _zoomRatio.value = ratio
+        }
+
+        fun observeProject(projectId: Long) {
+            if (observedProjectId == projectId && observeProjectJob?.isActive == true) return
+
+            observedProjectId = projectId
+            observeProjectJob?.cancel()
+            observeProjectJob =
+                viewModelScope.launch {
+                    getPairsByProjectUseCase(projectId).collect { pairs ->
+                        _beforePreviewUris.value = pairs.map { it.beforePhotoUri }
+                    }
+                }
         }
     }

@@ -4,29 +4,38 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.pairshot.ui.camera.CameraScreen
 import com.pairshot.ui.compare.CompareScreen
 import com.pairshot.ui.export.ExportAction
 import com.pairshot.ui.export.ExportFormat
+import com.pairshot.ui.export.ExportLoadingScreen
 import com.pairshot.ui.export.ExportScreen
 import com.pairshot.ui.export.ExportUiState
 import com.pairshot.ui.export.ExportViewModel
@@ -71,7 +80,53 @@ data object Settings
 
 @Composable
 fun PairShotNavGraph(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = ProjectList) {
+    NavHost(
+        navController = navController,
+        startDestination = ProjectList,
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black),
+        enterTransition = {
+            fadeIn(
+                animationSpec =
+                    tween(
+                        durationMillis = 220,
+                        delayMillis = 130,
+                        easing = LinearOutSlowInEasing,
+                    ),
+            )
+        },
+        exitTransition = {
+            fadeOut(
+                animationSpec =
+                    tween(
+                        durationMillis = 180,
+                        easing = FastOutLinearInEasing,
+                    ),
+            )
+        },
+        popEnterTransition = {
+            fadeIn(
+                animationSpec =
+                    tween(
+                        durationMillis = 210,
+                        delayMillis = 120,
+                        easing = LinearOutSlowInEasing,
+                    ),
+            )
+        },
+        popExitTransition = {
+            fadeOut(
+                animationSpec =
+                    tween(
+                        durationMillis = 170,
+                        easing = FastOutLinearInEasing,
+                    ),
+            )
+        },
+        sizeTransform = { null },
+    ) {
         composable<ProjectList> {
             ProjectListScreen(
                 onNavigateToSettings = { navController.navigate(Settings) },
@@ -106,10 +161,14 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                 onNavigateBack = { navController.popBackStack() },
             )
         }
-        composable<Compare> { backStackEntry ->
-            val route = backStackEntry.toRoute<Compare>()
+        dialog<Compare>(
+            dialogProperties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = true,
+                ),
+        ) {
             CompareScreen(
-                pairId = route.pairId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToPairing = { projectId, pairId ->
                     navController.navigate(Pairing(projectId, pairId))
@@ -220,12 +279,10 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
 
             when (val state = uiState) {
                 is ExportUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    ExportLoadingScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        snackbarHostState = snackbarHostState,
+                    )
                 }
 
                 is ExportUiState.Error -> {

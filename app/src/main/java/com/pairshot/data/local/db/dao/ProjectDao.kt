@@ -6,12 +6,31 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.pairshot.data.local.db.entity.ProjectEntity
+import com.pairshot.data.local.db.entity.ProjectWithCountsEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProjectDao {
-    @Query("SELECT * FROM projects ORDER BY updatedAt DESC")
-    fun getAll(): Flow<List<ProjectEntity>>
+    @Query(
+        """
+        SELECT
+            p.*,
+            (
+                SELECT COUNT(*)
+                FROM photo_pairs pp
+                WHERE pp.projectId = p.id
+            ) AS pairCount,
+            (
+                SELECT COUNT(*)
+                FROM photo_pairs pp
+                WHERE pp.projectId = p.id
+                AND pp.status IN ('PAIRED', 'COMBINED')
+            ) AS completedCount
+        FROM projects p
+        ORDER BY p.updatedAt DESC
+        """,
+    )
+    fun getAll(): Flow<List<ProjectWithCountsEntity>>
 
     @Query("SELECT * FROM projects WHERE id = :id")
     suspend fun getById(id: Long): ProjectEntity?

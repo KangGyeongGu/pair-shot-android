@@ -23,40 +23,36 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.NavigateBefore
-import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -67,12 +63,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,7 +78,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
+import com.pairshot.ui.component.BeforePreviewStrip
 import com.pairshot.ui.component.OverlayGuide
 import com.pairshot.ui.component.ShutterButton
 import kotlinx.coroutines.delay
@@ -195,6 +191,7 @@ private fun PairingContent(
     val haptic = LocalHapticFeedback.current
 
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
+    val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
     val lensFacing by viewModel.lensFacing.collectAsStateWithLifecycle()
     val zoomRatio by viewModel.zoomRatio.collectAsStateWithLifecycle()
@@ -203,6 +200,8 @@ private fun PairingContent(
 
     val currentPair = unpairedPhotos.getOrNull(currentIndex)
     val totalCount = unpairedPhotos.size
+    val completedCount = (totalPairCount - totalCount).coerceAtLeast(0)
+    val beforePreviewUris = unpairedPhotos.map { it.beforePhotoUri }
 
     var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
@@ -253,7 +252,8 @@ private fun PairingContent(
     // 현재 인덱스 변경 시 썸네일 스트립 자동 스크롤
     LaunchedEffect(currentIndex) {
         if (unpairedPhotos.isNotEmpty()) {
-            thumbnailListState.animateScrollToItem(currentIndex)
+            val index = currentIndex.coerceIn(0, unpairedPhotos.lastIndex)
+            thumbnailListState.animateScrollToItem(index)
         }
     }
 
@@ -329,275 +329,296 @@ private fun PairingContent(
         onDispose { cameraProvider?.unbindAll() }
     }
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .pointerInput(cameraControl) {
-                    detectTransformGestures { _, _, zoom, _ ->
-                        val control = cameraControl ?: return@detectTransformGestures
-                        val newRatio = (zoomRatio * zoom).coerceIn(1f, 10f)
-                        control.setZoomRatio(newRatio)
-                        viewModel.updateZoomRatio(newRatio)
-                    }
-                },
+    val density = LocalDensity.current
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
     ) {
-        // 1. CameraX Preview
-        surfaceRequest?.let { request ->
-            Box {
-                CameraXViewfinder(
-                    surfaceRequest = request,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                if (blackoutAlpha > 0f) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = blackoutAlpha)),
-                    )
-                }
-            }
-        }
+        val safeTopPx = WindowInsets.safeDrawing.getTop(density)
+        val safeBottomPx = WindowInsets.safeDrawing.getBottom(density)
+        val fullHeightPx = with(density) { maxHeight.roundToPx() }
+        val safeAvailableHeightPx = (fullHeightPx - safeTopPx - safeBottomPx).coerceAtLeast(0)
+        val safeAvailableHeightDp = with(density) { safeAvailableHeightPx.toDp() }
+        val topSectionHeight = 56.dp
+        val stripSectionHeight = 120.dp
+        val shutterSectionHeight = 116.dp
+        val bottomSpacerDesired = 32.dp
+        val minPreviewHeight = 180.dp
 
-        // 2. Before 오버레이
-        OverlayGuide(
-            imageUri = currentPair?.beforePhotoUri,
-            alpha = overlayAlpha,
-            modifier = Modifier.fillMaxSize(),
-        )
-
-        // 3. 줌 배율 표시 — 프리뷰 하단 중앙 (컨트롤 바 위)
-        val zoomText =
-            if (zoomRatio == 1f) {
-                "1.0x"
+        val reservedHeight =
+            topSectionHeight + stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
+        val previewHeightRaw = safeAvailableHeightDp - reservedHeight
+        val previewSectionHeight =
+            if (previewHeightRaw >= minPreviewHeight) {
+                previewHeightRaw
             } else {
-                "${(zoomRatio * 10).roundToInt() / 10f}x"
+                minPreviewHeight
             }
-        Text(
-            text = zoomText,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 148.dp),
-        )
-
-        // 4. 상단 반투명 바: 뒤로가기 + 카운터
-        Row(
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .fillMaxWidth()
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .background(Color.Black.copy(alpha = 0.45f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onNavigateBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "뒤로가기",
-                    tint = Color.White,
-                )
+        val bottomSpacerHeight =
+            if (previewHeightRaw >= minPreviewHeight) {
+                bottomSpacerDesired
+            } else {
+                (
+                    safeAvailableHeightDp -
+                        (topSectionHeight + stripSectionHeight + shutterSectionHeight + previewSectionHeight)
+                ).coerceAtLeast(0.dp)
             }
-            Text(
-                text = if (totalCount > 0) "${currentIndex + 1} / $totalCount (미완료)" else "미완료 없음",
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-            )
-        }
 
-        // 5. 하단 컨트롤 바
-        Column(
-            modifier =
-                Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .border(width = 1.dp, color = Color.White.copy(alpha = 0.1f))
-                    .background(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f))
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .padding(top = 12.dp, bottom = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // 셔터 + 카메라 전환 + 설정 Row
-            Box(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
-                // 가운데: 셔터 버튼
-                ShutterButton(
-                    onClick = {
-                        shutterPlayer?.let { player ->
-                            val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                            val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                            val ratio = if (max > 0) current.toFloat() / max else 0f
-                            val vol = ratio * 0.10f
-                            player.setVolume(vol, vol)
-                            if (player.isPlaying) player.seekTo(0) else player.start()
-                        }
-                        showBlackout = true
-
-                        val tempDir = File(context.cacheDir, "temp").also { it.mkdirs() }
-                        val tempFile = File(tempDir, "after_${System.currentTimeMillis()}.jpg")
-                        val outputFileOptions =
-                            ImageCapture.OutputFileOptions
-                                .Builder(tempFile)
-                                .build()
-                        viewModel.imageCapture.takePicture(
-                            outputFileOptions,
-                            ContextCompat.getMainExecutor(context),
-                            object : ImageCapture.OnImageSavedCallback {
-                                override fun onError(exception: ImageCaptureException) {
-                                    tempFile.delete()
-                                    viewModel.emitCaptureError(exception.message ?: "촬영 실패")
-                                }
-
-                                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                    val savedUri =
-                                        outputFileResults.savedUri
-                                            ?: Uri.fromFile(tempFile)
-                                    viewModel.onAfterCaptured(savedUri.toString())
-                                }
-                            },
-                        )
-                    },
-                    enabled = !isSaving && currentPair != null,
-                    modifier = Modifier.align(Alignment.Center),
-                )
-
-                // 오른쪽: 카메라 전환 + 설정
                 Row(
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(topSectionHeight)
+                            .background(Color.Black.copy(alpha = 0.45f))
+                            .padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = { viewModel.toggleLensFacing() }) {
-                        Icon(
-                            imageVector = Icons.Default.FlipCameraAndroid,
-                            contentDescription = "카메라 전환",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp),
+                    Row(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(start = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier.size(40.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            IconButton(onClick = onNavigateBack) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowLeft,
+                                    contentDescription = "뒤로가기",
+                                    tint = Color.White,
+                                )
+                            }
+                        }
+                        Text(
+                            text = "$completedCount/$totalPairCount 완료",
+                            color = Color.White,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Medium,
                         )
                     }
-                    IconButton(onClick = { /* 설정 — 추후 구현 */ }) {
+                    IconButton(
+                        onClick = { /* 설정 — 추후 구현 */ },
+                        modifier = Modifier.size(40.dp),
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "설정",
                             tint = Color.White,
-                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(previewSectionHeight)
+                            .pointerInput(cameraControl) {
+                                detectTransformGestures { _, _, zoom, _ ->
+                                    val control = cameraControl ?: return@detectTransformGestures
+                                    val newRatio = (zoomRatio * zoom).coerceIn(1f, 10f)
+                                    control.setZoomRatio(newRatio)
+                                    viewModel.updateZoomRatio(newRatio)
+                                }
+                            },
+                ) {
+                    surfaceRequest?.let { request ->
+                        Box {
+                            CameraXViewfinder(
+                                surfaceRequest = request,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                            if (blackoutAlpha > 0f) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = blackoutAlpha)),
+                                )
+                            }
+                        }
+                    }
+
+                    OverlayGuide(
+                        imageUri = currentPair?.beforePhotoUri,
+                        alpha = overlayAlpha,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    val zoomText =
+                        if (zoomRatio == 1f) {
+                            "1.0x"
+                        } else {
+                            "${(zoomRatio * 10).roundToInt() / 10f}x"
+                        }
+                    BoxWithConstraints(
+                        modifier =
+                            Modifier
+                                .align(Alignment.Center)
+                                .fillMaxSize(),
+                    ) {
+                        val containerRatio =
+                            if (maxHeight.value > 0f) {
+                                maxWidth.value / maxHeight.value
+                            } else {
+                                3f / 4f
+                            }
+                        val requestedRatioRaw =
+                            surfaceRequest?.resolution?.let { size ->
+                                if (size.height > 0) {
+                                    size.width.toFloat() / size.height.toFloat()
+                                } else {
+                                    containerRatio
+                                }
+                            } ?: containerRatio
+                        val requestedRatio =
+                            when {
+                                requestedRatioRaw <= 0f -> containerRatio
+                                (requestedRatioRaw > 1f) != (containerRatio > 1f) -> 1f / requestedRatioRaw
+                                else -> requestedRatioRaw
+                            }
+
+                        val previewFrameModifier =
+                            if (containerRatio > requestedRatio) {
+                                Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(requestedRatio)
+                            } else {
+                                Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(requestedRatio)
+                            }
+
+                        Box(modifier = previewFrameModifier.align(Alignment.Center)) {
+                            Text(
+                                text = zoomText,
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .padding(bottom = 12.dp)
+                                        .background(
+                                            color = Color.Black.copy(alpha = 0.45f),
+                                            shape = RoundedCornerShape(10.dp),
+                                        ).padding(horizontal = 10.dp, vertical = 4.dp),
+                            )
+                        }
+                    }
+                }
+
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(Color.Black),
+                ) {
+                    BeforePreviewStrip(
+                        beforePreviewUris = beforePreviewUris,
+                        modifier = Modifier.height(stripSectionHeight),
+                        selectedIndex = if (totalCount > 0) currentIndex else null,
+                        onSelectIndex = viewModel::selectIndex,
+                        listState = thumbnailListState,
+                        emptyMessage = "촬영할 Before가 없습니다",
+                        stripHeight = stripSectionHeight,
+                    )
+                }
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(shutterSectionHeight)
+                            .background(Color.Black)
+                            .padding(horizontal = 32.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(onClick = { viewModel.toggleLensFacing() }) {
+                            Icon(
+                                imageVector = Icons.Default.FlipCameraAndroid,
+                                contentDescription = "카메라 전환",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp),
+                            )
+                        }
+                    }
+
+                    ShutterButton(
+                        onClick = {
+                            shutterPlayer?.let { player ->
+                                val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                                val ratio = if (max > 0) current.toFloat() / max else 0f
+                                val vol = ratio * 0.10f
+                                player.setVolume(vol, vol)
+                                if (player.isPlaying) player.seekTo(0) else player.start()
+                            }
+                            showBlackout = true
+
+                            val tempDir = File(context.cacheDir, "temp").also { it.mkdirs() }
+                            val tempFile = File(tempDir, "after_${System.currentTimeMillis()}.jpg")
+                            val outputFileOptions =
+                                ImageCapture.OutputFileOptions
+                                    .Builder(tempFile)
+                                    .build()
+                            viewModel.imageCapture.takePicture(
+                                outputFileOptions,
+                                ContextCompat.getMainExecutor(context),
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onError(exception: ImageCaptureException) {
+                                        tempFile.delete()
+                                        viewModel.emitCaptureError(exception.message ?: "촬영 실패")
+                                    }
+
+                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                        val savedUri =
+                                            outputFileResults.savedUri
+                                                ?: Uri.fromFile(tempFile)
+                                        viewModel.onAfterCaptured(savedUri.toString())
+                                    }
+                                },
+                            )
+                        },
+                        enabled = !isSaving && currentPair != null,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(bottomSpacerHeight))
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Before 썸네일 스트립: ◀ [썸네일 고정 5개] ▶
-            val maxVisibleThumbnails = 5
-            Row(
+            SnackbarHost(
+                hostState = snackbarHostState,
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                // 이전 화살표
-                IconButton(
-                    onClick = { viewModel.moveToPrevious() },
-                    enabled = currentIndex > 0,
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.NavigateBefore,
-                        contentDescription = "이전",
-                        tint = if (currentIndex > 0) Color.White else Color.White.copy(alpha = 0.3f),
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-
-                // 고정 너비 썸네일 영역 (최대 5개 × 40dp + 간격)
-                val thumbnailSize = 40.dp
-                val thumbnailGap = 6.dp
-                val stripWidth = thumbnailSize * maxVisibleThumbnails + thumbnailGap * (maxVisibleThumbnails - 1)
-
-                LazyRow(
-                    state = thumbnailListState,
-                    horizontalArrangement = Arrangement.spacedBy(thumbnailGap),
-                    modifier = Modifier.width(stripWidth),
-                    contentPadding = PaddingValues(horizontal = 0.dp),
-                ) {
-                    itemsIndexed(
-                        items = unpairedPhotos,
-                        key = { _, pair -> pair.id },
-                    ) { index, pair ->
-                        val isSelected = index == currentIndex
-                        AsyncImage(
-                            model = pair.beforePhotoUri,
-                            contentDescription = "Before 썸네일 ${index + 1}",
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .size(thumbnailSize)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .border(
-                                        width = if (isSelected) 2.dp else 0.dp,
-                                        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                        shape = RoundedCornerShape(4.dp),
-                                    ).clickable { viewModel.selectIndex(index) },
-                        )
-                    }
-                }
-
-                // 다음 화살표
-                IconButton(
-                    onClick = { viewModel.moveToNext() },
-                    enabled = currentIndex < totalCount - 1,
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.NavigateNext,
-                        contentDescription = "다음",
-                        tint = if (currentIndex < totalCount - 1) Color.White else Color.White.copy(alpha = 0.3f),
-                        modifier = Modifier.size(28.dp),
-                    )
-                }
-            }
-        }
-
-        // 6. Snackbar — 화면 중앙, 문구에 맞는 너비
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier =
-                Modifier
-                    .align(Alignment.Center),
-            snackbar = { snackbarData ->
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Surface(
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp, vertical = 112.dp),
+                snackbar = { snackbarData ->
+                    androidx.compose.material3.Snackbar(
+                        snackbarData = snackbarData,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
                         shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shadowElevation = 6.dp,
-                    ) {
-                        Text(
-                            text = snackbarData.visuals.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
-                        )
-                    }
-                }
-            },
-        )
+                    )
+                },
+            )
+        }
     }
 }
 

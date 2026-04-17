@@ -10,10 +10,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.JoinRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.ui.theme.Success
-import com.pairshot.ui.theme.Warning
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -41,20 +45,8 @@ fun PairCard(
                 BorderStroke(2.dp, Success)
             }
 
-            selectionMode -> {
-                BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
-            }
-
             else -> {
-                val borderColor =
-                    when (pair.status) {
-                        PairStatus.BEFORE_ONLY -> Warning
-
-                        PairStatus.PAIRED,
-                        PairStatus.COMBINED,
-                        -> MaterialTheme.colorScheme.primary
-                    }
-                BorderStroke(0.5.dp, borderColor)
+                BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
             }
         }
 
@@ -122,10 +114,7 @@ fun PairCard(
             }
 
             if (pair.status == PairStatus.COMBINED) {
-                Text(
-                    text = "✓ 합성됨",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                CombinedStatusBadge(
                     modifier =
                         Modifier
                             .align(Alignment.TopEnd)
@@ -175,6 +164,24 @@ fun CombinedCard(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(3f / 2f),
+        )
+    }
+}
+
+@Composable
+private fun CombinedStatusBadge(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = Success,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        tonalElevation = 0.dp,
+        shadowElevation = 2.dp,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.JoinRight,
+            contentDescription = null,
+            modifier = Modifier.padding(5.dp).size(24.dp),
         )
     }
 }
