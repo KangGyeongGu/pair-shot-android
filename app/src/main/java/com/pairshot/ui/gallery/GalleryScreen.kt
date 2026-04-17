@@ -38,6 +38,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -82,10 +84,18 @@ fun GalleryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    var showProjectDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessage.collect { message ->
             snackbarHostState.showSnackbar(message)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.projectDeletedEvent.collect {
+            onNavigateBack()
         }
     }
 
@@ -139,13 +149,15 @@ fun GalleryScreen(
                                 DropdownMenuItem(
                                     text = { Text("프로젝트명 수정") },
                                     onClick = {
-                                        showMoreMenu = false // Step 2-4
+                                        showMoreMenu = false
+                                        showRenameDialog = true
                                     },
                                 )
                                 DropdownMenuItem(
                                     text = { Text("프로젝트 삭제") },
                                     onClick = {
-                                        showMoreMenu = false // Step 2-4
+                                        showMoreMenu = false
+                                        showProjectDeleteDialog = true
                                     },
                                 )
                             }
@@ -383,6 +395,76 @@ fun GalleryScreen(
             dismissButton = {
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text(text = "취소")
+                }
+            },
+        )
+    }
+
+    if (showRenameDialog) {
+        var newName by remember { mutableStateOf(projectName) }
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            shape = MaterialTheme.shapes.large,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("프로젝트명 수정", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                TextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    colors =
+                        TextFieldDefaults.colors(
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.renameProject(newName)
+                        showRenameDialog = false
+                    },
+                    enabled = newName.isNotBlank(),
+                ) {
+                    Text("저장", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
+                    Text("취소")
+                }
+            },
+        )
+    }
+
+    if (showProjectDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showProjectDeleteDialog = false },
+            shape = MaterialTheme.shapes.large,
+            containerColor = MaterialTheme.colorScheme.surface,
+            title = { Text("프로젝트 삭제", style = MaterialTheme.typography.titleMedium) },
+            text = {
+                Text(
+                    "'$projectName' 프로젝트와 모든 사진이 삭제됩니다.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showProjectDeleteDialog = false
+                        viewModel.deleteProject()
+                    },
+                ) {
+                    Text("삭제", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showProjectDeleteDialog = false }) {
+                    Text("취소")
                 }
             },
         )

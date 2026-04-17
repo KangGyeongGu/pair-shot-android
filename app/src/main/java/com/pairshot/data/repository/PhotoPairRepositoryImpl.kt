@@ -94,6 +94,11 @@ class PhotoPairRepositoryImpl
 
         override fun countByProject(projectId: Long): Flow<Int> = photoPairDao.countByProject(projectId)
 
+        override suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPair> =
+            withContext(Dispatchers.IO) {
+                photoPairDao.getAllByProjectOnce(projectId).map { it.toDomain() }
+            }
+
         override suspend fun saveBeforePhoto(
             projectId: Long,
             tempFileUri: String,

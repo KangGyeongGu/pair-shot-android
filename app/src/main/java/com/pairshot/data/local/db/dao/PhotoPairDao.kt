@@ -33,4 +33,7 @@ interface PhotoPairDao {
 
     @Query("SELECT COUNT(*) FROM photo_pairs WHERE projectId = :projectId")
     fun countByProject(projectId: Long): Flow<Int>
+
+    @Query("SELECT * FROM photo_pairs WHERE projectId = :projectId")
+    suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPairEntity>
 }

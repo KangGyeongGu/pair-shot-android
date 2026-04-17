@@ -35,4 +35,6 @@ interface PhotoPairRepository {
     suspend fun removeCombinedPhoto(pairId: Long)
 
     suspend fun combinePair(pairId: Long): String
+
+    suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPair>
 }

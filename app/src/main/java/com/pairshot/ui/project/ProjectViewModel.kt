@@ -6,6 +6,7 @@ import com.pairshot.data.local.location.LocationProvider
 import com.pairshot.data.local.location.LocationResult
 import com.pairshot.domain.model.Project
 import com.pairshot.domain.repository.ProjectRepository
+import com.pairshot.domain.usecase.project.DeleteProjectUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +33,7 @@ class ProjectViewModel
     constructor(
         private val projectRepository: ProjectRepository,
         private val locationProvider: LocationProvider,
+        private val deleteProjectUseCase: DeleteProjectUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<ProjectUiState>(ProjectUiState.Loading)
         val uiState: StateFlow<ProjectUiState> = _uiState.asStateFlow()
@@ -99,7 +101,7 @@ class ProjectViewModel
 
         fun deleteProject(project: Project) {
             viewModelScope.launch {
-                projectRepository.delete(project)
+                deleteProjectUseCase(project)
             }
         }
     }

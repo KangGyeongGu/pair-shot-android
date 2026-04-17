@@ -10,6 +10,7 @@ import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.domain.repository.ProjectRepository
 import com.pairshot.domain.usecase.combine.BatchCombineUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
+import com.pairshot.domain.usecase.project.DeleteProjectUseCase
 import com.pairshot.ui.navigation.ProjectDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -51,6 +52,7 @@ class GalleryViewModel
         private val projectRepository: ProjectRepository,
         private val batchCombineUseCase: BatchCombineUseCase,
         private val photoPairRepository: PhotoPairRepository,
+        private val deleteProjectUseCase: DeleteProjectUseCase,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle.toRoute<ProjectDetail>().projectId
@@ -72,6 +74,9 @@ class GalleryViewModel
 
         private val _snackbarMessage = MutableSharedFlow<String>()
         val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
+
+        private val _projectDeletedEvent = MutableSharedFlow<Unit>()
+        val projectDeletedEvent: SharedFlow<Unit> = _projectDeletedEvent.asSharedFlow()
 
         init {
             loadPairs()
@@ -185,6 +190,32 @@ class GalleryViewModel
                     }
                 }
                 exitSelectionMode()
+            }
+        }
+
+        fun renameProject(newName: String) {
+            viewModelScope.launch {
+                projectRepository.getById(projectId)?.let { project ->
+                    projectRepository.update(
+                        project.copy(name = newName, updatedAt = System.currentTimeMillis()),
+                    )
+                    _uiState.update { state ->
+                        if (state is GalleryUiState.Success) {
+                            state.copy(projectName = newName)
+                        } else {
+                            state
+                        }
+                    }
+                }
+            }
+        }
+
+        fun deleteProject() {
+            viewModelScope.launch {
+                projectRepository.getById(projectId)?.let { project ->
+                    deleteProjectUseCase(project)
+                    _projectDeletedEvent.emit(Unit)
+                }
             }
         }
     }
