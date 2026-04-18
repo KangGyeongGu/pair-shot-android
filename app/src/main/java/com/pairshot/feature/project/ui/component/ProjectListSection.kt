@@ -26,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
@@ -49,6 +51,7 @@ internal fun ProjectItem(
     onClick: () -> Unit,
     onToggleSelection: () -> Unit,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
     val successColor = LocalPairShotExtendedColors.current.success
     val cardShape = MaterialTheme.shapes.medium
     val itemShape =
@@ -108,8 +111,16 @@ internal fun ProjectItem(
             Modifier
                 .fillMaxWidth()
                 .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onToggleSelection,
+                    onClick = {
+                        if (selectionMode) {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        onClick()
+                    },
+                    onLongClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onToggleSelection()
+                    },
                 ).then(rowModifier)
                 .padding(
                     horizontal = PairShotSpacing.cardPadding,

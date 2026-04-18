@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.feature.compare.ui.screen.CompareScreen
@@ -23,6 +25,7 @@ fun CompareRoute(
     val isCombining by viewModel.isCombining.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val hapticFeedback = LocalHapticFeedback.current
 
     LaunchedEffect(Unit) {
         viewModel.deleteComplete.collect { onNavigateBack() }
@@ -36,6 +39,7 @@ fun CompareRoute(
 
     LaunchedEffect(Unit) {
         viewModel.combineComplete.collect { message ->
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
             snackbarHostState.showSnackbar(message)
         }
     }

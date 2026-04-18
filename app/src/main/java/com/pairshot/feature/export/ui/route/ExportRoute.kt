@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.app.navigation.effect.ExportShareEffect
@@ -40,9 +42,11 @@ fun ExportRoute(
         }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val hapticFeedback = LocalHapticFeedback.current
 
     LaunchedEffect("snackbar") {
         viewModel.snackbarMessage.collect { message ->
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
             snackbarHostState.showSnackbar(message)
         }
     }

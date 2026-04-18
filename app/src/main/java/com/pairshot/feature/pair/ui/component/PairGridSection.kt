@@ -12,6 +12,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
@@ -29,6 +31,8 @@ internal fun PairGridSection(
     onNavigateToAfterCamera: (Long) -> Unit,
     onNavigateToCompare: (Long) -> Unit,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+
     if (pairs.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -62,12 +66,16 @@ internal fun PairGridSection(
                         isSelected = pair.id in selectedIds,
                         onClick = {
                             if (selectionMode) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onToggleSelection(pair.id)
                             } else {
                                 onNavigateToCompare(pair.id)
                             }
                         },
-                        onLongClick = { onLongPressSelect(pair.id) },
+                        onLongClick = {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLongPressSelect(pair.id)
+                        },
                     )
                 } else {
                     PairCard(
@@ -76,6 +84,7 @@ internal fun PairGridSection(
                         isSelected = pair.id in selectedIds,
                         onClick = {
                             if (selectionMode) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                 onToggleSelection(pair.id)
                             } else {
                                 when (pair.status) {
@@ -87,7 +96,10 @@ internal fun PairGridSection(
                                 }
                             }
                         },
-                        onLongClick = { onLongPressSelect(pair.id) },
+                        onLongClick = {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLongPressSelect(pair.id)
+                        },
                     )
                 }
             }

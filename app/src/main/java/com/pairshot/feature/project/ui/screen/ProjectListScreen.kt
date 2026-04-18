@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EditOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -113,13 +114,13 @@ internal fun ProjectListScreen(
                                     enabled = editEnabled,
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Edit,
+                                        imageVector = if (editEnabled) Icons.Default.Edit else Icons.Filled.EditOff,
                                         contentDescription = "이름 변경",
                                         tint =
                                             if (editEnabled) {
                                                 MaterialTheme.colorScheme.onSurface
                                             } else {
-                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                                MaterialTheme.colorScheme.outline
                                             },
                                     )
                                 }
@@ -130,7 +131,7 @@ internal fun ProjectListScreen(
                                         if (editEnabled) {
                                             MaterialTheme.colorScheme.onSurface
                                         } else {
-                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                            MaterialTheme.colorScheme.outline
                                         },
                                 )
                             }
