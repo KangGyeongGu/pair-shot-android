@@ -9,11 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.data.local.datastore.AppPreferences
-import com.pairshot.domain.model.PhotoPair
-import com.pairshot.domain.repository.AppSettingsRepository
-import com.pairshot.domain.usecase.capture.SaveAfterPhotoUseCase
-import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
-import com.pairshot.domain.usecase.pair.GetUnpairedPhotosUseCase
+import com.pairshot.feature.camera.domain.usecase.SaveAfterPhotoUseCase
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
 import com.pairshot.feature.camera.ui.component.ZoomUiState
 import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
@@ -21,6 +17,10 @@ import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
 import com.pairshot.feature.camera.ui.state.CameraSettingsStateHolder
 import com.pairshot.feature.camera.ui.state.FlashMode
+import com.pairshot.feature.pair.domain.model.PhotoPair
+import com.pairshot.feature.pair.domain.usecase.GetPairsByProjectUseCase
+import com.pairshot.feature.pair.domain.usecase.GetUnpairedPhotosUseCase
+import com.pairshot.feature.settings.domain.repository.AppSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow

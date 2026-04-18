@@ -3,12 +3,12 @@ package com.pairshot.feature.settings.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.BuildConfig
-import com.pairshot.data.local.image.WatermarkManager
-import com.pairshot.domain.model.WatermarkConfig
-import com.pairshot.domain.repository.AppSettingsRepository
-import com.pairshot.domain.repository.WatermarkRepository
-import com.pairshot.domain.usecase.storage.ClearCacheUseCase
-import com.pairshot.domain.usecase.storage.GetStorageInfoUseCase
+import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.feature.settings.domain.model.WatermarkConfig
+import com.pairshot.feature.settings.domain.repository.AppSettingsRepository
+import com.pairshot.feature.settings.domain.repository.WatermarkRepository
+import com.pairshot.feature.settings.domain.usecase.ClearCacheUseCase
+import com.pairshot.feature.settings.domain.usecase.GetStorageInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +45,7 @@ class SettingsViewModel
         private val getStorageInfoUseCase: GetStorageInfoUseCase,
         private val clearCacheUseCase: ClearCacheUseCase,
         private val watermarkRepository: WatermarkRepository,
-        val watermarkManager: WatermarkManager,
+        val watermarkRenderer: WatermarkRenderer,
         private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
         private val _storageState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)

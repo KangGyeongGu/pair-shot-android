@@ -13,11 +13,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pairshot.domain.model.PairStatus
-import com.pairshot.domain.model.PhotoPair
-import com.pairshot.ui.component.CombinedCard
-import com.pairshot.ui.component.PairCard
-import com.pairshot.ui.theme.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.pair.domain.model.PairStatus
+import com.pairshot.feature.pair.domain.model.PhotoPair
+import com.pairshot.feature.pair.ui.component.CombinedCard
+import com.pairshot.feature.pair.ui.component.PairCard
 
 @Composable
 internal fun PairGridSection(

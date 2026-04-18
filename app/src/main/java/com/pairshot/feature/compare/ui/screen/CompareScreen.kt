@@ -14,13 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pairshot.domain.model.PhotoPair
 import com.pairshot.feature.compare.ui.component.CompareHeader
 import com.pairshot.feature.compare.ui.component.CompareImagePane
 import com.pairshot.feature.compare.ui.component.CompareModalScaffold
 import com.pairshot.feature.compare.ui.component.ComparePagerControls
 import com.pairshot.feature.compare.ui.dialog.CombiningDialog
 import com.pairshot.feature.compare.ui.dialog.DeleteConfirmDialog
+import com.pairshot.feature.pair.domain.model.PhotoPair
 
 @Composable
 fun CompareScreen(

@@ -36,9 +36,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.pairshot.domain.model.WatermarkConfig
-import com.pairshot.domain.model.WatermarkType
-import com.pairshot.ui.theme.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.settings.domain.model.WatermarkConfig
+import com.pairshot.feature.settings.domain.model.WatermarkType
 
 @Composable
 internal fun WatermarkTextSection(

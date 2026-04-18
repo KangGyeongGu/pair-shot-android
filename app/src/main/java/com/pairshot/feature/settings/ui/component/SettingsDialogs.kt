@@ -22,7 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.pairshot.ui.theme.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotSpacing
 
 private data class QualityOption(
     val label: String,

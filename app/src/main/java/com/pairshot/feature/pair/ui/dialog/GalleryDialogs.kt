@@ -17,8 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.feature.pair.ui.viewmodel.CombineProgress
-import com.pairshot.ui.theme.PairShotSpacing
 
 @Composable
 internal fun DeletePairsDialog(

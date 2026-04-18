@@ -22,15 +22,15 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import com.pairshot.R
-import com.pairshot.data.local.image.WatermarkManager
-import com.pairshot.domain.model.WatermarkConfig
+import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.feature.settings.domain.model.WatermarkConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
 internal fun WatermarkPreviewSection(
     config: WatermarkConfig,
-    watermarkManager: WatermarkManager,
+    watermarkRenderer: WatermarkRenderer,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -56,7 +56,7 @@ internal fun WatermarkPreviewSection(
                         (sourceBitmap.height * 0.5f).toInt().coerceAtLeast(200),
                         true,
                     )
-                val applied = watermarkManager.apply(scaled, previewConfig)
+                val applied = watermarkRenderer.apply(scaled, previewConfig)
                 if (applied !== scaled) scaled.recycle()
                 applied
             }

@@ -1,11 +1,11 @@
 package com.pairshot.di.feature
 
-import com.pairshot.data.repository.AppSettingsRepositoryImpl
-import com.pairshot.data.repository.StorageRepositoryImpl
-import com.pairshot.data.repository.WatermarkRepositoryImpl
-import com.pairshot.domain.repository.AppSettingsRepository
-import com.pairshot.domain.repository.StorageRepository
-import com.pairshot.domain.repository.WatermarkRepository
+import com.pairshot.feature.settings.data.repository.AppSettingsRepositoryImpl
+import com.pairshot.feature.settings.data.repository.StorageRepositoryImpl
+import com.pairshot.feature.settings.data.repository.WatermarkRepositoryImpl
+import com.pairshot.feature.settings.domain.repository.AppSettingsRepository
+import com.pairshot.feature.settings.domain.repository.StorageRepository
+import com.pairshot.feature.settings.domain.repository.WatermarkRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

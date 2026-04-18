@@ -18,9 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.pairshot.data.local.image.WatermarkManager
-import com.pairshot.domain.model.WatermarkConfig
-import com.pairshot.domain.model.WatermarkType
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.feature.settings.domain.model.WatermarkConfig
+import com.pairshot.feature.settings.domain.model.WatermarkType
 import com.pairshot.feature.settings.ui.component.SettingsCard
 import com.pairshot.feature.settings.ui.component.SettingsDivider
 import com.pairshot.feature.settings.ui.component.SettingsSwitchItem
@@ -28,7 +29,6 @@ import com.pairshot.feature.settings.ui.component.WatermarkLogoSection
 import com.pairshot.feature.settings.ui.component.WatermarkPreviewSection
 import com.pairshot.feature.settings.ui.component.WatermarkTextSection
 import com.pairshot.feature.settings.ui.component.WatermarkTypeItem
-import com.pairshot.ui.theme.PairShotSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,7 +37,7 @@ fun WatermarkSettingsScreen(
     onWatermarkConfigChange: (WatermarkConfig) -> Unit,
     onSelectLogo: () -> Unit,
     onNavigateBack: () -> Unit,
-    watermarkManager: WatermarkManager,
+    watermarkRenderer: WatermarkRenderer,
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -127,7 +127,7 @@ fun WatermarkSettingsScreen(
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                 WatermarkPreviewSection(
                     config = watermarkConfig,
-                    watermarkManager = watermarkManager,
+                    watermarkRenderer = watermarkRenderer,
                 )
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
             }

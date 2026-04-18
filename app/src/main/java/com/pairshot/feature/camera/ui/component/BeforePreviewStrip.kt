@@ -28,8 +28,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.pairshot.ui.component.ImageProfile
-import com.pairshot.ui.component.ProfiledAsyncImage
+import com.pairshot.core.ui.component.ImageProfile
+import com.pairshot.core.ui.component.ProfiledAsyncImage
 
 @Composable
 fun BeforePreviewStrip(

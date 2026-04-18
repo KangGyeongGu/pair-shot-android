@@ -1,7 +1,7 @@
 package com.pairshot.data.local.db.entity
 
-import com.pairshot.domain.model.PairStatus
-import com.pairshot.domain.model.PhotoPair
+import com.pairshot.feature.pair.domain.model.PairStatus
+import com.pairshot.feature.pair.domain.model.PhotoPair
 
 fun PhotoPairEntity.toDomain() =
     PhotoPair(

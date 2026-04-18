@@ -2,11 +2,11 @@ package com.pairshot.feature.project.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.data.local.location.LocationProvider
-import com.pairshot.data.local.location.LocationResult
-import com.pairshot.domain.model.Project
-import com.pairshot.domain.repository.ProjectRepository
-import com.pairshot.domain.usecase.project.DeleteProjectUseCase
+import com.pairshot.core.infra.location.LocationProvider
+import com.pairshot.core.infra.location.LocationResult
+import com.pairshot.feature.project.domain.model.Project
+import com.pairshot.feature.project.domain.repository.ProjectRepository
+import com.pairshot.feature.project.domain.usecase.DeleteProjectUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,6 +14,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+enum class ProjectGroupMode {
+    NONE,
+    CREATED_DATE,
+    UPDATED_DATE,
+}
 
 sealed interface ProjectUiState {
     data object Loading : ProjectUiState
@@ -46,6 +52,9 @@ class ProjectViewModel
 
         private val _selectedIds = MutableStateFlow<Set<Long>>(emptySet())
         val selectedIds: StateFlow<Set<Long>> = _selectedIds.asStateFlow()
+
+        private val _groupMode = MutableStateFlow(ProjectGroupMode.CREATED_DATE)
+        val groupMode: StateFlow<ProjectGroupMode> = _groupMode.asStateFlow()
 
         init {
             loadProjects()
@@ -143,6 +152,10 @@ class ProjectViewModel
             val projects = (_uiState.value as? ProjectUiState.Success)?.projects ?: return
             _selectionMode.value = true
             _selectedIds.value = projects.map { it.id }.toSet()
+        }
+
+        fun setGroupMode(mode: ProjectGroupMode) {
+            _groupMode.value = mode
         }
 
         fun deleteSelected() {

@@ -32,7 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pairshot.domain.model.WatermarkConfig
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.settings.domain.model.WatermarkConfig
 import com.pairshot.feature.settings.ui.component.ClearCacheDialog
 import com.pairshot.feature.settings.ui.component.FileNamePrefixDialog
 import com.pairshot.feature.settings.ui.component.ImageQualityDialog
@@ -40,10 +41,10 @@ import com.pairshot.feature.settings.ui.component.OverlayAlphaDialog
 import com.pairshot.feature.settings.ui.component.SettingsCard
 import com.pairshot.feature.settings.ui.component.SettingsDivider
 import com.pairshot.feature.settings.ui.component.SettingsItem
+import com.pairshot.feature.settings.ui.component.SettingsSectionLabel
 import com.pairshot.feature.settings.ui.component.SettingsSwitchItem
 import com.pairshot.feature.settings.ui.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.ui.viewmodel.formatBytes
-import com.pairshot.ui.theme.PairShotSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -182,6 +183,11 @@ fun SettingsScreen(
                             vertical = PairShotSpacing.cardPadding,
                         ),
                 ) {
+                    item(key = "label_capture") {
+                        SettingsSectionLabel(label = "촬영 및 파일")
+                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                    }
+
                     item(key = "card_capture") {
                         SettingsCard {
                             SettingsItem(
@@ -207,6 +213,11 @@ fun SettingsScreen(
 
                     item(key = "gap_1") {
                         Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                    }
+
+                    item(key = "label_watermark") {
+                        SettingsSectionLabel(label = "워터마크")
+                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     }
 
                     item(key = "card_watermark") {
@@ -242,6 +253,11 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                     }
 
+                    item(key = "label_storage") {
+                        SettingsSectionLabel(label = "저장공간")
+                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                    }
+
                     item(key = "card_storage") {
                         SettingsCard {
                             SettingsItem(
@@ -259,6 +275,11 @@ fun SettingsScreen(
 
                     item(key = "gap_3") {
                         Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                    }
+
+                    item(key = "label_info") {
+                        SettingsSectionLabel(label = "앱 정보")
+                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     }
 
                     item(key = "card_info") {

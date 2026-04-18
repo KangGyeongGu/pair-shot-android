@@ -18,10 +18,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import com.pairshot.ui.component.MarqueeTitleText
-import com.pairshot.ui.component.PairShotTopMenu
-import com.pairshot.ui.component.PairShotTopMenuDivider
-import com.pairshot.ui.component.PairShotTopMenuItemText
+import com.pairshot.core.ui.component.MarqueeTitleText
+import com.pairshot.core.ui.component.PairShotTopMenu
+import com.pairshot.core.ui.component.PairShotTopMenuDivider
+import com.pairshot.core.ui.component.PairShotTopMenuItemText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

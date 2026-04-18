@@ -8,7 +8,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.pairshot.ui.theme.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotSpacing
 
 @Composable
 internal fun GalleryFilterRow(

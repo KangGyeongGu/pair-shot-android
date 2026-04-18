@@ -19,9 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import com.pairshot.domain.model.LogoPosition
-import com.pairshot.domain.model.WatermarkConfig
-import com.pairshot.ui.theme.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.settings.domain.model.LogoPosition
+import com.pairshot.feature.settings.domain.model.WatermarkConfig
 import java.io.File
 
 private val logoPositionOrder =

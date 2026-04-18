@@ -20,13 +20,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.feature.export.ui.component.ExportActionSection
 import com.pairshot.feature.export.ui.component.ExportFormatSection
 import com.pairshot.feature.export.ui.component.ExportIncludeSection
 import com.pairshot.feature.export.ui.component.ExportProgressSection
 import com.pairshot.feature.export.ui.component.ExportWatermarkSection
 import com.pairshot.feature.export.ui.viewmodel.ExportFormat
-import com.pairshot.ui.theme.PairShotSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,7 +18,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,22 +25,28 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pairshot.feature.project.ui.component.ProjectItem
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.project.ui.component.ProjectGroupCard
+import com.pairshot.feature.project.ui.component.ProjectGroupFilterRow
+import com.pairshot.feature.project.ui.component.ProjectGroupLabel
 import com.pairshot.feature.project.ui.component.ProjectListTopBar
+import com.pairshot.feature.project.ui.component.groupProjectsForDisplay
 import com.pairshot.feature.project.ui.dialog.CreateProjectDialog
 import com.pairshot.feature.project.ui.dialog.DeleteSelectedProjectsDialog
+import com.pairshot.feature.project.ui.viewmodel.ProjectGroupMode
 import com.pairshot.feature.project.ui.viewmodel.ProjectUiState
 import com.pairshot.feature.project.ui.viewmodel.ProjectViewModel
-import com.pairshot.ui.theme.PairShotSpacing
 
 @Composable
 internal fun ProjectListScreen(
     uiState: ProjectUiState,
     selectionMode: Boolean,
     selectedIds: Set<Long>,
+    groupMode: ProjectGroupMode,
     showCreateDialog: Boolean,
     showDeleteSelectedDialog: Boolean,
     showTopMenu: Boolean,
@@ -172,31 +179,55 @@ internal fun ProjectListScreen(
                         )
                     }
                 } else {
+                    val groups =
+                        remember(state.projects, groupMode) {
+                            groupProjectsForDisplay(
+                                projects = state.projects,
+                                mode = groupMode,
+                            )
+                        }
                     LazyColumn(
                         modifier =
                             Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding),
-                        contentPadding = PaddingValues(bottom = 96.dp),
+                        contentPadding =
+                            PaddingValues(
+                                top = PairShotSpacing.cardPadding,
+                                bottom = 96.dp,
+                            ),
                     ) {
+                        item(key = "group_filter") {
+                            ProjectGroupFilterRow(
+                                groupMode = groupMode,
+                                onGroupModeChange = viewModel::setGroupMode,
+                            )
+                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                        }
+
                         items(
-                            items = state.projects,
-                            key = { it.id },
-                        ) { project ->
-                            ProjectItem(
-                                project = project,
+                            items = groups,
+                            key = { it.key },
+                        ) { group ->
+                            group.label?.let { label ->
+                                ProjectGroupLabel(label = label)
+                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                            }
+
+                            ProjectGroupCard(
+                                projects = group.projects,
                                 selectionMode = selectionMode,
-                                isSelected = project.id in selectedIds,
-                                onClick = {
+                                selectedIds = selectedIds,
+                                onProjectClick = { projectId ->
                                     if (selectionMode) {
-                                        viewModel.toggleSelection(project.id)
+                                        viewModel.toggleSelection(projectId)
                                     } else {
-                                        onNavigateToProject(project.id)
+                                        onNavigateToProject(projectId)
                                     }
                                 },
-                                onToggleSelection = { viewModel.toggleSelection(project.id) },
+                                onProjectToggleSelection = viewModel::toggleSelection,
                             )
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                         }
                     }
                 }

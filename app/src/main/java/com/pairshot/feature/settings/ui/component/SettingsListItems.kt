@@ -28,7 +28,23 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.pairshot.ui.theme.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotSpacing
+
+@Composable
+fun SettingsSectionLabel(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = label,
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = PairShotSpacing.iconTextGap),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
 
 @Composable
 fun SettingsCard(

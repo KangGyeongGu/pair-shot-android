@@ -29,6 +29,6 @@ fun WatermarkSettingsRoute(
         onWatermarkConfigChange = viewModel::updateWatermarkConfig,
         onSelectLogo = { logoPickerLauncher.launch(arrayOf("image/*")) },
         onNavigateBack = onNavigateBack,
-        watermarkManager = viewModel.watermarkManager,
+        watermarkRenderer = viewModel.watermarkRenderer,
     )
 }

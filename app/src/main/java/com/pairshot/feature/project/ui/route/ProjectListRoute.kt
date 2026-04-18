@@ -19,6 +19,7 @@ fun ProjectListRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectionMode by viewModel.selectionMode.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val groupMode by viewModel.groupMode.collectAsStateWithLifecycle()
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showDeleteSelectedDialog by remember { mutableStateOf(false) }
@@ -28,6 +29,7 @@ fun ProjectListRoute(
         uiState = uiState,
         selectionMode = selectionMode,
         selectedIds = selectedIds,
+        groupMode = groupMode,
         showCreateDialog = showCreateDialog,
         showDeleteSelectedDialog = showDeleteSelectedDialog,
         showTopMenu = showTopMenu,
