@@ -1,15 +1,9 @@
-package com.pairshot.di
+package com.pairshot.di.feature
 
 import com.pairshot.data.repository.AppSettingsRepositoryImpl
-import com.pairshot.data.repository.ExportRepositoryImpl
-import com.pairshot.data.repository.PhotoPairRepositoryImpl
-import com.pairshot.data.repository.ProjectRepositoryImpl
 import com.pairshot.data.repository.StorageRepositoryImpl
 import com.pairshot.data.repository.WatermarkRepositoryImpl
 import com.pairshot.domain.repository.AppSettingsRepository
-import com.pairshot.domain.repository.ExportRepository
-import com.pairshot.domain.repository.PhotoPairRepository
-import com.pairshot.domain.repository.ProjectRepository
 import com.pairshot.domain.repository.StorageRepository
 import com.pairshot.domain.repository.WatermarkRepository
 import dagger.Binds
@@ -19,18 +13,9 @@ import dagger.hilt.components.SingletonComponent
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule {
+abstract class SettingsRepositoryModule {
     @Binds
     abstract fun bindAppSettingsRepository(impl: AppSettingsRepositoryImpl): AppSettingsRepository
-
-    @Binds
-    abstract fun bindProjectRepository(impl: ProjectRepositoryImpl): ProjectRepository
-
-    @Binds
-    abstract fun bindPhotoPairRepository(impl: PhotoPairRepositoryImpl): PhotoPairRepository
-
-    @Binds
-    abstract fun bindExportRepository(impl: ExportRepositoryImpl): ExportRepository
 
     @Binds
     abstract fun bindStorageRepository(impl: StorageRepositoryImpl): StorageRepository

@@ -1,4 +1,4 @@
-package com.pairshot.util
+package com.pairshot.core.util
 
 import java.text.SimpleDateFormat
 import java.util.Date

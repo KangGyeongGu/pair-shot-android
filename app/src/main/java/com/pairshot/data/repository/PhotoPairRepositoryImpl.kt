@@ -3,6 +3,8 @@ package com.pairshot.data.repository
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import com.pairshot.core.util.FileNameGenerator
+import com.pairshot.core.util.PairImageComposer
 import com.pairshot.data.local.db.dao.PhotoPairDao
 import com.pairshot.data.local.db.dao.ProjectDao
 import com.pairshot.data.local.db.entity.PhotoPairEntity
@@ -13,8 +15,6 @@ import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.AppSettingsRepository
 import com.pairshot.domain.repository.PhotoPairRepository
-import com.pairshot.util.FileNameGenerator
-import com.pairshot.util.ImageUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +31,7 @@ class PhotoPairRepositoryImpl
         private val projectDao: ProjectDao,
         private val mediaStoreManager: MediaStoreManager,
         private val fileNameGenerator: FileNameGenerator,
-        private val imageUtils: ImageUtils,
+        private val pairImageComposer: PairImageComposer,
         private val appSettingsRepository: AppSettingsRepository,
     ) : PhotoPairRepository {
         override fun getPairsByProject(projectId: Long): Flow<List<PhotoPair>> =
@@ -224,7 +224,7 @@ class PhotoPairRepositoryImpl
                     )
 
                 // combineSideBySide는 내부에서 EXIF 보정 + recycle 처리
-                val combined = imageUtils.combineSideBySide(beforeUri, afterUri)
+                val combined = pairImageComposer.combineSideBySide(beforeUri, afterUri)
 
                 val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
                 val settings = appSettingsRepository.settingsFlow.first()
