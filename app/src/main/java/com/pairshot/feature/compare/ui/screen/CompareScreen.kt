@@ -48,11 +48,9 @@ fun CompareScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 10.dp),
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
         ) {
             CompareHeader(
-                pairNumber = pairNumber,
-                pairsSize = pairs.size,
                 pairStatus = pair?.status,
                 isCombining = isCombining,
                 menuExpanded = menuExpanded,

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.JoinRight
 import androidx.compose.material3.Card
@@ -43,15 +44,7 @@ fun PairCard(
 ) {
     val successColor = LocalPairShotExtendedColors.current.success
     val borderStroke =
-        when {
-            selectionMode && isSelected -> {
-                BorderStroke(2.dp, successColor)
-            }
-
-            else -> {
-                BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
-            }
-        }
+        if (selectionMode && isSelected) BorderStroke(2.dp, successColor) else null
 
     Card(
         modifier =
@@ -89,14 +82,7 @@ fun PairCard(
                                     .weight(1f)
                                     .aspectRatio(3f / 4f)
                                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "After",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            )
-                        }
+                        )
                     }
 
                     PairStatus.PAIRED,
@@ -121,7 +107,7 @@ fun PairCard(
                     modifier =
                         Modifier
                             .align(Alignment.TopEnd)
-                            .padding(end = 8.dp, top = 6.dp),
+                            .padding(end = 8.dp, top = 8.dp),
                 )
             }
         }
@@ -140,11 +126,7 @@ fun CombinedCard(
 ) {
     val successColor = LocalPairShotExtendedColors.current.success
     val borderStroke =
-        when {
-            selectionMode && isSelected -> BorderStroke(2.dp, successColor)
-            selectionMode -> BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
-            else -> BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary)
-        }
+        if (selectionMode && isSelected) BorderStroke(2.dp, successColor) else null
 
     Card(
         modifier =
@@ -174,19 +156,18 @@ fun CombinedCard(
 
 @Composable
 private fun CombinedStatusBadge(modifier: Modifier = Modifier) {
-    val successColor = LocalPairShotExtendedColors.current.success
     Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = successColor,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
+        modifier = modifier.size(28.dp),
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         tonalElevation = 0.dp,
-        shadowElevation = 2.dp,
+        shadowElevation = 0.dp,
     ) {
         Icon(
             imageVector = Icons.Filled.JoinRight,
             contentDescription = null,
-            modifier = Modifier.padding(5.dp).size(24.dp),
+            modifier = Modifier.padding(4.dp).size(20.dp),
         )
     }
 }

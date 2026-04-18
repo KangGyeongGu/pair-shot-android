@@ -23,6 +23,7 @@ fun ProjectListRoute(
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var showDeleteSelectedDialog by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
     var showTopMenu by remember { mutableStateOf(false) }
 
     ProjectListScreen(
@@ -32,6 +33,7 @@ fun ProjectListRoute(
         groupMode = groupMode,
         showCreateDialog = showCreateDialog,
         showDeleteSelectedDialog = showDeleteSelectedDialog,
+        showRenameDialog = showRenameDialog,
         showTopMenu = showTopMenu,
         viewModel = viewModel,
         onNavigateToSettings = onNavigateToSettings,
@@ -40,6 +42,8 @@ fun ProjectListRoute(
         onDismissCreateDialog = { showCreateDialog = false },
         onShowDeleteSelectedDialog = { showDeleteSelectedDialog = true },
         onDismissDeleteSelectedDialog = { showDeleteSelectedDialog = false },
+        onShowRenameDialog = { showRenameDialog = true },
+        onDismissRenameDialog = { showRenameDialog = false },
         onShowTopMenu = { showTopMenu = true },
         onDismissTopMenu = { showTopMenu = false },
     )

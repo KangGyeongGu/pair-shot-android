@@ -135,9 +135,18 @@ class GalleryViewModel
         }
 
         fun toggleSelection(pairId: Long) {
-            _selectedIds.update { ids ->
-                if (pairId in ids) ids - pairId else ids + pairId
+            val next =
+                _selectedIds.value.toMutableSet().apply {
+                    if (!add(pairId)) remove(pairId)
+                }
+            _selectedIds.value = next
+            if (next.isEmpty()) {
+                _selectionMode.value = false
             }
+        }
+
+        fun deselectAll() {
+            _selectedIds.value = emptySet()
         }
 
         fun selectAll() {
@@ -170,13 +179,14 @@ class GalleryViewModel
                     _snackbarMessage.emit("합성할 수 있는 페어가 없습니다")
                     return@launch
                 }
+                _snackbarMessage.emit("원본 합성 시작 · ${pairedIds.size}개")
                 _combineProgress.value = CombineProgress(0, pairedIds.size)
                 val success =
                     batchCombineUseCase(pairedIds) { current, total ->
                         _combineProgress.value = CombineProgress(current, total)
                     }
                 _combineProgress.value = null
-                _snackbarMessage.emit("${success}개 합성 완료")
+                _snackbarMessage.emit("합성 완료 · ${success}개")
                 exitSelectionMode()
             }
         }

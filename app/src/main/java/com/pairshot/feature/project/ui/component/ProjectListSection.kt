@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.core.domain.project.Project
 import com.pairshot.feature.project.ui.viewmodel.ProjectGroupMode
 import java.time.Instant
@@ -130,40 +131,24 @@ internal fun ProjectGroupFilterRow(
             modifier
                 .fillMaxWidth()
                 .padding(horizontal = PairShotSpacing.screenPadding),
-        horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.cardPadding),
+        horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.cardPadding, Alignment.End),
     ) {
         options.forEach { (mode, label) ->
             val selected = mode == groupMode
-            Column(
+            Text(
+                text = label,
+                style =
+                    PairShotTypographyTokens.labelExtraSmall.copy(
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    ),
+                color =
+                    if (selected) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                 modifier = Modifier.clickable { onGroupModeChange(mode) },
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color =
-                        if (selected) {
-                            MaterialTheme.colorScheme.onSurface
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Spacer(
-                    modifier =
-                        Modifier
-                            .width(28.dp)
-                            .height(2.dp)
-                            .background(
-                                if (selected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    Color.Transparent
-                                },
-                            ),
-                )
-            }
+            )
         }
     }
 }
@@ -200,7 +185,6 @@ internal fun ProjectGroupCard(
                 .padding(horizontal = PairShotSpacing.screenPadding),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column {
             projects.forEachIndexed { index, project ->

@@ -3,13 +3,12 @@ package com.pairshot.feature.compare.ui.component
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -19,19 +18,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.ModalShape
 
 @Composable
 internal fun CompareModalScaffold(
     onDismiss: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val isDark = isSystemInDarkTheme()
-
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = if (isDark) 0.62f else 0.45f))
+                .background(Color.Black.copy(alpha = 0.45f))
                 .pointerInput(Unit) {
                     detectTapGestures { onDismiss() }
                 }.padding(horizontal = 16.dp, vertical = 28.dp),
@@ -40,23 +38,19 @@ internal fun CompareModalScaffold(
         Card(
             colors =
                 CardDefaults.cardColors(
-                    containerColor =
-                        if (isDark) {
-                            MaterialTheme.colorScheme.surface
-                        } else {
-                            MaterialTheme.colorScheme.background
-                        },
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
-            elevation = CardDefaults.cardElevation(defaultElevation = if (isDark) 14.dp else 8.dp),
-            shape = RoundedCornerShape(14.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+            shape = ModalShape,
             border =
                 BorderStroke(
                     width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = if (isDark) 0.65f else 0.35f),
+                    color = MaterialTheme.colorScheme.outlineVariant,
                 ),
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .widthIn(max = 560.dp)
                     .wrapContentHeight()
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = {})

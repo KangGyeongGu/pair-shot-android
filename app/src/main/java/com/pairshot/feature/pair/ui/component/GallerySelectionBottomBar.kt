@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
@@ -20,14 +22,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotTypographyTokens
 
 @Composable
 internal fun GallerySelectionBottomBar(
+    selectedCount: Int,
     onCombineSelected: () -> Unit,
     onExportSelected: () -> Unit,
     onShowDeleteDialog: () -> Unit,
 ) {
     Surface(
+        modifier = Modifier.navigationBarsPadding(),
         color = MaterialTheme.colorScheme.background,
         tonalElevation = 0.dp,
     ) {
@@ -35,17 +40,19 @@ internal fun GallerySelectionBottomBar(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = PairShotSpacing.screenPadding,
-                        vertical = PairShotSpacing.cardPadding,
-                    ),
+                    .height(PairShotSpacing.actionBar)
+                    .padding(horizontal = PairShotSpacing.screenPadding),
+            contentAlignment = Alignment.Center,
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = onCombineSelected) {
+                    IconButton(
+                        onClick = onCombineSelected,
+                        enabled = selectedCount > 0,
+                    ) {
                         Icon(
                             imageVector = Icons.Default.JoinRight,
                             contentDescription = "합성",
@@ -53,11 +60,14 @@ internal fun GallerySelectionBottomBar(
                     }
                     Text(
                         text = "합성",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = PairShotTypographyTokens.labelExtraSmall,
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = onExportSelected) {
+                    IconButton(
+                        onClick = onExportSelected,
+                        enabled = selectedCount > 0,
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Share,
                             contentDescription = "공유",
@@ -65,11 +75,14 @@ internal fun GallerySelectionBottomBar(
                     }
                     Text(
                         text = "공유",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = PairShotTypographyTokens.labelExtraSmall,
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(onClick = onShowDeleteDialog) {
+                    IconButton(
+                        onClick = onShowDeleteDialog,
+                        enabled = selectedCount > 0,
+                    ) {
                         Icon(
                             imageVector = Icons.Default.DeleteForever,
                             contentDescription = "삭제",
@@ -78,7 +91,7 @@ internal fun GallerySelectionBottomBar(
                     }
                     Text(
                         text = "삭제",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = PairShotTypographyTokens.labelExtraSmall,
                         color = MaterialTheme.colorScheme.error,
                     )
                 }

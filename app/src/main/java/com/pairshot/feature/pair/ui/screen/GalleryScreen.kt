@@ -2,7 +2,9 @@ package com.pairshot.feature.pair.ui.screen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Camera
@@ -19,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.feature.pair.ui.component.GalleryFilterRow
@@ -51,6 +54,7 @@ internal fun GalleryScreen(
     onNavigateToExport: (Set<Long>) -> Unit,
     onExitSelectionMode: () -> Unit,
     onSelectAll: () -> Unit,
+    onDeselectAll: () -> Unit,
     onShowMoreMenu: () -> Unit,
     onDismissMoreMenu: () -> Unit,
     onEnterSelectionMode: () -> Unit,
@@ -82,10 +86,16 @@ internal fun GalleryScreen(
                 projectName = projectName,
                 selectionMode = selectionMode,
                 selectedCount = selectedIds.size,
+                totalCount =
+                    when (val state = uiState) {
+                        is GalleryUiState.Success -> state.pairs.size
+                        else -> 0
+                    },
                 showMoreMenu = showMoreMenu,
                 onExitSelectionMode = onExitSelectionMode,
                 onNavigateBack = onNavigateBack,
                 onSelectAll = onSelectAll,
+                onDeselectAll = onDeselectAll,
                 onShowMoreMenu = onShowMoreMenu,
                 onDismissMoreMenu = onDismissMoreMenu,
                 onEnterSelectionMode = onEnterSelectionMode,
@@ -96,6 +106,7 @@ internal fun GalleryScreen(
         bottomBar = {
             if (selectionMode) {
                 GallerySelectionBottomBar(
+                    selectedCount = selectedIds.size,
                     onCombineSelected = onCombineSelected,
                     onExportSelected = { onNavigateToExport(selectedIds) },
                     onShowDeleteDialog = onShowDeleteDialog,
@@ -161,12 +172,14 @@ internal fun GalleryScreen(
                             .fillMaxSize()
                             .padding(innerPadding),
                 ) {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                     GalleryFilterRow(
                         totalCount = state.pairs.size,
                         combinedCount = state.combinedCount,
                         showCombinedOnly = showCombinedOnly,
                         onToggleFilter = onToggleFilter,
                     )
+                    Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                     PairGridSection(
                         pairs = displayedPairs,
                         showCombinedOnly = showCombinedOnly,

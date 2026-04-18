@@ -84,3 +84,14 @@ val PairShotTypography =
                 letterSpacing = 0.2.sp,
             ),
     )
+
+object PairShotTypographyTokens {
+    val labelExtraSmall =
+        TextStyle(
+            fontFamily = PretendardFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = 10.sp,
+            lineHeight = 14.sp,
+            letterSpacing = 0.sp,
+        )
+}

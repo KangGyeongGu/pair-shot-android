@@ -1,6 +1,7 @@
 package com.pairshot.feature.pair.ui.component
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Close
@@ -18,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.pairshot.core.ui.component.MarqueeTitleText
 import com.pairshot.core.ui.component.PairShotTopMenu
 import com.pairshot.core.ui.component.PairShotTopMenuDivider
@@ -29,10 +31,12 @@ internal fun GalleryTopBar(
     projectName: String,
     selectionMode: Boolean,
     selectedCount: Int,
+    totalCount: Int,
     showMoreMenu: Boolean,
     onExitSelectionMode: () -> Unit,
     onNavigateBack: () -> Unit,
     onSelectAll: () -> Unit,
+    onDeselectAll: () -> Unit,
     onShowMoreMenu: () -> Unit,
     onDismissMoreMenu: () -> Unit,
     onEnterSelectionMode: () -> Unit,
@@ -40,6 +44,7 @@ internal fun GalleryTopBar(
     onShowProjectDeleteDialog: () -> Unit,
 ) {
     TopAppBar(
+        modifier = Modifier.statusBarsPadding(),
         title = {
             if (selectionMode) {
                 Text(
@@ -69,8 +74,9 @@ internal fun GalleryTopBar(
         },
         actions = {
             if (selectionMode) {
-                TextButton(onClick = onSelectAll) {
-                    Text(text = "전체선택")
+                val allSelected = selectedCount >= totalCount && totalCount > 0
+                TextButton(onClick = if (allSelected) onDeselectAll else onSelectAll) {
+                    Text(text = if (allSelected) "전체해제" else "전체선택")
                 }
             } else {
                 Box {

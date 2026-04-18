@@ -27,9 +27,11 @@ import com.pairshot.core.ui.component.PairShotTopMenuItemText
 internal fun ProjectListTopBar(
     selectionMode: Boolean,
     selectedCount: Int,
+    totalCount: Int,
     showTopMenu: Boolean,
     onExitSelectionMode: () -> Unit,
     onSelectAll: () -> Unit,
+    onDeselectAll: () -> Unit,
     onShowTopMenu: () -> Unit,
     onDismissTopMenu: () -> Unit,
     onEnterSelectionMode: () -> Unit,
@@ -39,12 +41,7 @@ internal fun ProjectListTopBar(
         title = {
             Text(
                 text = if (selectionMode) "${selectedCount}개 선택됨" else "PairShot",
-                style =
-                    if (selectionMode) {
-                        MaterialTheme.typography.titleLarge
-                    } else {
-                        MaterialTheme.typography.headlineMedium
-                    },
+                style = MaterialTheme.typography.titleLarge,
             )
         },
         navigationIcon = {
@@ -59,8 +56,9 @@ internal fun ProjectListTopBar(
         },
         actions = {
             if (selectionMode) {
-                TextButton(onClick = onSelectAll) {
-                    Text(text = "전체선택")
+                val allSelected = totalCount > 0 && selectedCount >= totalCount
+                TextButton(onClick = if (allSelected) onDeselectAll else onSelectAll) {
+                    Text(text = if (allSelected) "전체해제" else "전체선택")
                 }
             } else {
                 Box {

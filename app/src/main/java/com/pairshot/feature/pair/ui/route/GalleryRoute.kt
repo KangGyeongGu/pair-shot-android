@@ -64,6 +64,7 @@ fun GalleryRoute(
         onNavigateToExport = onNavigateToExport,
         onExitSelectionMode = { viewModel.exitSelectionMode() },
         onSelectAll = { viewModel.selectAll() },
+        onDeselectAll = { viewModel.deselectAll() },
         onShowMoreMenu = { showMoreMenu = true },
         onDismissMoreMenu = { showMoreMenu = false },
         onEnterSelectionMode = { viewModel.enterSelectionMode() },
