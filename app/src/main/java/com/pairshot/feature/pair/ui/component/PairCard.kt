@@ -25,7 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.designsystem.Success
+import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
@@ -41,10 +41,11 @@ fun PairCard(
     isSelected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
 ) {
+    val successColor = LocalPairShotExtendedColors.current.success
     val borderStroke =
         when {
             selectionMode && isSelected -> {
-                BorderStroke(2.dp, Success)
+                BorderStroke(2.dp, successColor)
             }
 
             else -> {
@@ -137,9 +138,10 @@ fun CombinedCard(
     isSelected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
 ) {
+    val successColor = LocalPairShotExtendedColors.current.success
     val borderStroke =
         when {
-            selectionMode && isSelected -> BorderStroke(2.dp, Success)
+            selectionMode && isSelected -> BorderStroke(2.dp, successColor)
             selectionMode -> BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline)
             else -> BorderStroke(0.5.dp, MaterialTheme.colorScheme.primary)
         }
@@ -172,10 +174,11 @@ fun CombinedCard(
 
 @Composable
 private fun CombinedStatusBadge(modifier: Modifier = Modifier) {
+    val successColor = LocalPairShotExtendedColors.current.success
     Surface(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
-        color = Success,
+        color = successColor,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         tonalElevation = 0.dp,
         shadowElevation = 2.dp,

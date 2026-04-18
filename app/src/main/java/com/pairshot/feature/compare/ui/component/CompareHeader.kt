@@ -3,14 +3,12 @@ package com.pairshot.feature.compare.ui.component
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.domain.pair.PairStatus
+import com.pairshot.core.ui.component.PairShotTopMenu
+import com.pairshot.core.ui.component.PairShotTopMenuDivider
+import com.pairshot.core.ui.component.PairShotTopMenuItem
 
 @Composable
 internal fun CompareHeader(
@@ -39,17 +40,18 @@ internal fun CompareHeader(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 2.dp),
+                .height(44.dp)
+                .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = onNavigateBack,
-            modifier = Modifier.size(30.dp),
+            modifier = Modifier.size(48.dp),
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "닫기",
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
         Text(
@@ -66,23 +68,21 @@ internal fun CompareHeader(
         Box {
             IconButton(
                 onClick = { onMenuExpandedChange(true) },
-                modifier = Modifier.size(30.dp),
+                modifier = Modifier.size(48.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "더보기",
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
-            DropdownMenu(
+            PairShotTopMenu(
                 expanded = menuExpanded,
                 onDismissRequest = { onMenuExpandedChange(false) },
-                containerColor = MaterialTheme.colorScheme.surface,
-                shape = MaterialTheme.shapes.medium,
             ) {
                 when (pairStatus) {
                     PairStatus.PAIRED -> {
-                        DropdownMenuItem(
+                        PairShotTopMenuItem(
                             text = { Text("합성 이미지 생성") },
                             onClick = {
                                 onMenuExpandedChange(false)
@@ -90,30 +90,30 @@ internal fun CompareHeader(
                             },
                             enabled = !isCombining,
                         )
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                        PairShotTopMenuDivider()
                     }
 
                     PairStatus.COMBINED -> {
-                        DropdownMenuItem(
+                        PairShotTopMenuItem(
                             text = { Text("합성 결과 보기") },
                             onClick = {
                                 onMenuExpandedChange(false)
                             },
                         )
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                        PairShotTopMenuDivider()
                     }
 
                     else -> {}
                 }
-                DropdownMenuItem(
+                PairShotTopMenuItem(
                     text = { Text("After 재촬영") },
                     onClick = {
                         onMenuExpandedChange(false)
                         onPrepareRetake()
                     },
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                DropdownMenuItem(
+                PairShotTopMenuDivider()
+                PairShotTopMenuItem(
                     text = { Text(text = "삭제", color = MaterialTheme.colorScheme.error) },
                     onClick = {
                         onMenuExpandedChange(false)

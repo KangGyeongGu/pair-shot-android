@@ -29,8 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.designsystem.Success
 import com.pairshot.core.domain.project.Project
 import com.pairshot.feature.project.ui.viewmodel.ProjectGroupMode
 import java.time.Instant
@@ -47,13 +47,14 @@ internal fun ProjectItem(
     onClick: () -> Unit,
     onToggleSelection: () -> Unit,
 ) {
+    val successColor = LocalPairShotExtendedColors.current.success
     val shape = MaterialTheme.shapes.small
     val rowModifier =
         when {
             selectionMode && isSelected -> {
                 Modifier
                     .clip(shape)
-                    .border(BorderStroke(2.dp, Success), shape)
+                    .border(BorderStroke(2.dp, successColor), shape)
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
             }
 

@@ -5,37 +5,65 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
+
+// Success / Warning을 CompositionLocal로 확장
+data class PairShotExtendedColors(
+    val success: androidx.compose.ui.graphics.Color,
+    val warning: androidx.compose.ui.graphics.Color,
+)
+
+val LocalPairShotExtendedColors =
+    staticCompositionLocalOf {
+        PairShotExtendedColors(
+            success = LightSuccess,
+            warning = LightWarning,
+        )
+    }
 
 private val DarkColorScheme =
     darkColorScheme(
         primary = DarkPrimary,
-        onPrimary = OnPrimary,
+        onPrimary = DarkOnPrimary,
+        primaryContainer = DarkPrimaryContainer,
+        onPrimaryContainer = DarkOnPrimaryContainer,
         background = DarkBackground,
-        onBackground = DarkOnBackground,
+        onBackground = DarkOnSurface,
         surface = DarkSurface,
-        onSurface = DarkOnBackground,
-        surfaceVariant = DarkSurfaceVariant,
-        onSurfaceVariant = DarkOnBackgroundVariant,
+        onSurface = DarkOnSurface,
+        surfaceVariant = DarkSurfaceContainer,
+        onSurfaceVariant = DarkOnSurfaceVariant,
+        surfaceContainer = DarkSurfaceContainer,
+        surfaceContainerHigh = DarkSurfaceContainerHigh,
         error = DarkError,
-        onError = OnPrimary,
-        outline = DarkDivider,
-        outlineVariant = DarkDivider,
+        onError = DarkOnError,
+        errorContainer = DarkErrorContainer,
+        onErrorContainer = DarkOnErrorContainer,
+        outline = DarkOutline,
+        outlineVariant = DarkOutlineVariant,
     )
 
 private val LightColorScheme =
     lightColorScheme(
         primary = LightPrimary,
-        onPrimary = OnPrimary,
+        onPrimary = LightOnPrimary,
+        primaryContainer = LightPrimaryContainer,
+        onPrimaryContainer = LightOnPrimaryContainer,
         background = LightBackground,
-        onBackground = LightOnBackground,
+        onBackground = LightOnSurface,
         surface = LightSurface,
-        onSurface = LightOnBackground,
-        surfaceVariant = LightSurfaceVariant,
-        onSurfaceVariant = LightOnBackgroundVariant,
+        onSurface = LightOnSurface,
+        surfaceVariant = LightSurfaceContainer,
+        onSurfaceVariant = LightOnSurfaceVariant,
+        surfaceContainer = LightSurfaceContainer,
+        surfaceContainerHigh = LightSurfaceContainerHigh,
         error = LightError,
-        onError = OnPrimary,
-        outline = LightDivider,
-        outlineVariant = LightDivider,
+        onError = LightOnError,
+        errorContainer = LightErrorContainer,
+        onErrorContainer = LightOnErrorContainer,
+        outline = LightOutline,
+        outlineVariant = LightOutlineVariant,
     )
 
 @Composable
@@ -44,11 +72,19 @@ fun PairShotTheme(
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val extendedColors =
+        if (darkTheme) {
+            PairShotExtendedColors(success = DarkSuccess, warning = DarkWarning)
+        } else {
+            PairShotExtendedColors(success = LightSuccess, warning = LightWarning)
+        }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = PairShotTypography,
-        shapes = PairShotShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalPairShotExtendedColors provides extendedColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = PairShotTypography,
+            shapes = PairShotShapes,
+            content = content,
+        )
+    }
 }
