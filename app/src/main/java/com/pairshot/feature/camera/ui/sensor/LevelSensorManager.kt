@@ -1,4 +1,4 @@
-package com.pairshot.ui.camera
+package com.pairshot.feature.camera.ui.sensor
 
 import android.content.Context
 import android.hardware.Sensor

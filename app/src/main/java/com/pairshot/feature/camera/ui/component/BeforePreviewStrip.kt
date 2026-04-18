@@ -1,4 +1,4 @@
-package com.pairshot.ui.component
+package com.pairshot.feature.camera.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +28,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pairshot.ui.component.ImageProfile
+import com.pairshot.ui.component.ProfiledAsyncImage
 
 @Composable
 fun BeforePreviewStrip(

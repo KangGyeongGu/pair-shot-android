@@ -1,4 +1,4 @@
-package com.pairshot.ui.component
+package com.pairshot.feature.camera.ui.component
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween

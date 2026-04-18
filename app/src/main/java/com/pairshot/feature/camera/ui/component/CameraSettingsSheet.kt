@@ -1,4 +1,4 @@
-package com.pairshot.ui.component
+package com.pairshot.feature.camera.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -44,13 +44,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import com.pairshot.ui.camera.CameraCapabilities
-import com.pairshot.ui.camera.CameraSettingsState
-import com.pairshot.ui.camera.FlashMode
+import com.pairshot.feature.camera.ui.state.CameraCapabilities
+import com.pairshot.feature.camera.ui.state.CameraSettingsState
+import com.pairshot.feature.camera.ui.state.FlashMode
 import kotlin.math.roundToInt
 
 @Composable
-fun CameraSettingsPanel(
+fun CameraSettingsSheet(
     visible: Boolean,
     settingsState: CameraSettingsState,
     capabilities: CameraCapabilities,

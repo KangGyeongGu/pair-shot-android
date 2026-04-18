@@ -1,15 +1,8 @@
-package com.pairshot.ui.aftercamera
+package com.pairshot.feature.camera.ui.screen
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
-import android.provider.Settings
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraSelector
@@ -77,122 +70,26 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.concurrent.futures.await
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.ui.camera.FlashMode
-import com.pairshot.ui.component.BeforePreviewStrip
-import com.pairshot.ui.component.CameraSettingsPanel
-import com.pairshot.ui.component.FocusExposureOverlay
-import com.pairshot.ui.component.GridOverlay
-import com.pairshot.ui.component.LevelOverlay
-import com.pairshot.ui.component.OverlayGuide
-import com.pairshot.ui.component.ShutterButton
-import com.pairshot.ui.component.ZoomControls
+import com.pairshot.feature.camera.ui.component.BeforePreviewStrip
+import com.pairshot.feature.camera.ui.component.CameraSettingsSheet
+import com.pairshot.feature.camera.ui.component.FocusExposureOverlay
+import com.pairshot.feature.camera.ui.component.GridOverlay
+import com.pairshot.feature.camera.ui.component.LevelOverlay
+import com.pairshot.feature.camera.ui.component.OverlayGuide
+import com.pairshot.feature.camera.ui.component.ShutterButton
+import com.pairshot.feature.camera.ui.component.ZoomControls
+import com.pairshot.feature.camera.ui.state.FlashMode
+import com.pairshot.feature.camera.ui.viewmodel.AfterCameraEvent
+import com.pairshot.feature.camera.ui.viewmodel.AfterCameraViewModel
 import kotlinx.coroutines.delay
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun AfterCameraScreen(
-    projectId: Long,
-    initialPairId: Long? = null,
-    onNavigateBack: () -> Unit = {},
-    viewModel: AfterCameraViewModel = hiltViewModel(),
-) {
-    val context = LocalContext.current
-    val activity = LocalActivity.current
-
-    var hasCameraPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_GRANTED,
-        )
-    }
-    var showRationale by remember { mutableStateOf(false) }
-    var permissionPermanentlyDenied by remember { mutableStateOf(false) }
-
-    val permissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) { isGranted ->
-            if (isGranted) {
-                hasCameraPermission = true
-            } else {
-                val shouldShowRationale =
-                    activity?.let {
-                        ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CAMERA)
-                    } ?: false
-                if (shouldShowRationale) {
-                    showRationale = true
-                } else {
-                    permissionPermanentlyDenied = true
-                }
-            }
-        }
-
-    LaunchedEffect(Unit) {
-        if (!hasCameraPermission) {
-            val shouldShowRationale =
-                activity?.let {
-                    ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CAMERA)
-                } ?: false
-            if (shouldShowRationale) {
-                showRationale = true
-            } else {
-                permissionLauncher.launch(Manifest.permission.CAMERA)
-            }
-        }
-    }
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black),
-    ) {
-        when {
-            hasCameraPermission -> {
-                AfterCameraContent(
-                    viewModel = viewModel,
-                    onNavigateBack = onNavigateBack,
-                )
-            }
-
-            permissionPermanentlyDenied -> {
-                AfterCameraPermissionDeniedContent(
-                    onOpenSettings = {
-                        val intent =
-                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                data = Uri.fromParts("package", context.packageName, null)
-                            }
-                        context.startActivity(intent)
-                    },
-                    onNavigateBack = onNavigateBack,
-                )
-            }
-
-            showRationale -> {
-                AfterCameraPermissionRationaleContent(
-                    onRequestPermission = {
-                        showRationale = false
-                        permissionLauncher.launch(Manifest.permission.CAMERA)
-                    },
-                    onNavigateBack = onNavigateBack,
-                )
-            }
-
-            else -> {
-                // 권한 요청 중 — 빈 검은 화면 유지
-            }
-        }
-    }
-}
-
-@Composable
-private fun AfterCameraContent(
+internal fun AfterCameraScreen(
     viewModel: AfterCameraViewModel,
     onNavigateBack: () -> Unit,
 ) {
@@ -698,7 +595,7 @@ private fun AfterCameraContent(
                 Spacer(modifier = Modifier.height(bottomSpacerHeight))
             }
 
-            CameraSettingsPanel(
+            CameraSettingsSheet(
                 visible = settingsState.showPanel,
                 settingsState = settingsState,
                 capabilities = capabilities,
@@ -754,76 +651,6 @@ private fun AfterCameraPreviewOverlays(
             exit = fadeOut(),
         ) {
             LevelOverlay(roll = roll)
-        }
-    }
-}
-
-@Composable
-private fun AfterCameraPermissionRationaleContent(
-    onRequestPermission: () -> Unit,
-    onNavigateBack: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "카메라 권한 필요",
-            color = Color.White,
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "After 사진 촬영을 위해 카메라 접근 권한이 필요합니다.",
-            color = Color.White.copy(alpha = 0.75f),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        androidx.compose.material3.Button(onClick = onRequestPermission) {
-            Text(text = "권한 허용")
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        androidx.compose.material3.TextButton(onClick = onNavigateBack) {
-            Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
-        }
-    }
-}
-
-@Composable
-private fun AfterCameraPermissionDeniedContent(
-    onOpenSettings: () -> Unit,
-    onNavigateBack: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = "카메라 권한이 거부되었습니다",
-            color = Color.White,
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "설정 앱에서 PairShot의 카메라 권한을 직접 허용해 주세요.",
-            color = Color.White.copy(alpha = 0.75f),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        androidx.compose.material3.Button(onClick = onOpenSettings) {
-            Text(text = "설정으로 이동")
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        androidx.compose.material3.TextButton(onClick = onNavigateBack) {
-            Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
         }
     }
 }

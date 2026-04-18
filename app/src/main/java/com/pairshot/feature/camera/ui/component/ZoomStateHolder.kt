@@ -1,4 +1,4 @@
-package com.pairshot.ui.component
+package com.pairshot.feature.camera.ui.component
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

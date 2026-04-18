@@ -1,4 +1,4 @@
-package com.pairshot.ui.component
+package com.pairshot.feature.camera.ui.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

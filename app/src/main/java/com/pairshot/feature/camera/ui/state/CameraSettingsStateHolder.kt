@@ -1,4 +1,4 @@
-package com.pairshot.ui.camera
+package com.pairshot.feature.camera.ui.state
 
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector

@@ -1,4 +1,4 @@
-package com.pairshot.ui.camera
+package com.pairshot.feature.camera.ui.viewmodel
 
 import android.content.Context
 import androidx.camera.core.CameraInfo
@@ -9,8 +9,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.domain.usecase.capture.SaveBeforePhotoUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
-import com.pairshot.ui.component.ZoomStateHolder
-import com.pairshot.ui.component.ZoomUiState
+import com.pairshot.feature.camera.ui.component.ZoomStateHolder
+import com.pairshot.feature.camera.ui.component.ZoomUiState
+import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
+import com.pairshot.feature.camera.ui.state.CameraCapabilities
+import com.pairshot.feature.camera.ui.state.CameraSettingsState
+import com.pairshot.feature.camera.ui.state.CameraSettingsStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job

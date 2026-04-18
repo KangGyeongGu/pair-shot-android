@@ -1,4 +1,4 @@
-package com.pairshot.ui.camera
+package com.pairshot.feature.camera.ui.state
 
 import android.util.Range
 import android.util.Rational

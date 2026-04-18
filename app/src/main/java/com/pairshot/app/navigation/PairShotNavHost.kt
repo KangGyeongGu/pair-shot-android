@@ -26,6 +26,8 @@ import com.pairshot.app.navigation.route.ProjectDetail
 import com.pairshot.app.navigation.route.ProjectList
 import com.pairshot.app.navigation.route.Settings
 import com.pairshot.app.navigation.route.WatermarkSettings
+import com.pairshot.feature.camera.ui.route.AfterCameraRoute
+import com.pairshot.feature.camera.ui.route.CameraRoute
 import com.pairshot.feature.compare.ui.route.CompareRoute
 import com.pairshot.feature.export.ui.route.ExportRoute
 import com.pairshot.feature.pair.ui.route.GalleryRoute
@@ -33,8 +35,6 @@ import com.pairshot.feature.project.ui.route.ProjectListRoute
 import com.pairshot.feature.settings.ui.route.SettingsRoute
 import com.pairshot.feature.settings.ui.route.WatermarkSettingsRoute
 import com.pairshot.feature.settings.ui.screen.LicenseScreen
-import com.pairshot.ui.aftercamera.AfterCameraScreen
-import com.pairshot.ui.camera.CameraScreen
 
 @Composable
 fun PairShotNavHost(navController: NavHostController = rememberNavController()) {
@@ -106,14 +106,14 @@ fun PairShotNavHost(navController: NavHostController = rememberNavController()) 
         }
         composable<Camera> { backStackEntry ->
             val route = backStackEntry.toRoute<Camera>()
-            CameraScreen(
+            CameraRoute(
                 projectId = route.projectId,
                 onNavigateBack = { navController.popBackStack() },
             )
         }
         composable<AfterCamera> { backStackEntry ->
             val route = backStackEntry.toRoute<AfterCamera>()
-            AfterCameraScreen(
+            AfterCameraRoute(
                 projectId = route.projectId,
                 initialPairId = route.initialPairId,
                 onNavigateBack = { navController.popBackStack() },
