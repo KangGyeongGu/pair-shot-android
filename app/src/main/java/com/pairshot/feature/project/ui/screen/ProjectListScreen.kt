@@ -230,7 +230,7 @@ internal fun ProjectListScreen(
                         contentPadding =
                             PaddingValues(
                                 top = PairShotSpacing.cardPadding,
-                                bottom = 96.dp,
+                                bottom = PairShotSpacing.fabOffset,
                             ),
                     ) {
                         item(key = "group_filter") {

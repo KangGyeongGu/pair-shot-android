@@ -16,12 +16,16 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+private val ImagePaneVerticalPadding = 5.dp
+private val ImageSeparatorWidth = 10.dp
 
 @Composable
 internal fun CompareImagePane(
@@ -40,7 +44,7 @@ internal fun CompareImagePane(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = PairShotSpacing.iconTextGap),
     ) {
         Text(
             text = "Before",
@@ -62,7 +66,7 @@ internal fun CompareImagePane(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 5.dp)
+                .padding(horizontal = PairShotSpacing.xs, vertical = ImagePaneVerticalPadding)
                 .pointerInput(pairs, currentPairId) {
                     var dragTotal = 0f
                     val swipeThreshold = 72f
@@ -98,7 +102,7 @@ internal fun CompareImagePane(
                         .weight(1f)
                         .aspectRatio(3f / 4f),
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(ImageSeparatorWidth))
             ProfiledAsyncImage(
                 data = pair?.afterPhotoUri,
                 profile = ImageProfile.DETAIL,

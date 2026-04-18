@@ -46,7 +46,7 @@ internal fun GallerySelectionBottomBar(
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.sectionGap, Alignment.CenterHorizontally),
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(

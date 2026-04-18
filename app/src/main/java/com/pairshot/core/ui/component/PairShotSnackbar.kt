@@ -23,6 +23,10 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.ModalShape
 
+private val SnackbarMinHeight = 52.dp
+private val SnackbarHorizontalPadding = 12.dp
+private val SnackbarVerticalPadding = 10.dp
+
 enum class SnackbarVariant { SUCCESS, INFO, WARNING, ERROR }
 
 @Composable
@@ -72,13 +76,13 @@ fun PairShotSnackbar(
         }
 
     Surface(
-        modifier = modifier.heightIn(min = 52.dp),
+        modifier = modifier.heightIn(min = SnackbarMinHeight),
         shape = ModalShape,
         color = containerColor,
         border = BorderStroke(1.dp, colorScheme.outlineVariant),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = SnackbarHorizontalPadding, vertical = SnackbarVerticalPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {

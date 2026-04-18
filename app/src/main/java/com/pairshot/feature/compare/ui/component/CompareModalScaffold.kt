@@ -19,6 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.ModalShape
+import com.pairshot.core.designsystem.PairShotSpacing
+
+private val CompareModalMaxWidth = 560.dp
+private val CompareModalVerticalPadding = 28.dp
 
 @Composable
 internal fun CompareModalScaffold(
@@ -32,7 +36,7 @@ internal fun CompareModalScaffold(
                 .background(Color.Black.copy(alpha = 0.45f))
                 .pointerInput(Unit) {
                     detectTapGestures { onDismiss() }
-                }.padding(horizontal = 16.dp, vertical = 28.dp),
+                }.padding(horizontal = PairShotSpacing.cardPadding, vertical = CompareModalVerticalPadding),
         contentAlignment = Alignment.Center,
     ) {
         Card(
@@ -50,7 +54,7 @@ internal fun CompareModalScaffold(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .widthIn(max = 560.dp)
+                    .widthIn(max = CompareModalMaxWidth)
                     .wrapContentHeight()
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = {})

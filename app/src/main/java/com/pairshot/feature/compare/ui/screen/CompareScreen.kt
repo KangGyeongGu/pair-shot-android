@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.feature.compare.ui.component.CompareHeader
 import com.pairshot.feature.compare.ui.component.CompareImagePane
@@ -48,7 +49,7 @@ fun CompareScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                    .padding(horizontal = PairShotSpacing.itemGap, vertical = PairShotSpacing.itemGap),
         ) {
             CompareHeader(
                 pairStatus = pair?.status,
@@ -61,7 +62,7 @@ fun CompareScreen(
                 onShowDeleteDialog = { showDeleteDialog = true },
             )
 
-            Spacer(modifier = Modifier.size(6.dp))
+            Spacer(modifier = Modifier.size(PairShotSpacing.iconTextGap))
 
             CompareImagePane(
                 pair = pair,

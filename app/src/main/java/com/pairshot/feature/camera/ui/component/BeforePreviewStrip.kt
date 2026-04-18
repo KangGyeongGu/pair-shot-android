@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
 
+private val DefaultStripHeight = 120.dp
+
 @Composable
 fun BeforePreviewStrip(
     beforePreviewUris: List<String>,
@@ -39,7 +41,7 @@ fun BeforePreviewStrip(
     onSelectIndex: ((Int) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     emptyMessage: String = "아직 촬영된 Before가 없습니다",
-    stripHeight: Dp = 120.dp,
+    stripHeight: Dp = DefaultStripHeight,
 ) {
     Box(
         modifier =

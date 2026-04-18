@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotDialog
 
 @Composable
@@ -21,7 +22,7 @@ internal fun CombiningDialog() {
         text = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.cardPadding),
             ) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp))
                 Text("이미지를 합성하고 있습니다", style = MaterialTheme.typography.bodyMedium)

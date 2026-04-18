@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotDialog
 
+private val InputFieldMinHeight = 40.dp
+private val InputErrorHeight = 20.dp
+
 private data class QualityOption(
     val label: String,
     val description: String,
@@ -201,7 +204,7 @@ internal fun FileNamePrefixDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 4.dp)
+                                .padding(bottom = PairShotSpacing.xs)
                                 .drawBehind {
                                     val lineColor = if (isError) errorColor else outlineColor
                                     drawLine(
@@ -214,7 +217,7 @@ internal fun FileNamePrefixDialog(
                         decorationBox = { innerTextField ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.heightIn(min = 40.dp),
+                                modifier = Modifier.heightIn(min = InputFieldMinHeight),
                             ) {
                                 Box(modifier = Modifier.weight(1f)) {
                                     if (prefixInput.isEmpty()) {
@@ -235,7 +238,7 @@ internal fun FileNamePrefixDialog(
                         },
                     )
                 }
-                Box(modifier = Modifier.height(20.dp)) {
+                Box(modifier = Modifier.height(InputErrorHeight)) {
                     if (isError) {
                         Text(
                             text = "접두어를 입력해주세요",

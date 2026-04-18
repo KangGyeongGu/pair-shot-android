@@ -12,7 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
@@ -49,7 +48,7 @@ internal fun PairGridSection(
                     start = PairShotSpacing.screenPadding,
                     top = PairShotSpacing.screenPadding,
                     end = PairShotSpacing.screenPadding,
-                    bottom = if (selectionMode) PairShotSpacing.screenPadding else 96.dp,
+                    bottom = if (selectionMode) PairShotSpacing.screenPadding else PairShotSpacing.fabOffset,
                 ),
             horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.itemGap),
             verticalArrangement = Arrangement.spacedBy(PairShotSpacing.itemGap),

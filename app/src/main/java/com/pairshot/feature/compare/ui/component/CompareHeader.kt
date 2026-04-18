@@ -18,10 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.ui.component.PairShotTopMenu
 import com.pairshot.core.ui.component.PairShotTopMenuDivider
 import com.pairshot.core.ui.component.PairShotTopMenuItem
+
+private val CompareHeaderHeight = 44.dp
 
 @Composable
 internal fun CompareHeader(
@@ -38,8 +41,8 @@ internal fun CompareHeader(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(44.dp)
-                .padding(horizontal = 4.dp),
+                .height(CompareHeaderHeight)
+                .padding(horizontal = PairShotSpacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
@@ -77,16 +80,6 @@ internal fun CompareHeader(
                                 onCombinePair()
                             },
                             enabled = !isCombining,
-                        )
-                        PairShotTopMenuDivider()
-                    }
-
-                    PairStatus.COMBINED -> {
-                        PairShotTopMenuItem(
-                            text = { Text("합성 결과 보기") },
-                            onClick = {
-                                onMenuExpandedChange(false)
-                            },
                         )
                         PairShotTopMenuDivider()
                     }

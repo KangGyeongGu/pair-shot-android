@@ -11,22 +11,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.pairshot.core.designsystem.ModalShape
 
+private val DialogHorizontalMargin = 32.dp
+private val DialogConfirmMaxWidth = 360.dp
+private val DialogOptionMaxWidth = 480.dp
+
 @Composable
 fun confirmDialogWidth(): Dp {
     val sw = LocalConfiguration.current.screenWidthDp.dp
-    return (sw - 32.dp).coerceAtMost(360.dp)
+    return (sw - DialogHorizontalMargin).coerceAtMost(DialogConfirmMaxWidth)
 }
 
 @Composable
 fun optionDialogWidth(): Dp {
     val sw = LocalConfiguration.current.screenWidthDp.dp
-    return (sw - 32.dp).coerceAtMost(480.dp)
+    return (sw - DialogHorizontalMargin).coerceAtMost(DialogOptionMaxWidth)
 }
 
 @Composable
 fun inputDialogWidth(): Dp {
     val sw = LocalConfiguration.current.screenWidthDp.dp
-    return (sw - 32.dp).coerceAtMost(480.dp)
+    return (sw - DialogHorizontalMargin).coerceAtMost(DialogOptionMaxWidth)
 }
 
 @Composable

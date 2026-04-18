@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
@@ -114,7 +115,7 @@ fun PairCard(
                     modifier =
                         Modifier
                             .align(Alignment.TopEnd)
-                            .padding(end = 8.dp, top = 8.dp),
+                            .padding(end = PairShotSpacing.iconTextGap, top = PairShotSpacing.iconTextGap),
                 )
             }
         }

@@ -18,4 +18,5 @@ object PairShotSpacing {
     val inputRow = 56.dp
     val appBar = 64.dp
     val actionBar = 72.dp
+    val fabOffset = 96.dp
 }

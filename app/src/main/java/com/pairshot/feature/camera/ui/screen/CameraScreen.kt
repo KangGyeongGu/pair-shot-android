@@ -48,6 +48,10 @@ import com.pairshot.feature.camera.ui.viewmodel.CameraEvent
 import com.pairshot.feature.camera.ui.viewmodel.CameraViewModel
 import kotlin.math.roundToInt
 
+private val CameraTopBarHeight = 56.dp
+private val CameraStripHeight = 120.dp
+private val CameraShutterHeight = 116.dp
+
 @Composable
 internal fun CameraScreen(
     projectId: Long,
@@ -158,9 +162,9 @@ internal fun CameraScreen(
         val fullHeightPx = with(density) { maxHeight.roundToPx() }
         val safeAvailableHeightPx = (fullHeightPx - safeTopPx - safeBottomPx).coerceAtLeast(0)
         val safeAvailableHeightDp = with(density) { safeAvailableHeightPx.toDp() }
-        val topSectionHeight = 56.dp
-        val stripSectionHeight = 120.dp
-        val shutterSectionHeight = 116.dp
+        val topSectionHeight = CameraTopBarHeight
+        val stripSectionHeight = CameraStripHeight
+        val shutterSectionHeight = CameraShutterHeight
         val bottomSpacerDesired = 32.dp
         val minPreviewHeight = 180.dp
 

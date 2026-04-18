@@ -103,11 +103,11 @@ fun CameraSettingsSheet(
             Column(
                 modifier =
                     Modifier
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = PairShotSpacing.cardPadding)
                         .widthIn(max = 520.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .padding(horizontal = 20.dp, vertical = 20.dp)
+                        .padding(horizontal = PairShotSpacing.screenPadding, vertical = PairShotSpacing.screenPadding)
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
@@ -142,7 +142,7 @@ fun CameraSettingsSheet(
                 }
 
                 if (overlayAlpha != null && onOverlayAlphaChange != null) {
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconSize))
                     OverlayAlphaSlider(
                         alpha = overlayAlpha,
                         enabled = overlayEnabled == true,
