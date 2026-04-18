@@ -22,4 +22,8 @@ interface AppSettingsRepository {
     suspend fun updateCameraNightMode(enabled: Boolean)
 
     suspend fun updateCameraHdr(enabled: Boolean)
+
+    suspend fun getLastExportPreset(): ExportPreset
+
+    suspend fun saveLastExportPreset(preset: ExportPreset)
 }

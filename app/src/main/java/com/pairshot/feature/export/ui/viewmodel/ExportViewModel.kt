@@ -9,6 +9,8 @@ import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.project.ProjectRepository
+import com.pairshot.core.domain.settings.AppSettingsRepository
+import com.pairshot.core.domain.settings.ExportPreset
 import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -59,6 +61,7 @@ class ExportViewModel
         private val photoPairRepository: PhotoPairRepository,
         private val exportRepository: ExportRepository,
         private val watermarkRepository: WatermarkRepository,
+        private val appSettingsRepository: AppSettingsRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<Export>()
@@ -96,7 +99,10 @@ class ExportViewModel
         val exportAction: SharedFlow<ExportAction> = _exportAction.asSharedFlow()
 
         init {
-            loadSelectedPairsInfo()
+            viewModelScope.launch {
+                loadLastExportPreset()
+                loadSelectedPairsInfo()
+            }
             loadWatermarkDefault()
         }
 
@@ -107,62 +113,85 @@ class ExportViewModel
             }
         }
 
+        private suspend fun loadLastExportPreset() {
+            val preset = appSettingsRepository.getLastExportPreset()
+            _exportFormat.value = if (preset.format == "ZIP") ExportFormat.ZIP else ExportFormat.INDIVIDUAL
+            _includeBefore.value = preset.includeBefore
+            _includeAfter.value = preset.includeAfter
+            _includeCombined.value = preset.includeCombined
+        }
+
+        private suspend fun saveCurrentPreset() {
+            appSettingsRepository.saveLastExportPreset(
+                ExportPreset(
+                    format = if (_exportFormat.value == ExportFormat.ZIP) "ZIP" else "INDIVIDUAL",
+                    includeBefore = _includeBefore.value,
+                    includeAfter = _includeAfter.value,
+                    includeCombined = _includeCombined.value,
+                ),
+            )
+        }
+
         fun setApplyWatermark(value: Boolean) {
             _applyWatermark.update { value }
         }
 
-        private fun loadSelectedPairsInfo() {
-            viewModelScope.launch {
-                val projectName =
+        private suspend fun loadSelectedPairsInfo() {
+            val projectName =
+                try {
+                    projectRepository.getById(projectId)?.name ?: "프로젝트"
+                } catch (_: Exception) {
+                    "프로젝트"
+                }
+
+            val pairs =
+                pairIds.mapNotNull { id ->
                     try {
-                        projectRepository.getById(projectId)?.name ?: "프로젝트"
+                        photoPairRepository.getById(id)
                     } catch (_: Exception) {
-                        "프로젝트"
+                        null
                     }
+                }
 
-                val pairs =
-                    pairIds.mapNotNull { id ->
-                        try {
-                            photoPairRepository.getById(id)
-                        } catch (_: Exception) {
-                            null
-                        }
-                    }
+            val beforeCount = pairs.count { it.beforePhotoUri.isNotBlank() }
+            val afterCount = pairs.count { it.afterPhotoUri != null }
+            val combinableCount =
+                pairs.count { it.status == PairStatus.PAIRED || it.status == PairStatus.COMBINED }
+            val incompleteCount = pairs.count { it.status == PairStatus.BEFORE_ONLY }
 
-                val afterCount = pairs.count { it.afterPhotoUri != null }
-                val combinableCount =
-                    pairs.count { it.status == PairStatus.PAIRED || it.status == PairStatus.COMBINED }
-                val incompleteCount = pairs.count { it.status == PairStatus.BEFORE_ONLY }
+            if (beforeCount == 0) _includeBefore.value = false
+            if (afterCount == 0) _includeAfter.value = false
+            if (combinableCount == 0) _includeCombined.value = false
 
-                if (afterCount == 0) _includeAfter.value = false
-                if (combinableCount == 0) _includeCombined.value = false
-
-                _uiState.value =
-                    ExportUiState.Success(
-                        projectName = projectName,
-                        pairCount = pairs.size,
-                        beforeCount = pairs.count { it.beforePhotoUri.isNotBlank() },
-                        afterCount = afterCount,
-                        combinedCount = combinableCount,
-                        incompleteCount = incompleteCount,
-                    )
-            }
+            _uiState.value =
+                ExportUiState.Success(
+                    projectName = projectName,
+                    pairCount = pairs.size,
+                    beforeCount = beforeCount,
+                    afterCount = afterCount,
+                    combinedCount = combinableCount,
+                    incompleteCount = incompleteCount,
+                )
         }
 
         fun setIncludeBefore(value: Boolean) {
             _includeBefore.update { value }
+            viewModelScope.launch { saveCurrentPreset() }
         }
 
         fun setIncludeAfter(value: Boolean) {
             _includeAfter.update { value }
+            viewModelScope.launch { saveCurrentPreset() }
         }
 
         fun setIncludeCombined(value: Boolean) {
             _includeCombined.update { value }
+            viewModelScope.launch { saveCurrentPreset() }
         }
 
         fun setExportFormat(format: ExportFormat) {
             _exportFormat.update { format }
+            viewModelScope.launch { saveCurrentPreset() }
         }
 
         private suspend fun ensureCombined() {

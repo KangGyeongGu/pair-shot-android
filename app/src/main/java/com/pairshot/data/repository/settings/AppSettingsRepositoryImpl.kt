@@ -2,9 +2,11 @@ package com.pairshot.data.repository.settings
 
 import com.pairshot.core.domain.settings.AppSettings
 import com.pairshot.core.domain.settings.AppSettingsRepository
+import com.pairshot.core.domain.settings.ExportPreset
 import com.pairshot.data.local.datastore.AppPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -74,4 +76,19 @@ class AppSettingsRepositoryImpl
         override suspend fun updateCameraNightMode(enabled: Boolean) = appPreferences.setCameraNightMode(enabled)
 
         override suspend fun updateCameraHdr(enabled: Boolean) = appPreferences.setCameraHdr(enabled)
+
+        override suspend fun getLastExportPreset(): ExportPreset {
+            val format = appPreferences.exportFormat.first()
+            val before = appPreferences.exportIncludeBefore.first()
+            val after = appPreferences.exportIncludeAfter.first()
+            val combined = appPreferences.exportIncludeCombined.first()
+            return ExportPreset(format = format, includeBefore = before, includeAfter = after, includeCombined = combined)
+        }
+
+        override suspend fun saveLastExportPreset(preset: ExportPreset) {
+            appPreferences.setExportFormat(preset.format)
+            appPreferences.setExportIncludeBefore(preset.includeBefore)
+            appPreferences.setExportIncludeAfter(preset.includeAfter)
+            appPreferences.setExportIncludeCombined(preset.includeCombined)
+        }
     }

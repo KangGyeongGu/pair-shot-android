@@ -35,6 +35,10 @@ class AppPreferences
             val CAMERA_FLASH_MODE = stringPreferencesKey("camera_flash_mode")
             val CAMERA_NIGHT_MODE = booleanPreferencesKey("camera_night_mode")
             val CAMERA_HDR = booleanPreferencesKey("camera_hdr")
+            val EXPORT_FORMAT = stringPreferencesKey("export_format")
+            val EXPORT_INCLUDE_BEFORE = booleanPreferencesKey("export_include_before")
+            val EXPORT_INCLUDE_AFTER = booleanPreferencesKey("export_include_after")
+            val EXPORT_INCLUDE_COMBINED = booleanPreferencesKey("export_include_combined")
         }
 
         val jpegQuality: Flow<Int> =
@@ -133,6 +137,50 @@ class AppPreferences
         suspend fun setCameraHdr(enabled: Boolean) {
             context.appDataStore.edit { prefs ->
                 prefs[Keys.CAMERA_HDR] = enabled
+            }
+        }
+
+        val exportFormat: Flow<String> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.EXPORT_FORMAT] ?: "ZIP"
+            }
+
+        val exportIncludeBefore: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.EXPORT_INCLUDE_BEFORE] ?: true
+            }
+
+        val exportIncludeAfter: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.EXPORT_INCLUDE_AFTER] ?: true
+            }
+
+        val exportIncludeCombined: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.EXPORT_INCLUDE_COMBINED] ?: true
+            }
+
+        suspend fun setExportFormat(format: String) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.EXPORT_FORMAT] = format
+            }
+        }
+
+        suspend fun setExportIncludeBefore(value: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.EXPORT_INCLUDE_BEFORE] = value
+            }
+        }
+
+        suspend fun setExportIncludeAfter(value: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.EXPORT_INCLUDE_AFTER] = value
+            }
+        }
+
+        suspend fun setExportIncludeCombined(value: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.EXPORT_INCLUDE_COMBINED] = value
             }
         }
     }
