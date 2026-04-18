@@ -10,10 +10,12 @@ import com.pairshot.data.local.storage.MediaStoreManager
 import com.pairshot.data.local.storage.ZipImageEntry
 import com.pairshot.data.local.storage.ZipManager
 import com.pairshot.domain.model.WatermarkConfig
+import com.pairshot.domain.repository.AppSettingsRepository
 import com.pairshot.domain.repository.ExportRepository
 import com.pairshot.util.ImageUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -29,6 +31,7 @@ class ExportRepositoryImpl
         private val mediaStoreManager: MediaStoreManager,
         private val watermarkManager: WatermarkManager,
         private val imageUtils: ImageUtils,
+        private val appSettingsRepository: AppSettingsRepository,
         @ApplicationContext private val context: Context,
     ) : ExportRepository {
         override suspend fun exportZip(
@@ -41,6 +44,7 @@ class ExportRepositoryImpl
             onProgress: (current: Int, total: Int) -> Unit,
         ): Unit =
             withContext(Dispatchers.IO) {
+                val jpegQuality = appSettingsRepository.settingsFlow.first().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
                 if (watermarkConfig != null) {
                     val tempDir = prepareTempDir("export_wm")
@@ -52,6 +56,7 @@ class ExportRepositoryImpl
                             includeCombined,
                             watermarkConfig,
                             tempDir,
+                            jpegQuality,
                         )
                     zipManager.createZip(entries = entries, outputUri = Uri.parse(outputUri), onProgress = onProgress)
                     tempDir.deleteRecursively()
@@ -71,6 +76,7 @@ class ExportRepositoryImpl
             onProgress: (current: Int, total: Int) -> Unit,
         ): String =
             withContext(Dispatchers.IO) {
+                val jpegQuality = appSettingsRepository.settingsFlow.first().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
                 val shareDir = File(context.cacheDir, "share")
                 shareDir.mkdirs()
@@ -86,6 +92,7 @@ class ExportRepositoryImpl
                             includeCombined,
                             watermarkConfig,
                             tempDir,
+                            jpegQuality,
                         )
                     zipManager.createZipToFile(entries = entries, outputFile = outputFile, onProgress = onProgress)
                     tempDir.deleteRecursively()
@@ -105,6 +112,7 @@ class ExportRepositoryImpl
             onProgress: (current: Int, total: Int) -> Unit,
         ): List<String> =
             withContext(Dispatchers.IO) {
+                val jpegQuality = appSettingsRepository.settingsFlow.first().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
                 val authority = "${context.packageName}.fileprovider"
 
@@ -156,9 +164,9 @@ class ExportRepositoryImpl
                 entries.mapIndexed { index, entry ->
                     val destFile = File(shareDir, entry.fileName)
                     if (watermarkConfig != null && !entry.isCombined && entry.sourceUri.isNotBlank()) {
-                        applyWatermarkToFile(entry.sourceUri, destFile, watermarkConfig)
+                        applyWatermarkToFile(entry.sourceUri, destFile, watermarkConfig, jpegQuality)
                     } else if (entry.isCombined && watermarkConfig != null) {
-                        combineWithWatermark(entry.beforeUri!!, entry.afterUri!!, destFile, watermarkConfig)
+                        combineWithWatermark(entry.beforeUri!!, entry.afterUri!!, destFile, watermarkConfig, jpegQuality)
                     } else {
                         context.contentResolver.openInputStream(Uri.parse(entry.sourceUri))?.use { input ->
                             destFile.outputStream().use { output -> input.copyTo(output) }
@@ -180,6 +188,7 @@ class ExportRepositoryImpl
             watermarkConfig: WatermarkConfig?,
             onProgress: (current: Int, total: Int) -> Unit,
         ) = withContext(Dispatchers.IO) {
+            val jpegQuality = appSettingsRepository.settingsFlow.first().jpegQuality
             val pairs = photoPairDao.getByIds(pairIds)
 
             data class GalleryEntry(
@@ -229,12 +238,12 @@ class ExportRepositoryImpl
                     if (watermarkConfig != null && !entry.isCombined && entry.sourceUri.isNotBlank()) {
                         val bitmap = imageUtils.loadBitmapWithExifCorrection(Uri.parse(entry.sourceUri))
                         val watermarked = watermarkManager.apply(bitmap, watermarkConfig.copy(enabled = true))
-                        mediaStoreManager.saveBitmapToGallery(watermarked, projectName, entry.displayName)
+                        mediaStoreManager.saveBitmapToGallery(watermarked, projectName, entry.displayName, jpegQuality)
                         if (watermarked !== bitmap) bitmap.recycle()
                         watermarked.recycle()
                     } else if (entry.isCombined && watermarkConfig != null && tempDir != null) {
                         val tempFile = File(tempDir, entry.displayName)
-                        combineWithWatermark(entry.beforeUri!!, entry.afterUri!!, tempFile, watermarkConfig)
+                        combineWithWatermark(entry.beforeUri!!, entry.afterUri!!, tempFile, watermarkConfig, jpegQuality)
                         mediaStoreManager.saveToGallery(Uri.fromFile(tempFile), projectName, entry.displayName)
                     } else {
                         mediaStoreManager.saveToGallery(
@@ -282,6 +291,7 @@ class ExportRepositoryImpl
             includeCombined: Boolean,
             config: WatermarkConfig,
             tempDir: File,
+            jpegQuality: Int,
         ): List<ZipImageEntry> =
             buildList {
                 val enabledConfig = config.copy(enabled = true)
@@ -289,20 +299,20 @@ class ExportRepositoryImpl
                     val seq = index + 1
                     if (includeBefore && pair.beforePhotoUri.isNotBlank()) {
                         val file = File(tempDir, "BEFORE_%03d.jpg".format(seq))
-                        applyWatermarkToFile(pair.beforePhotoUri, file, enabledConfig)
+                        applyWatermarkToFile(pair.beforePhotoUri, file, enabledConfig, jpegQuality)
                         add(ZipImageEntry(uri = Uri.fromFile(file), entryPath = "before/BEFORE_%03d.jpg".format(seq)))
                     }
                     if (includeAfter) {
                         pair.afterPhotoUri?.takeIf { it.isNotBlank() }?.let { uri ->
                             val file = File(tempDir, "AFTER_%03d.jpg".format(seq))
-                            applyWatermarkToFile(uri, file, enabledConfig)
+                            applyWatermarkToFile(uri, file, enabledConfig, jpegQuality)
                             add(ZipImageEntry(uri = Uri.fromFile(file), entryPath = "after/AFTER_%03d.jpg".format(seq)))
                         }
                     }
                     if (includeCombined) {
                         if (pair.beforePhotoUri.isNotBlank() && pair.afterPhotoUri?.isNotBlank() == true) {
                             val file = File(tempDir, "PAIR_%03d.jpg".format(seq))
-                            combineWithWatermark(pair.beforePhotoUri, pair.afterPhotoUri, file, enabledConfig)
+                            combineWithWatermark(pair.beforePhotoUri, pair.afterPhotoUri, file, enabledConfig, jpegQuality)
                             add(ZipImageEntry(uri = Uri.fromFile(file), entryPath = "combined/PAIR_%03d.jpg".format(seq)))
                         }
                     }
@@ -320,11 +330,12 @@ class ExportRepositoryImpl
             sourceUri: String,
             destFile: File,
             config: WatermarkConfig,
+            jpegQuality: Int,
         ) {
             val bitmap = imageUtils.loadBitmapWithExifCorrection(Uri.parse(sourceUri))
             val watermarked = watermarkManager.apply(bitmap, config.copy(enabled = true))
             FileOutputStream(destFile).use { out ->
-                watermarked.compress(Bitmap.CompressFormat.JPEG, 95, out)
+                watermarked.compress(Bitmap.CompressFormat.JPEG, jpegQuality, out)
             }
             if (watermarked !== bitmap) bitmap.recycle()
             watermarked.recycle()
@@ -335,6 +346,7 @@ class ExportRepositoryImpl
             afterUri: String,
             destFile: File,
             config: WatermarkConfig,
+            jpegQuality: Int,
         ) {
             val enabledConfig = config.copy(enabled = true)
             val beforeBitmap = imageUtils.loadBitmapWithExifCorrection(Uri.parse(beforeUri))
@@ -351,7 +363,7 @@ class ExportRepositoryImpl
             canvas.drawBitmap(wmAfter, wmBefore.width.toFloat(), 0f, null)
 
             FileOutputStream(destFile).use { out ->
-                combined.compress(Bitmap.CompressFormat.JPEG, 95, out)
+                combined.compress(Bitmap.CompressFormat.JPEG, jpegQuality, out)
             }
 
             if (wmBefore !== beforeBitmap) beforeBitmap.recycle()

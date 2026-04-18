@@ -11,6 +11,7 @@ import com.pairshot.data.local.db.entity.toEntity
 import com.pairshot.data.local.storage.MediaStoreManager
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
+import com.pairshot.domain.repository.AppSettingsRepository
 import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.util.FileNameGenerator
 import com.pairshot.util.ImageUtils
@@ -31,6 +32,7 @@ class PhotoPairRepositoryImpl
         private val mediaStoreManager: MediaStoreManager,
         private val fileNameGenerator: FileNameGenerator,
         private val imageUtils: ImageUtils,
+        private val appSettingsRepository: AppSettingsRepository,
     ) : PhotoPairRepository {
         override fun getPairsByProject(projectId: Long): Flow<List<PhotoPair>> =
             photoPairDao.getPairsByProject(projectId).map { entities ->
@@ -149,8 +151,9 @@ class PhotoPairRepositoryImpl
                 val currentCount = photoPairDao.countByProject(projectId).first()
                 val sequenceNumber = currentCount + 1
 
-                // 파일명 생성
-                val fileName = fileNameGenerator.generateBeforeFileName(sequenceNumber)
+                // 파일명 생성 (설정에서 prefix 읽기)
+                val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
+                val fileName = fileNameGenerator.generateBeforeFileName(sequenceNumber, prefix)
 
                 // 1. MediaStore에 저장 (파일 저장 먼저!)
                 val savedUri =
@@ -185,7 +188,8 @@ class PhotoPairRepositoryImpl
                     ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
 
             val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
-            val fileName = fileNameGenerator.generateAfterFileName(sequenceNumber)
+            val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
+            val fileName = fileNameGenerator.generateAfterFileName(sequenceNumber, prefix)
 
             val savedUri =
                 mediaStoreManager.saveToGallery(
@@ -223,11 +227,12 @@ class PhotoPairRepositoryImpl
                 val combined = imageUtils.combineSideBySide(beforeUri, afterUri)
 
                 val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
-                val fileName = fileNameGenerator.generatePairFileName(sequenceNumber)
+                val settings = appSettingsRepository.settingsFlow.first()
+                val fileName = fileNameGenerator.generatePairFileName(sequenceNumber, settings.fileNamePrefix)
 
                 val savedUri =
                     try {
-                        mediaStoreManager.saveBitmapToGallery(combined, project.name, fileName)
+                        mediaStoreManager.saveBitmapToGallery(combined, project.name, fileName, settings.jpegQuality)
                     } finally {
                         combined.recycle()
                     }

@@ -13,6 +13,8 @@ local.properties
 
 # Claude Code & 프로젝트 문서 (로컬 전용)
 .claude/
+.agents
+uiux.md
 CLAUDE.md
 CLAUDE.local.md
 architecture.md

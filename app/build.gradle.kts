@@ -84,6 +84,7 @@ dependencies {
 
     // Activity Compose
     implementation(libs.activity.compose)
+    implementation(libs.core.splashscreen)
 
     // Coil
     implementation(libs.coil.compose)

@@ -207,6 +207,7 @@ private fun AfterCameraContent(
     val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
     val latestZoomRatio by rememberUpdatedState(zoomUiState.currentRatio)
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
+    val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
@@ -498,11 +499,13 @@ private fun AfterCameraContent(
                         }
                     }
 
-                    OverlayGuide(
-                        imageUri = currentPair?.beforePhotoUri,
-                        alpha = overlayAlpha,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    if (overlayEnabled) {
+                        OverlayGuide(
+                            imageUri = currentPair?.beforePhotoUri,
+                            alpha = overlayAlpha,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
 
                     AfterCameraPreviewOverlays(
                         gridEnabled = settingsState.gridEnabled,
@@ -705,8 +708,10 @@ private fun AfterCameraContent(
                 onToggleHdr = viewModel::toggleHdr,
                 onToggleLevel = viewModel::toggleLevel,
                 onDismiss = viewModel::dismissSettingsPanel,
-                overlayAlpha = overlayAlpha,
-                onOverlayAlphaChange = viewModel::updateOverlayAlpha,
+                overlayEnabled = overlayEnabled,
+                onToggleOverlay = viewModel::toggleOverlay,
+                overlayAlpha = if (overlayEnabled) overlayAlpha else null,
+                onOverlayAlphaChange = if (overlayEnabled) viewModel::updateOverlayAlpha else null,
             )
 
             SnackbarHost(

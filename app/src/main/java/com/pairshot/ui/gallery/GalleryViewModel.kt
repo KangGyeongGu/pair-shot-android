@@ -94,6 +94,23 @@ class GalleryViewModel
                 getPairsUseCase(projectId)
                     .catch { e -> _uiState.value = GalleryUiState.Error(e.message ?: "알 수 없는 오류") }
                     .collect { pairs ->
+                        // 외부 갤러리에서 삭제된 After 사진 자동 복구
+                        val afterUris =
+                            pairs
+                                .filter { it.afterPhotoUri != null }
+                                .mapNotNull { it.afterPhotoUri }
+                        if (afterUris.isNotEmpty()) {
+                            val existingUris = photoPairRepository.checkUrisExist(afterUris)
+                            val stalePairs =
+                                pairs.filter { pair ->
+                                    pair.afterPhotoUri != null && pair.afterPhotoUri !in existingUris
+                                }
+                            if (stalePairs.isNotEmpty()) {
+                                stalePairs.forEach { photoPairRepository.resetAfterPhoto(it.id) }
+                                return@collect // DB 변경 후 Flow가 재발행하므로 여기서 중단
+                            }
+                        }
+
                         _uiState.value =
                             GalleryUiState.Success(
                                 projectName = projectName,

@@ -9,6 +9,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.domain.model.PhotoPair
+import com.pairshot.domain.repository.AppSettingsRepository
 import com.pairshot.domain.usecase.capture.SaveAfterPhotoUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.domain.usecase.pair.GetUnpairedPhotosUseCase
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -57,6 +59,7 @@ class AfterCameraViewModel
         getPairsByProjectUseCase: GetPairsByProjectUseCase,
         getUnpairedPhotosUseCase: GetUnpairedPhotosUseCase,
         private val saveAfterPhotoUseCase: SaveAfterPhotoUseCase,
+        private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle["projectId"] ?: 0L
         private val initialPairId: Long? = savedStateHandle["initialPairId"]
@@ -85,9 +88,21 @@ class AfterCameraViewModel
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
-        // 오버레이 투명도 (0f ~ 0.5f)
+        // 오버레이 활성화 여부 — 설정에서 읽어옴
+        private val _overlayEnabled = MutableStateFlow(true)
+        val overlayEnabled: StateFlow<Boolean> = _overlayEnabled.asStateFlow()
+
+        // 오버레이 투명도 (0f ~ 0.5f) — 초기값은 설정에서 읽어옴, 세션 내 변경은 임시 적용
         private val _overlayAlpha = MutableStateFlow(0.3f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
+
+        init {
+            viewModelScope.launch {
+                val settings = appSettingsRepository.settingsFlow.first()
+                _overlayEnabled.value = settings.overlayEnabled
+                _overlayAlpha.value = settings.defaultOverlayAlpha.coerceIn(0f, 0.5f)
+            }
+        }
 
         // 카메라 설정 상태 — CameraSettingsStateHolder로 위임
         private val settingsHolder = CameraSettingsStateHolder()
@@ -209,6 +224,14 @@ class AfterCameraViewModel
         fun emitAllCompleted() {
             viewModelScope.launch {
                 _events.emit(AfterCameraEvent.AllCompleted)
+            }
+        }
+
+        fun toggleOverlay() {
+            val newValue = !_overlayEnabled.value
+            _overlayEnabled.value = newValue
+            viewModelScope.launch {
+                appSettingsRepository.updateOverlayEnabled(newValue)
             }
         }
 

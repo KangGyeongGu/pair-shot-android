@@ -25,8 +25,10 @@ import androidx.compose.material.icons.outlined.FlashOn
 import androidx.compose.material.icons.outlined.FlashlightOn
 import androidx.compose.material.icons.outlined.Grid3x3
 import androidx.compose.material.icons.outlined.HdrOn
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.Straighten
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -38,7 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.pairshot.ui.camera.CameraCapabilities
 import com.pairshot.ui.camera.CameraSettingsState
@@ -56,6 +60,8 @@ fun CameraSettingsPanel(
     onToggleHdr: () -> Unit,
     onToggleLevel: () -> Unit,
     onDismiss: () -> Unit,
+    overlayEnabled: Boolean? = null,
+    onToggleOverlay: (() -> Unit)? = null,
     overlayAlpha: Float? = null,
     onOverlayAlphaChange: ((Float) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -101,6 +107,8 @@ fun CameraSettingsPanel(
                         onToggleNightMode = onToggleNightMode,
                         onToggleHdr = onToggleHdr,
                         onToggleLevel = onToggleLevel,
+                        overlayEnabled = overlayEnabled,
+                        onToggleOverlay = onToggleOverlay,
                     )
 
                 Row(
@@ -149,6 +157,8 @@ private fun buildSettingItems(
     onToggleNightMode: () -> Unit,
     onToggleHdr: () -> Unit,
     onToggleLevel: () -> Unit,
+    overlayEnabled: Boolean? = null,
+    onToggleOverlay: (() -> Unit)? = null,
 ): List<SettingItem> {
     val items = mutableListOf<SettingItem>()
 
@@ -201,6 +211,18 @@ private fun buildSettingItems(
                 statusText = if (state.hdrEnabled) "ON" else "OFF",
                 isActive = state.hdrEnabled,
                 onClick = onToggleHdr,
+            ),
+        )
+    }
+
+    if (overlayEnabled != null && onToggleOverlay != null) {
+        items.add(
+            SettingItem(
+                icon = Icons.Outlined.Layers,
+                label = "오버레이",
+                statusText = if (overlayEnabled) "ON" else "OFF",
+                isActive = overlayEnabled,
+                onClick = onToggleOverlay,
             ),
         )
     }
@@ -272,11 +294,20 @@ private fun SettingIconItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OverlayAlphaSlider(
     alpha: Float,
     onAlphaChange: (Float) -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val sliderColors =
+        SliderDefaults.colors(
+            thumbColor = MaterialTheme.colorScheme.primary,
+            activeTrackColor = MaterialTheme.colorScheme.primary,
+            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+        )
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -298,12 +329,24 @@ private fun OverlayAlphaSlider(
             value = alpha,
             onValueChange = onAlphaChange,
             valueRange = 0f..0.5f,
-            colors =
-                SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+            interactionSource = interactionSource,
+            colors = sliderColors,
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    thumbSize = DpSize(1.dp, 16.dp),
+                    colors = sliderColors,
+                )
+            },
+            track = { sliderState ->
+                SliderDefaults.Track(
+                    sliderState = sliderState,
+                    modifier = Modifier.graphicsLayer(scaleY = 0.3f),
+                    colors = sliderColors,
+                    drawTick = { _, _ -> },
+                    drawStopIndicator = null,
+                )
+            },
         )
     }
 }

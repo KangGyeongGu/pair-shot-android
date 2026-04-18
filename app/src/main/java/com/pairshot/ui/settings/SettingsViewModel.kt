@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.pairshot.BuildConfig
 import com.pairshot.data.local.image.WatermarkManager
 import com.pairshot.domain.model.WatermarkConfig
+import com.pairshot.domain.repository.AppSettingsRepository
 import com.pairshot.domain.repository.WatermarkRepository
 import com.pairshot.domain.usecase.storage.ClearCacheUseCase
 import com.pairshot.domain.usecase.storage.GetStorageInfoUseCase
@@ -15,8 +16,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,6 +29,10 @@ sealed interface SettingsUiState {
         val usedStorageBytes: Long,
         val cacheBytes: Long,
         val appVersion: String,
+        val jpegQuality: Int = 85,
+        val fileNamePrefix: String = "PAIRSHOT",
+        val overlayEnabled: Boolean = true,
+        val overlayAlpha: Float = 0.3f,
     ) : SettingsUiState
 
     data object Error : SettingsUiState
@@ -40,9 +46,34 @@ class SettingsViewModel
         private val clearCacheUseCase: ClearCacheUseCase,
         private val watermarkRepository: WatermarkRepository,
         val watermarkManager: WatermarkManager,
+        private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
-        val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+        private val _storageState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
+
+        val uiState: StateFlow<SettingsUiState> =
+            combine(
+                _storageState,
+                appSettingsRepository.settingsFlow,
+            ) { storageState, appSettings ->
+                when (storageState) {
+                    is SettingsUiState.Success -> {
+                        storageState.copy(
+                            jpegQuality = appSettings.jpegQuality,
+                            fileNamePrefix = appSettings.fileNamePrefix,
+                            overlayEnabled = appSettings.overlayEnabled,
+                            overlayAlpha = appSettings.defaultOverlayAlpha,
+                        )
+                    }
+
+                    else -> {
+                        storageState
+                    }
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = SettingsUiState.Loading,
+            )
 
         private val _snackbarMessage = MutableSharedFlow<String>()
         val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
@@ -66,14 +97,15 @@ class SettingsViewModel
             viewModelScope.launch {
                 try {
                     val info = getStorageInfoUseCase()
-                    _uiState.value =
+                    _storageState.update {
                         SettingsUiState.Success(
                             usedStorageBytes = info.usedBytes,
                             cacheBytes = info.cacheBytes,
                             appVersion = BuildConfig.VERSION_NAME,
                         )
+                    }
                 } catch (_: Exception) {
-                    _uiState.value = SettingsUiState.Error
+                    _storageState.value = SettingsUiState.Error
                 }
             }
         }
@@ -107,6 +139,30 @@ class SettingsViewModel
                 } catch (_: Exception) {
                     _snackbarMessage.emit("로고 파일을 불러올 수 없습니다")
                 }
+            }
+        }
+
+        fun updateJpegQuality(quality: Int) {
+            viewModelScope.launch {
+                appSettingsRepository.updateJpegQuality(quality)
+            }
+        }
+
+        fun updateFileNamePrefix(prefix: String) {
+            viewModelScope.launch {
+                appSettingsRepository.updateFileNamePrefix(prefix)
+            }
+        }
+
+        fun updateOverlayEnabled(enabled: Boolean) {
+            viewModelScope.launch {
+                appSettingsRepository.updateOverlayEnabled(enabled)
+            }
+        }
+
+        fun updateOverlayAlpha(alpha: Float) {
+            viewModelScope.launch {
+                appSettingsRepository.updateOverlayAlpha(alpha)
             }
         }
     }

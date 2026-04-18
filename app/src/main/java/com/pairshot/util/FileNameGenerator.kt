@@ -13,24 +13,36 @@ class FileNameGenerator
         private val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.US)
         private val timeFormat = SimpleDateFormat("HHmmss", Locale.US)
 
-        fun generateBeforeFileName(sequenceNumber: Int): String {
+        fun generateBeforeFileName(
+            sequenceNumber: Int,
+            prefix: String = "",
+        ): String {
             val now = Date()
             val date = dateFormat.format(now)
             val time = timeFormat.format(now)
-            return "BEFORE_%03d_%s_%s.jpg".format(sequenceNumber, date, time)
+            val prefixPart = if (prefix.isNotEmpty()) "${prefix}_" else ""
+            return "${prefixPart}BEFORE_%03d_%s_%s.jpg".format(sequenceNumber, date, time)
         }
 
-        fun generateAfterFileName(sequenceNumber: Int): String {
+        fun generateAfterFileName(
+            sequenceNumber: Int,
+            prefix: String = "",
+        ): String {
             val now = Date()
             val date = dateFormat.format(now)
             val time = timeFormat.format(now)
-            return "AFTER_%03d_%s_%s.jpg".format(sequenceNumber, date, time)
+            val prefixPart = if (prefix.isNotEmpty()) "${prefix}_" else ""
+            return "${prefixPart}AFTER_%03d_%s_%s.jpg".format(sequenceNumber, date, time)
         }
 
-        fun generatePairFileName(sequenceNumber: Int): String {
+        fun generatePairFileName(
+            sequenceNumber: Int,
+            prefix: String = "",
+        ): String {
             val now = Date()
             val date = dateFormat.format(now)
             val time = timeFormat.format(now)
-            return "PAIR_%03d_%s_%s.jpg".format(sequenceNumber, date, time)
+            val prefixPart = if (prefix.isNotEmpty()) "${prefix}_" else ""
+            return "${prefixPart}PAIR_%03d_%s_%s.jpg".format(sequenceNumber, date, time)
         }
     }
