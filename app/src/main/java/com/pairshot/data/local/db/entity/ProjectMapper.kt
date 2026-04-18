@@ -1,6 +1,6 @@
 package com.pairshot.data.local.db.entity
 
-import com.pairshot.core.domain.model.Project
+import com.pairshot.core.domain.project.Project
 
 fun ProjectEntity.toDomain() =
     Project(

@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.domain.model.PairStatus
+import com.pairshot.core.domain.pair.PairStatus
 
 @Composable
 internal fun CompareHeader(

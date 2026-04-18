@@ -1,7 +1,7 @@
 package com.pairshot.di.feature
 
-import com.pairshot.core.domain.repository.PhotoPairRepository
-import com.pairshot.data.repository.PhotoPairRepositoryImpl
+import com.pairshot.core.domain.pair.PhotoPairRepository
+import com.pairshot.data.repository.pair.PhotoPairRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

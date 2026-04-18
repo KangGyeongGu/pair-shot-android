@@ -3,7 +3,7 @@ package com.pairshot.data.local.export
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
-import com.pairshot.core.domain.model.WatermarkConfig
+import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.util.ExifBitmapLoader
 import java.io.File

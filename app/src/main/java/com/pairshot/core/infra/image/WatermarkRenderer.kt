@@ -6,9 +6,9 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import com.pairshot.core.domain.model.LogoPosition
-import com.pairshot.core.domain.model.WatermarkConfig
-import com.pairshot.core.domain.model.WatermarkType
+import com.pairshot.core.domain.settings.LogoPosition
+import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.domain.settings.WatermarkType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

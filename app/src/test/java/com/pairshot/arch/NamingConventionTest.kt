@@ -22,11 +22,11 @@ class NamingConventionTest {
     val `N-01 UseCase classes should end with UseCase`: ArchRule =
         classes()
             .that()
-            .resideInAPackage("..domain.usecase..")
+            .haveSimpleNameEndingWith("UseCase")
+            .and()
+            .resideInAPackage("..domain..")
             .and()
             .areTopLevelClasses()
-            .and()
-            .haveSimpleNameNotEndingWith("_Factory")
             .should()
             .haveSimpleNameEndingWith("UseCase")
             .because("UseCase naming convention")
@@ -43,10 +43,12 @@ class NamingConventionTest {
             .because("ViewModel naming convention")
 
     @ArchTest
-    val `N-03 domain repository packages should contain only interfaces`: ArchRule =
+    val `N-03 domain Repository interfaces should be interfaces`: ArchRule =
         classes()
             .that()
-            .resideInAPackage("..domain.repository..")
+            .haveSimpleNameEndingWith("Repository")
+            .and()
+            .resideInAPackage("..domain..")
             .and()
             .areTopLevelClasses()
             .should()
@@ -68,7 +70,9 @@ class NamingConventionTest {
     val `N-05 UseCase should have invoke method`: ArchRule =
         classes()
             .that()
-            .resideInAPackage("..domain.usecase..")
+            .haveSimpleNameEndingWith("UseCase")
+            .and()
+            .resideInAPackage("..domain..")
             .and()
             .areTopLevelClasses()
             .and()

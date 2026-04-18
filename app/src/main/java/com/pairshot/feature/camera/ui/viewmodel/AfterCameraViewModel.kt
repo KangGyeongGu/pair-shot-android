@@ -8,11 +8,11 @@ import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.core.domain.model.PhotoPair
-import com.pairshot.core.domain.repository.AppSettingsRepository
-import com.pairshot.core.domain.usecase.GetPairsByProjectUseCase
-import com.pairshot.core.domain.usecase.GetUnpairedPhotosUseCase
-import com.pairshot.core.domain.usecase.SaveAfterPhotoUseCase
+import com.pairshot.core.domain.capture.SaveAfterPhotoUseCase
+import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
+import com.pairshot.core.domain.pair.GetUnpairedPhotosUseCase
+import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
 import com.pairshot.feature.camera.ui.component.ZoomUiState
 import com.pairshot.feature.camera.ui.sensor.LevelSensorManager

@@ -19,8 +19,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.model.WatermarkConfig
-import com.pairshot.core.domain.model.WatermarkType
+import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.domain.settings.WatermarkType
 import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.feature.settings.ui.component.SettingsCard
 import com.pairshot.feature.settings.ui.component.SettingsDivider

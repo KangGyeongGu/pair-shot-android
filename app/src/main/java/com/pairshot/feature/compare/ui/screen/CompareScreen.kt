@@ -14,7 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.domain.model.PhotoPair
+import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.feature.compare.ui.component.CompareHeader
 import com.pairshot.feature.compare.ui.component.CompareImagePane
 import com.pairshot.feature.compare.ui.component.CompareModalScaffold
