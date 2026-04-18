@@ -9,6 +9,7 @@ navigation = "2.9.0"
 coil = "3.4.0"
 ksp = "2.0.20-1.0.25"
 core-splashscreen = "1.0.1"
+archunit = "1.4.1"
 
 [libraries]
 # Compose
@@ -68,6 +69,7 @@ junit = { group = "junit", name = "junit", version = "4.13.2" }
 mockk = { group = "io.mockk", name = "mockk", version = "1.13.13" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version = "1.8.1" }
 turbine = { group = "app.cash.turbine", name = "turbine", version = "1.1.0" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 
 [plugins]

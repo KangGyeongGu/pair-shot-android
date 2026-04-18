@@ -45,6 +45,10 @@ android {
     }
 }
 
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
 dependencies {
     // Compose
     val composeBom = platform(libs.compose.bom)
@@ -104,6 +108,8 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.turbine)
+    testImplementation(libs.archunit.junit5)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     androidTestImplementation(composeBom)
     androidTestImplementation(libs.compose.ui.test)
 }
