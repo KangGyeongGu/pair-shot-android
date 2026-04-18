@@ -103,6 +103,12 @@ dependencies {
     // Concurrent Futures (ListenableFuture.await())
     implementation(libs.concurrent.futures.ktx)
 
+    // ProfileInstaller
+    implementation(libs.profileinstaller)
+
+    // JankStats
+    implementation(libs.jankstats)
+
     // Test
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

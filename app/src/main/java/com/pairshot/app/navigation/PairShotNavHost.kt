@@ -8,9 +8,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -37,7 +39,22 @@ import com.pairshot.feature.settings.ui.route.WatermarkSettingsRoute
 import com.pairshot.feature.settings.ui.screen.LicenseScreen
 
 @Composable
-fun PairShotNavHost(navController: NavHostController = rememberNavController()) {
+fun PairShotNavHost(
+    navController: NavHostController = rememberNavController(),
+    onDestinationChanged: (String) -> Unit = {},
+) {
+    DisposableEffect(navController) {
+        val listener =
+            NavController.OnDestinationChangedListener { _, destination, _ ->
+                val route =
+                    destination.route?.substringAfterLast(".")?.substringBefore("?")
+                        ?: "Unknown"
+                onDestinationChanged(route)
+            }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose { navController.removeOnDestinationChangedListener(listener) }
+    }
+
     NavHost(
         navController = navController,
         startDestination = ProjectList,

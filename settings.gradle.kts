@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "PairShot"
 include(":app")
+include(":benchmark")
