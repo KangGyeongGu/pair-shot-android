@@ -1,12 +1,13 @@
 package com.pairshot.feature.settings.ui.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -14,21 +15,22 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
+import kotlin.math.abs
 
 @Composable
 fun SettingsSectionLabel(
@@ -54,7 +56,7 @@ fun SettingsCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column {
             content()
@@ -74,10 +76,8 @@ fun SettingsItem(
                 .fillMaxWidth()
                 .then(
                     if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
-                ).padding(
-                    horizontal = PairShotSpacing.cardPadding,
-                    vertical = PairShotSpacing.cardPadding,
-                ),
+                ).height(PairShotSpacing.inputRow)
+                .padding(horizontal = PairShotSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -109,10 +109,8 @@ fun SettingsSwitchItem(
                 .fillMaxWidth()
                 .then(
                     if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
-                ).padding(
-                    horizontal = PairShotSpacing.cardPadding,
-                    vertical = PairShotSpacing.cardPadding,
-                ),
+                ).height(PairShotSpacing.inputRow)
+                .padding(horizontal = PairShotSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -124,6 +122,15 @@ fun SettingsSwitchItem(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            colors =
+                SwitchDefaults.colors(
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            modifier =
+                Modifier
+                    .wrapContentHeight(unbounded = true)
+                    .scale(0.67f),
         )
     }
 }
@@ -137,18 +144,17 @@ fun SettingsSliderItem(
     displayText: String,
     onValueChange: (Float) -> Unit,
     steps: Int = 0,
-    labelWidth: androidx.compose.ui.unit.Dp = 80.dp,
+    onValueChangeImmediate: ((Float) -> Unit)? = null,
 ) {
-    var sliderValue by rememberSaveable { mutableStateOf(value) }
-    LaunchedEffect(value) { sliderValue = value }
+    var sliderValue by remember { mutableStateOf(value) }
+    LaunchedEffect(value) { if (abs(sliderValue - value) > 1e-4f) sliderValue = value }
 
     val interactionSource =
         remember {
-            androidx.compose.foundation.interaction
-                .MutableInteractionSource()
+            MutableInteractionSource()
         }
 
-    Row(
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -156,21 +162,33 @@ fun SettingsSliderItem(
                     horizontal = PairShotSpacing.cardPadding,
                     vertical = PairShotSpacing.cardPadding,
                 ),
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.width(labelWidth),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = displayText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         Slider(
             value = sliderValue,
-            onValueChange = { sliderValue = it },
+            onValueChange = {
+                sliderValue = it
+                onValueChangeImmediate?.invoke(it)
+            },
             onValueChangeFinished = { onValueChange(sliderValue) },
             valueRange = valueRange,
             steps = steps,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.fillMaxWidth(),
             interactionSource = interactionSource,
             thumb = {
                 SliderDefaults.Thumb(
@@ -187,13 +205,6 @@ fun SettingsSliderItem(
                 )
             },
         )
-        Text(
-            text = displayText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.End,
-            modifier = Modifier.width(40.dp),
-        )
     }
 }
 
@@ -201,6 +212,6 @@ fun SettingsSliderItem(
 fun SettingsDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(horizontal = PairShotSpacing.cardPadding),
-        color = MaterialTheme.colorScheme.outline,
+        color = MaterialTheme.colorScheme.outlineVariant,
     )
 }

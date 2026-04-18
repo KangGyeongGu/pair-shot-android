@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.ui.component.PairShotDialog
+import com.pairshot.core.ui.component.PairShotProgressBar
 import com.pairshot.feature.pair.ui.viewmodel.CombineProgress
 
 @Composable
@@ -26,7 +26,7 @@ internal fun DeletePairsDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
         title = { Text(text = "선택 항목 삭제") },
         text = { Text(text = "${selectedCount}개 페어를 삭제하시겠습니까?") },
@@ -55,10 +55,8 @@ internal fun RenameProjectDialog(
     onConfirm: (String) -> Unit,
 ) {
     var newName by remember { mutableStateOf(currentName) }
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("프로젝트명 수정", style = MaterialTheme.typography.titleMedium) },
         text = {
             TextField(
@@ -98,10 +96,8 @@ internal fun DeleteProjectDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("프로젝트 삭제", style = MaterialTheme.typography.titleMedium) },
         text = {
             Text(
@@ -126,15 +122,14 @@ internal fun DeleteProjectDialog(
 
 @Composable
 internal fun CombineProgressDialog(progress: CombineProgress) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = { },
         title = { Text(text = "합성 중") },
         text = {
             Column {
-                LinearProgressIndicator(
-                    progress = { progress.current.toFloat() / progress.total },
+                PairShotProgressBar(
+                    progress = progress.current.toFloat() / progress.total,
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                 Text(

@@ -2,7 +2,6 @@ package com.pairshot.feature.project.ui.component
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -26,7 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
@@ -45,24 +44,58 @@ internal fun ProjectItem(
     project: Project,
     selectionMode: Boolean,
     isSelected: Boolean,
+    isFirst: Boolean,
+    isLast: Boolean,
     onClick: () -> Unit,
     onToggleSelection: () -> Unit,
 ) {
     val successColor = LocalPairShotExtendedColors.current.success
-    val shape = MaterialTheme.shapes.small
+    val cardShape = MaterialTheme.shapes.medium
+    val itemShape =
+        when {
+            isFirst && isLast -> {
+                cardShape
+            }
+
+            isFirst -> {
+                cardShape.copy(
+                    bottomStart =
+                        androidx.compose.foundation.shape
+                            .CornerSize(0.dp),
+                    bottomEnd =
+                        androidx.compose.foundation.shape
+                            .CornerSize(0.dp),
+                )
+            }
+
+            isLast -> {
+                cardShape.copy(
+                    topStart =
+                        androidx.compose.foundation.shape
+                            .CornerSize(0.dp),
+                    topEnd =
+                        androidx.compose.foundation.shape
+                            .CornerSize(0.dp),
+                )
+            }
+
+            else -> {
+                RectangleShape
+            }
+        }
+
     val rowModifier =
         when {
             selectionMode && isSelected -> {
                 Modifier
-                    .clip(shape)
-                    .border(BorderStroke(2.dp, successColor), shape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
+                    .clip(itemShape)
+                    .border(BorderStroke(2.dp, successColor), itemShape)
             }
 
             selectionMode -> {
                 Modifier
-                    .clip(shape)
-                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), shape)
+                    .clip(itemShape)
+                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), itemShape)
             }
 
             else -> {
@@ -163,7 +196,7 @@ internal fun ProjectGroupLabel(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = PairShotSpacing.screenPadding),
+                .padding(horizontal = PairShotSpacing.screenPadding + PairShotSpacing.iconTextGap),
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -184,7 +217,7 @@ internal fun ProjectGroupCard(
                 .fillMaxWidth()
                 .padding(horizontal = PairShotSpacing.screenPadding),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surface,
     ) {
         Column {
             projects.forEachIndexed { index, project ->
@@ -192,6 +225,8 @@ internal fun ProjectGroupCard(
                     project = project,
                     selectionMode = selectionMode,
                     isSelected = project.id in selectedIds,
+                    isFirst = index == 0,
+                    isLast = index == projects.lastIndex,
                     onClick = { onProjectClick(project.id) },
                     onToggleSelection = { onProjectToggleSelection(project.id) },
                 )

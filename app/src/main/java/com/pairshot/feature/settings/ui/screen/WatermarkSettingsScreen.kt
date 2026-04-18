@@ -24,6 +24,7 @@ import com.pairshot.core.domain.settings.WatermarkType
 import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.feature.settings.ui.component.SettingsCard
 import com.pairshot.feature.settings.ui.component.SettingsDivider
+import com.pairshot.feature.settings.ui.component.SettingsSectionLabel
 import com.pairshot.feature.settings.ui.component.SettingsSwitchItem
 import com.pairshot.feature.settings.ui.component.WatermarkLogoSection
 import com.pairshot.feature.settings.ui.component.WatermarkPreviewSection
@@ -75,10 +76,15 @@ fun WatermarkSettingsScreen(
                     vertical = PairShotSpacing.cardPadding,
                 ),
         ) {
+            item(key = "label_basic") {
+                SettingsSectionLabel(label = "기본 설정")
+                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+            }
+
             item(key = "card_basic") {
                 SettingsCard {
                     SettingsSwitchItem(
-                        label = "워터마크 기본 사용",
+                        label = "워터마크",
                         checked = watermarkConfig.enabled,
                         onCheckedChange = { checked ->
                             onWatermarkConfigChange(watermarkConfig.copy(enabled = checked))
@@ -94,11 +100,12 @@ fun WatermarkSettingsScreen(
                 }
             }
 
-            item(key = "gap_1") {
-                Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-            }
-
             if (watermarkConfig.type == WatermarkType.TEXT) {
+                item(key = "label_text") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    SettingsSectionLabel(label = "텍스트 설정")
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                }
                 item(key = "card_text") {
                     WatermarkTextSection(
                         watermarkConfig = watermarkConfig,
@@ -108,6 +115,11 @@ fun WatermarkSettingsScreen(
             }
 
             if (watermarkConfig.type == WatermarkType.LOGO) {
+                item(key = "label_logo") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    SettingsSectionLabel(label = "로고 설정")
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                }
                 item(key = "card_logo") {
                     WatermarkLogoSection(
                         watermarkConfig = watermarkConfig,
@@ -119,11 +131,7 @@ fun WatermarkSettingsScreen(
 
             item(key = "wm_preview") {
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                Text(
-                    text = "미리보기",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                SettingsSectionLabel(label = "미리보기")
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                 WatermarkPreviewSection(
                     config = watermarkConfig,

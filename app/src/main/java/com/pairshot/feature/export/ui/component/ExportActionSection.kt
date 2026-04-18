@@ -58,7 +58,7 @@ private fun ExportActionCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        color = MaterialTheme.colorScheme.surface,
         onClick = onClick,
     ) {
         Row(

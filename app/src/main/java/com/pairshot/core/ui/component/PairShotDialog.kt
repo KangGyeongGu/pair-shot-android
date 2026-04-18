@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.pairshot.core.designsystem.ModalShape
 
-// 타입별 폭 규격
 @Composable
 fun confirmDialogWidth(): Dp {
     val sw = LocalConfiguration.current.screenWidthDp.dp
@@ -30,11 +29,6 @@ fun inputDialogWidth(): Dp {
     return (sw - 32.dp).coerceAtMost(480.dp)
 }
 
-/**
- * PairShot 공통 다이얼로그 래퍼.
- * - 라운드 12dp, 경계선 1dp outlineVariant
- * - 스크림: Light 0.45 / Dark 0.62 (AlertDialog 기본 동작에서 추가 오버레이로 구현 불가 — 표준 스크림 사용)
- */
 @Composable
 fun PairShotDialog(
     onDismissRequest: () -> Unit,

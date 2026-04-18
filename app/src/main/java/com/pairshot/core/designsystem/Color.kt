@@ -2,8 +2,7 @@ package com.pairshot.core.designsystem
 
 import androidx.compose.ui.graphics.Color
 
-// Light Scheme
-val LightBackground = Color(0xFFFAFAFA)
+val LightBackground = Color(0xFFEEF1F6)
 val LightSurface = Color(0xFFFFFFFF)
 val LightSurfaceContainer = Color(0xFFEEF1F6)
 val LightSurfaceContainerHigh = Color(0xFFE6EAF2)
@@ -22,7 +21,6 @@ val LightOnErrorContainer = Color(0xFF410002)
 val LightSuccess = Color(0xFF166534)
 val LightWarning = Color(0xFFB45309)
 
-// Dark Scheme
 val DarkBackground = Color(0xFF080808)
 val DarkSurface = Color(0xFF1A1A1F)
 val DarkSurfaceContainer = Color(0xFF242428)

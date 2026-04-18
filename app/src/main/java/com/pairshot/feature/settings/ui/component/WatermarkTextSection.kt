@@ -1,7 +1,6 @@
 package com.pairshot.feature.settings.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +28,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -61,15 +62,21 @@ internal fun WatermarkTextSection(
             onValueChange = { v ->
                 onWatermarkConfigChange(watermarkConfig.copy(alpha = v))
             },
+            onValueChangeImmediate = { v ->
+                onWatermarkConfigChange(watermarkConfig.copy(alpha = v))
+            },
         )
         SettingsDivider()
         SettingsSliderItem(
             label = "대각선 줄 수",
             value = watermarkConfig.diagonalCount.toFloat(),
-            valueRange = 1f..20f,
-            steps = 18,
+            valueRange = 0f..20f,
+            steps = 19,
             displayText = "${watermarkConfig.diagonalCount}",
             onValueChange = { v ->
+                onWatermarkConfigChange(watermarkConfig.copy(diagonalCount = v.toInt()))
+            },
+            onValueChangeImmediate = { v ->
                 onWatermarkConfigChange(watermarkConfig.copy(diagonalCount = v.toInt()))
             },
         )
@@ -77,9 +84,12 @@ internal fun WatermarkTextSection(
         SettingsSliderItem(
             label = "반복 밀도",
             value = watermarkConfig.repeatDensity,
-            valueRange = 0.5f..3.0f,
+            valueRange = 0f..3.0f,
             displayText = "%.1f".format(watermarkConfig.repeatDensity),
             onValueChange = { v ->
+                onWatermarkConfigChange(watermarkConfig.copy(repeatDensity = v))
+            },
+            onValueChangeImmediate = { v ->
                 onWatermarkConfigChange(watermarkConfig.copy(repeatDensity = v))
             },
         )
@@ -116,19 +126,10 @@ internal fun WatermarkTypeItem(
                             .clip(MaterialTheme.shapes.small)
                             .background(
                                 if (isSelected) {
-                                    MaterialTheme.colorScheme.primary
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                                 } else {
-                                    MaterialTheme.colorScheme.surface
+                                    Color.Transparent
                                 },
-                            ).border(
-                                width = 1.dp,
-                                color =
-                                    if (isSelected) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.outline
-                                    },
-                                shape = MaterialTheme.shapes.small,
                             ).clickable { onTypeChange(type) }
                             .padding(
                                 horizontal = PairShotSpacing.itemGap,
@@ -142,12 +143,15 @@ internal fun WatermarkTypeItem(
                                 WatermarkType.TEXT -> "텍스트"
                                 WatermarkType.LOGO -> "로고"
                             },
-                        style = MaterialTheme.typography.bodySmall,
+                        style =
+                            MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            ),
                         color =
                             if (isSelected) {
-                                MaterialTheme.colorScheme.onPrimary
+                                MaterialTheme.colorScheme.primary
                             } else {
-                                MaterialTheme.colorScheme.onSurface
+                                MaterialTheme.colorScheme.onSurfaceVariant
                             },
                     )
                 }

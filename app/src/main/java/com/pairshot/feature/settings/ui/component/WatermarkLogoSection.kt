@@ -65,9 +65,12 @@ internal fun WatermarkLogoSection(
         SettingsSliderItem(
             label = "로고 크기",
             value = watermarkConfig.logoSizeRatio,
-            valueRange = 0.05f..0.5f,
+            valueRange = 0f..1.0f,
             displayText = "${(watermarkConfig.logoSizeRatio * 100).toInt()}%",
             onValueChange = { v ->
+                onWatermarkConfigChange(watermarkConfig.copy(logoSizeRatio = v))
+            },
+            onValueChangeImmediate = { v ->
                 onWatermarkConfigChange(watermarkConfig.copy(logoSizeRatio = v))
             },
         )
@@ -78,6 +81,9 @@ internal fun WatermarkLogoSection(
             valueRange = 0f..1f,
             displayText = "${(watermarkConfig.logoAlpha * 100).toInt()}%",
             onValueChange = { v ->
+                onWatermarkConfigChange(watermarkConfig.copy(logoAlpha = v))
+            },
+            onValueChangeImmediate = { v ->
                 onWatermarkConfigChange(watermarkConfig.copy(logoAlpha = v))
             },
         )
@@ -121,7 +127,7 @@ private fun LogoPositionItem(
                                         if (isSelected) {
                                             MaterialTheme.colorScheme.primary
                                         } else {
-                                            MaterialTheme.colorScheme.surface
+                                            MaterialTheme.colorScheme.surfaceContainerHigh
                                         },
                                     ).clickable { onPositionChange(position) },
                             contentAlignment = Alignment.Center,

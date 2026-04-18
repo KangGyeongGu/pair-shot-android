@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.feature.project.ui.viewmodel.ProjectViewModel
 
 @Composable
@@ -76,10 +76,8 @@ internal fun CreateProjectDialog(
 
     val placeholderText = currentLocation?.shortAddress ?: "프로젝트 이름"
 
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Text(
                 "새 프로젝트",
@@ -143,10 +141,8 @@ internal fun RenameProjectDialog(
 ) {
     var name by remember { mutableStateOf(currentName) }
 
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Text(
                 "이름 변경",
@@ -189,10 +185,8 @@ internal fun DeleteProjectDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Text(
                 "프로젝트 삭제",
@@ -224,10 +218,8 @@ internal fun DeleteSelectedProjectsDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("선택 프로젝트 삭제", style = MaterialTheme.typography.titleMedium) },
         text = {
             Text(

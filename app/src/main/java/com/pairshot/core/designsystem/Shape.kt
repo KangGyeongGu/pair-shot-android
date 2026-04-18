@@ -13,5 +13,4 @@ val PairShotShapes =
         extraLarge = RoundedCornerShape(32.dp),
     )
 
-// 모달 전용 토큰 — shapes.large를 건드리지 않고 독립 정의
 val ModalShape = RoundedCornerShape(12.dp)

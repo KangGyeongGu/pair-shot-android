@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 
-// Success / Warning을 CompositionLocal로 확장
 data class PairShotExtendedColors(
     val success: androidx.compose.ui.graphics.Color,
     val warning: androidx.compose.ui.graphics.Color,

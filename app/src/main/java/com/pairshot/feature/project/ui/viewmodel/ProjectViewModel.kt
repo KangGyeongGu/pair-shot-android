@@ -138,14 +138,10 @@ class ProjectViewModel
             if (!_selectionMode.value) {
                 _selectionMode.value = true
             }
-            val next =
+            _selectedIds.value =
                 _selectedIds.value.toMutableSet().apply {
                     if (!add(projectId)) remove(projectId)
                 }
-            _selectedIds.value = next
-            if (next.isEmpty()) {
-                _selectionMode.value = false
-            }
         }
 
         fun selectAll() {

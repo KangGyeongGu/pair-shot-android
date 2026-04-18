@@ -24,6 +24,6 @@ data class WatermarkConfig(
     val textSizeRatio: Float = 0.03f,
     val logoPath: String = "",
     val logoPosition: LogoPosition = LogoPosition.BOTTOM_RIGHT,
-    val logoSizeRatio: Float = 0.15f,
+    val logoSizeRatio: Float = 0.5f,
     val logoAlpha: Float = 0.5f,
 )

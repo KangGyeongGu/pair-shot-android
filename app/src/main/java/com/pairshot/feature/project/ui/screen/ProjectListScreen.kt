@@ -106,23 +106,33 @@ internal fun ProjectListScreen(
                                     Alignment.CenterHorizontally,
                                 ),
                         ) {
-                            if (selectedIds.size == 1) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    IconButton(
-                                        onClick = onShowRenameDialog,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Edit,
-                                            contentDescription = "이름 변경",
-                                            tint = MaterialTheme.colorScheme.onSurface,
-                                        )
-                                    }
-                                    Text(
-                                        text = "수정",
-                                        style = PairShotTypographyTokens.labelExtraSmall,
-                                        color = MaterialTheme.colorScheme.onSurface,
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                val editEnabled = selectedIds.size == 1
+                                IconButton(
+                                    onClick = onShowRenameDialog,
+                                    enabled = editEnabled,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "이름 변경",
+                                        tint =
+                                            if (editEnabled) {
+                                                MaterialTheme.colorScheme.onSurface
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            },
                                     )
                                 }
+                                Text(
+                                    text = "수정",
+                                    style = PairShotTypographyTokens.labelExtraSmall,
+                                    color =
+                                        if (editEnabled) {
+                                            MaterialTheme.colorScheme.onSurface
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                )
                             }
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 IconButton(

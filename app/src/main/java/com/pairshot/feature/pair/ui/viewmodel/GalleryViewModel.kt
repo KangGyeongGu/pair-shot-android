@@ -135,14 +135,10 @@ class GalleryViewModel
         }
 
         fun toggleSelection(pairId: Long) {
-            val next =
+            _selectedIds.value =
                 _selectedIds.value.toMutableSet().apply {
                     if (!add(pairId)) remove(pairId)
                 }
-            _selectedIds.value = next
-            if (next.isEmpty()) {
-                _selectionMode.value = false
-            }
         }
 
         fun deselectAll() {

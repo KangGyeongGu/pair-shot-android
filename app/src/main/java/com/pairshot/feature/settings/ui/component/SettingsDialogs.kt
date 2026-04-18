@@ -1,28 +1,36 @@
 package com.pairshot.feature.settings.ui.component
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.ui.component.PairShotDialog
 
 private data class QualityOption(
     val label: String,
@@ -45,20 +53,18 @@ internal fun OverlayAlphaDialog(
     onAlphaChange: (Float) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("오버레이 기본 투명도") },
         text = {
             SettingsSliderItem(
                 label = "",
                 value = currentAlpha,
-                valueRange = 0f..0.5f,
+                valueRange = 0f..1.0f,
                 steps = 9,
                 displayText = "${(currentAlpha * 100).toInt()}%",
                 onValueChange = onAlphaChange,
-                labelWidth = 0.dp,
+                onValueChangeImmediate = onAlphaChange,
             )
         },
         confirmButton = {
@@ -74,10 +80,8 @@ internal fun ClearCacheDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("캐시 초기화") },
         text = { Text("캐시를 초기화하시겠습니까?\n썸네일이 삭제되며, 다시 생성됩니다.") },
         confirmButton = {
@@ -104,10 +108,10 @@ internal fun ImageQualityDialog(
     onQualityChange: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    AlertDialog(
+    var selectedQuality by rememberSaveable { mutableIntStateOf(currentQuality) }
+
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("이미지 품질") },
         text = {
             Column {
@@ -116,24 +120,19 @@ internal fun ImageQualityDialog(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    onQualityChange(option.value)
-                                    onDismiss()
-                                }.padding(vertical = PairShotSpacing.itemGap),
+                                .clickable { selectedQuality = option.value }
+                                .padding(vertical = PairShotSpacing.iconTextGap),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         RadioButton(
-                            selected = currentQuality == option.value,
-                            onClick = {
-                                onQualityChange(option.value)
-                                onDismiss()
-                            },
+                            selected = selectedQuality == option.value,
+                            onClick = { selectedQuality = option.value },
                             colors =
                                 RadioButtonDefaults.colors(
                                     selectedColor = MaterialTheme.colorScheme.primary,
                                 ),
                         )
-                        Column(modifier = Modifier.padding(start = PairShotSpacing.itemGap)) {
+                        Column(modifier = Modifier.padding(start = PairShotSpacing.iconTextGap)) {
                             Text(
                                 text = option.label,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -149,7 +148,16 @@ internal fun ImageQualityDialog(
                 }
             }
         },
-        confirmButton = {},
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onQualityChange(selectedQuality)
+                    onDismiss()
+                },
+            ) {
+                Text("적용")
+            }
+        },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("취소")
@@ -166,36 +174,76 @@ internal fun FileNamePrefixDialog(
 ) {
     var prefixInput by rememberSaveable { mutableStateOf(currentPrefix) }
 
-    AlertDialog(
+    val isError = prefixInput.isBlank()
+    val outlineColor = MaterialTheme.colorScheme.outline
+    val errorColor = MaterialTheme.colorScheme.error
+    val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+
+    PairShotDialog(
         onDismissRequest = onDismiss,
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surface,
         title = { Text("파일명 접두어") },
         text = {
             Column {
-                OutlinedTextField(
-                    value = prefixInput,
-                    onValueChange = { raw ->
-                        prefixInput = raw.replace(fileNameSafePattern, "")
-                    },
-                    placeholder = {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    BasicTextField(
+                        value = prefixInput,
+                        onValueChange = { raw ->
+                            prefixInput = raw.replace(fileNameSafePattern, "")
+                        },
+                        singleLine = true,
+                        textStyle =
+                            MaterialTheme.typography.bodyLarge.copy(
+                                color = onSurfaceColor,
+                            ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 4.dp)
+                                .drawBehind {
+                                    val lineColor = if (isError) errorColor else outlineColor
+                                    drawLine(
+                                        color = lineColor,
+                                        start = Offset(0f, size.height),
+                                        end = Offset(size.width, size.height),
+                                        strokeWidth = 1.dp.toPx(),
+                                    )
+                                },
+                        decorationBox = { innerTextField ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.heightIn(min = 40.dp),
+                            ) {
+                                Box(modifier = Modifier.weight(1f)) {
+                                    if (prefixInput.isEmpty()) {
+                                        Text(
+                                            text = "접두어 입력 (예: 현장A)",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = onSurfaceVariantColor,
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                                Text(
+                                    text = "_",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = onSurfaceVariantColor,
+                                )
+                            }
+                        },
+                    )
+                }
+                Box(modifier = Modifier.height(20.dp)) {
+                    if (isError) {
                         Text(
-                            text = "접두어 입력 (예: 현장A)",
-                            style = MaterialTheme.typography.bodyLarge,
+                            text = "접두어를 입력해주세요",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = errorColor,
                         )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxWidth(),
-                    suffix = {
-                        Text(
-                            text = "_",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                )
+                    }
+                }
                 if (prefixInput != "PAIRSHOT") {
                     TextButton(
                         onClick = { prefixInput = "PAIRSHOT" },
@@ -212,8 +260,9 @@ internal fun FileNamePrefixDialog(
                     onPrefixChange(prefixInput)
                     onDismiss()
                 },
+                enabled = prefixInput.isNotBlank(),
             ) {
-                Text("확인")
+                Text("저장")
             }
         },
         dismissButton = {
