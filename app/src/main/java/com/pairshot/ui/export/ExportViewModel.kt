@@ -4,13 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.pairshot.app.navigation.route.Export
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.WatermarkConfig
 import com.pairshot.domain.repository.ExportRepository
 import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.domain.repository.ProjectRepository
 import com.pairshot.domain.repository.WatermarkRepository
-import com.pairshot.ui.navigation.Export
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

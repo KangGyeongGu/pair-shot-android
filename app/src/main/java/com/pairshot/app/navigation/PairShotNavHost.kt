@@ -1,11 +1,8 @@
-package com.pairshot.ui.navigation
+package com.pairshot.app.navigation
 
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -20,9 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,10 +28,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.pairshot.app.navigation.effect.ExportShareEffect
+import com.pairshot.app.navigation.route.AfterCamera
+import com.pairshot.app.navigation.route.Camera
+import com.pairshot.app.navigation.route.Compare
+import com.pairshot.app.navigation.route.Export
+import com.pairshot.app.navigation.route.License
+import com.pairshot.app.navigation.route.ProjectDetail
+import com.pairshot.app.navigation.route.ProjectList
+import com.pairshot.app.navigation.route.Settings
+import com.pairshot.app.navigation.route.WatermarkSettings
 import com.pairshot.ui.aftercamera.AfterCameraScreen
 import com.pairshot.ui.camera.CameraScreen
 import com.pairshot.ui.compare.CompareScreen
-import com.pairshot.ui.export.ExportAction
 import com.pairshot.ui.export.ExportFormat
 import com.pairshot.ui.export.ExportLoadingScreen
 import com.pairshot.ui.export.ExportScreen
@@ -48,49 +52,9 @@ import com.pairshot.ui.settings.LicenseScreen
 import com.pairshot.ui.settings.SettingsScreen
 import com.pairshot.ui.settings.SettingsViewModel
 import com.pairshot.ui.settings.WatermarkSettingsScreen
-import kotlinx.serialization.Serializable
-
-@Serializable
-data object ProjectList
-
-@Serializable
-data class ProjectDetail(
-    val projectId: Long,
-)
-
-@Serializable
-data class Camera(
-    val projectId: Long,
-)
-
-@Serializable
-data class AfterCamera(
-    val projectId: Long,
-    val initialPairId: Long? = null,
-)
-
-@Serializable
-data class Compare(
-    val pairId: Long,
-)
-
-@Serializable
-data class Export(
-    val projectId: Long,
-    val pairIds: String,
-)
-
-@Serializable
-data object Settings
-
-@Serializable
-data object WatermarkSettings
-
-@Serializable
-data object License
 
 @Composable
-fun PairShotNavGraph(navController: NavHostController = rememberNavController()) {
+fun PairShotNavHost(navController: NavHostController = rememberNavController()) {
     NavHost(
         navController = navController,
         startDestination = ProjectList,
@@ -188,7 +152,6 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
         }
         composable<Export> {
             val viewModel: ExportViewModel = hiltViewModel()
-            val context = LocalContext.current
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val includeBefore by viewModel.includeBefore.collectAsStateWithLifecycle()
             val includeAfter by viewModel.includeAfter.collectAsStateWithLifecycle()
@@ -213,67 +176,7 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                 }
             }
 
-            LaunchedEffect("exportAction") {
-                viewModel.exportAction.collect { action ->
-                    val resolver = context.contentResolver
-                    val intent =
-                        when (action) {
-                            is ExportAction.ShareZip -> {
-                                val zipFile = java.io.File(action.filePath)
-                                val authority = "${context.packageName}.fileprovider"
-                                val uri = FileProvider.getUriForFile(context, authority, zipFile)
-                                Intent(Intent.ACTION_SEND).apply {
-                                    type = "application/zip"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    clipData =
-                                        android.content.ClipData.newUri(
-                                            resolver,
-                                            "PairShot ZIP",
-                                            uri,
-                                        )
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                            }
-
-                            is ExportAction.ShareImages -> {
-                                val uris = action.uris.map { Uri.parse(it) }
-                                if (uris.size == 1) {
-                                    Intent(Intent.ACTION_SEND).apply {
-                                        type = "image/jpeg"
-                                        putExtra(Intent.EXTRA_STREAM, uris.first())
-                                        clipData =
-                                            android.content.ClipData.newUri(
-                                                resolver,
-                                                "PairShot",
-                                                uris.first(),
-                                            )
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                } else {
-                                    Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                                        type = "image/*"
-                                        putParcelableArrayListExtra(
-                                            Intent.EXTRA_STREAM,
-                                            ArrayList(uris),
-                                        )
-                                        clipData =
-                                            android.content.ClipData
-                                                .newUri(resolver, "PairShot", uris.first())
-                                                .apply {
-                                                    uris.drop(1).forEach {
-                                                        addItem(
-                                                            android.content.ClipData.Item(it),
-                                                        )
-                                                    }
-                                                }
-                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    }
-                                }
-                            }
-                        }
-                    context.startActivity(Intent.createChooser(intent, null))
-                }
-            }
+            ExportShareEffect(exportAction = viewModel.exportAction)
 
             val onSaveToDevice = {
                 when (exportFormat) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.pairshot.app.navigation.route.ProjectDetail
 import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.PhotoPairRepository
@@ -11,7 +12,6 @@ import com.pairshot.domain.repository.ProjectRepository
 import com.pairshot.domain.usecase.combine.BatchCombineUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.domain.usecase.project.DeleteProjectUseCase
-import com.pairshot.ui.navigation.ProjectDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
