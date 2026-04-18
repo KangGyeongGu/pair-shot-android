@@ -2,91 +2,52 @@ package com.pairshot.feature.camera.ui.screen
 
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.net.Uri
-import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.CameraControl
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.Preview
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory
-import androidx.camera.core.SurfaceRequest
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.lifecycle.awaitInstance
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FlipCameraAndroid
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.concurrent.futures.await
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.feature.camera.ui.chrome.AfterCameraTopBar
+import com.pairshot.feature.camera.ui.chrome.CameraBottomBar
 import com.pairshot.feature.camera.ui.component.BeforePreviewStrip
 import com.pairshot.feature.camera.ui.component.CameraSettingsSheet
-import com.pairshot.feature.camera.ui.component.FocusExposureOverlay
-import com.pairshot.feature.camera.ui.component.GridOverlay
-import com.pairshot.feature.camera.ui.component.LevelOverlay
 import com.pairshot.feature.camera.ui.component.OverlayGuide
-import com.pairshot.feature.camera.ui.component.ShutterButton
-import com.pairshot.feature.camera.ui.component.ZoomControls
-import com.pairshot.feature.camera.ui.state.FlashMode
+import com.pairshot.feature.camera.ui.coordinator.CameraSessionCoordinator
+import com.pairshot.feature.camera.ui.preview.CameraPreviewPane
 import com.pairshot.feature.camera.ui.viewmodel.AfterCameraEvent
 import com.pairshot.feature.camera.ui.viewmodel.AfterCameraViewModel
 import kotlinx.coroutines.delay
-import java.io.File
-import java.util.concurrent.TimeUnit
 
 @Composable
 internal fun AfterCameraScreen(
@@ -94,7 +55,6 @@ internal fun AfterCameraScreen(
     onNavigateBack: () -> Unit,
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
     val haptic = LocalHapticFeedback.current
 
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
@@ -102,7 +62,6 @@ internal fun AfterCameraScreen(
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
     val lensFacing by viewModel.lensFacing.collectAsStateWithLifecycle()
     val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
-    val latestZoomRatio by rememberUpdatedState(zoomUiState.currentRatio)
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
@@ -115,8 +74,10 @@ internal fun AfterCameraScreen(
     val completedCount = (totalPairCount - totalCount).coerceAtLeast(0)
     val beforePreviewUris = unpairedPhotos.map { it.beforePhotoUri }
 
-    var surfaceRequest by remember { mutableStateOf<SurfaceRequest?>(null) }
+    var surfaceRequest by remember { mutableStateOf<androidx.camera.core.SurfaceRequest?>(null) }
     var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
+    val cameraProviderState = remember { mutableStateOf<ProcessCameraProvider?>(null) }
+    val extensionsManagerState = remember { mutableStateOf<ExtensionsManager?>(null) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val thumbnailListState = rememberLazyListState()
@@ -133,7 +94,7 @@ internal fun AfterCameraScreen(
                     "/system/media/audio/ui/camera_shutter.ogg",
                     "/system/media/audio/ui/CameraClick.ogg",
                 )
-            val path = candidates.firstOrNull { File(it).exists() }
+            val path = candidates.firstOrNull { java.io.File(it).exists() }
             path?.let {
                 MediaPlayer().apply {
                     setDataSource(it)
@@ -142,7 +103,13 @@ internal fun AfterCameraScreen(
             }
         }
     DisposableEffect(Unit) {
-        onDispose { shutterPlayer?.release() }
+        onDispose {
+            shutterPlayer?.release()
+            cameraProviderState.value?.unbindAll()
+            cameraProviderState.value = null
+            surfaceRequest = null
+            cameraControl = null
+        }
     }
 
     var showBlackout by remember { mutableStateOf(false) }
@@ -169,7 +136,7 @@ internal fun AfterCameraScreen(
         }
     }
 
-    // 현재 pair 변경 시 해당 Before의 zoomLevel을 카메라에 적용 + 다이얼에도 반영
+    // 현재 pair 변경 시 해당 Before의 zoomLevel을 카메라에 적용
     LaunchedEffect(currentIndex, unpairedPhotos) {
         val pair = unpairedPhotos.getOrNull(currentIndex) ?: return@LaunchedEffect
         viewModel.restoreZoomForPair(pair.zoomLevel)
@@ -202,91 +169,32 @@ internal fun AfterCameraScreen(
         }
     }
 
-    // CameraX 바인딩
-    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
-    var extensionsManager by remember { mutableStateOf<ExtensionsManager?>(null) }
-
-    // ExtensionsManager 초기화 — ProcessCameraProvider당 1회만 수행
-    LaunchedEffect(Unit) {
-        val provider = ProcessCameraProvider.awaitInstance(context)
-        cameraProvider = provider
-        extensionsManager = ExtensionsManager.getInstanceAsync(context, provider).await()
-    }
-
-    // 렌즈 전환 / Extension 토글 시 카메라 재바인딩 — 단일 LaunchedEffect로 race condition 방지
-    LaunchedEffect(lensFacing, settingsState.nightModeEnabled, settingsState.hdrEnabled) {
-        val provider = cameraProvider ?: ProcessCameraProvider.awaitInstance(context).also { cameraProvider = it }
-        val extManager = extensionsManager ?: ExtensionsManager.getInstanceAsync(context, provider).await().also { extensionsManager = it }
-        provider.unbindAll()
-
-        val cameraSelector = viewModel.getExtensionCameraSelector(extManager)
-
-        val preview = Preview.Builder().build()
-        preview.setSurfaceProvider { request ->
-            surfaceRequest = request
-        }
-
-        viewModel.applyFlashMode(viewModel.imageCapture)
-
-        val camera =
-            provider.bindToLifecycle(
-                lifecycleOwner,
-                cameraSelector,
-                preview,
-                viewModel.imageCapture,
-            )
-        cameraControl = camera.cameraControl
-
-        viewModel.updateCapabilities(camera.cameraInfo, extManager)
-
-        if (viewModel.settingsState.value.flashMode == FlashMode.TORCH) {
-            camera.cameraControl.enableTorch(true)
-        }
-
-        if (viewModel.settingsState.value.exposureIndex != 0) {
-            camera.cameraControl.setExposureCompensationIndex(viewModel.settingsState.value.exposureIndex)
-        }
-
-        // 기존 observer 제거 후 재등록 — observer 누적 방지
-        camera.cameraInfo.zoomState.removeObservers(lifecycleOwner)
-        camera.cameraInfo.zoomState.observe(lifecycleOwner) { zoomState ->
-            if (zoomState != null) {
-                viewModel.initFromZoomState(zoomState.minZoomRatio, zoomState.maxZoomRatio)
-            }
-        }
-
-        val zoom = unpairedPhotos.getOrNull(currentIndex)?.zoomLevel ?: 1f
-        viewModel.restoreZoomForPair(zoom)
-        val restored = viewModel.zoomUiState.value.currentRatio
-        camera.cameraControl.setZoomRatio(restored)
-    }
-
-    // 플래시 모드 변경 반영
-    LaunchedEffect(settingsState.flashMode) {
-        val control = cameraControl ?: return@LaunchedEffect
-        viewModel.applyFlashMode(viewModel.imageCapture)
-        control.enableTorch(settingsState.flashMode == FlashMode.TORCH)
-    }
-
-    // 노출 보정 변경 반영
-    LaunchedEffect(settingsState.exposureIndex) {
-        cameraControl?.setExposureCompensationIndex(settingsState.exposureIndex)
-    }
-
-    // 화면 이탈 시 카메라 리소스 해제
-    DisposableEffect(Unit) {
-        onDispose {
-            cameraProvider?.unbindAll()
-            cameraProvider = null
-            surfaceRequest = null
-            cameraControl = null
-        }
-    }
+    // 카메라 바인딩 사이드이펙트
+    CameraSessionCoordinator(
+        lensFacing = lensFacing,
+        nightModeEnabled = settingsState.nightModeEnabled,
+        hdrEnabled = settingsState.hdrEnabled,
+        flashMode = settingsState.flashMode,
+        exposureIndex = settingsState.exposureIndex,
+        imageCapture = viewModel.imageCapture,
+        cameraProviderState = cameraProviderState,
+        extensionsManagerState = extensionsManagerState,
+        getExtensionCameraSelector = { extManager -> viewModel.getExtensionCameraSelector(extManager) },
+        applyFlashMode = { ic -> viewModel.applyFlashMode(ic) },
+        cameraControlProvider = { cameraControl },
+        onSurfaceRequest = { surfaceRequest = it },
+        onCameraReady = { cameraControl = it },
+        onZoomStateReady = { min, max -> viewModel.initFromZoomState(min, max) },
+        onCapabilitiesReady = { info, extManager -> viewModel.updateCapabilities(info, extManager) },
+        onInitialZoom = { control ->
+            val zoom = unpairedPhotos.getOrNull(currentIndex)?.zoomLevel ?: 1f
+            viewModel.restoreZoomForPair(zoom)
+            control.setZoomRatio(viewModel.zoomUiState.value.currentRatio)
+        },
+    )
 
     val density = LocalDensity.current
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize(),
-    ) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val safeTopPx = WindowInsets.safeDrawing.getTop(density)
         val safeBottomPx = WindowInsets.safeDrawing.getBottom(density)
         val fullHeightPx = with(density) { maxHeight.roundToPx() }
@@ -298,23 +206,15 @@ internal fun AfterCameraScreen(
         val bottomSpacerDesired = 32.dp
         val minPreviewHeight = 180.dp
 
-        val reservedHeight =
-            topSectionHeight + stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
+        val reservedHeight = topSectionHeight + stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
         val previewHeightRaw = safeAvailableHeightDp - reservedHeight
-        val previewSectionHeight =
-            if (previewHeightRaw >= minPreviewHeight) {
-                previewHeightRaw
-            } else {
-                minPreviewHeight
-            }
+        val previewSectionHeight = if (previewHeightRaw >= minPreviewHeight) previewHeightRaw else minPreviewHeight
         val bottomSpacerHeight =
             if (previewHeightRaw >= minPreviewHeight) {
                 bottomSpacerDesired
             } else {
-                (
-                    safeAvailableHeightDp -
-                        (topSectionHeight + stripSectionHeight + shutterSectionHeight + previewSectionHeight)
-                ).coerceAtLeast(0.dp)
+                (safeAvailableHeightDp - (topSectionHeight + stripSectionHeight + shutterSectionHeight + previewSectionHeight))
+                    .coerceAtLeast(0.dp)
             }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -324,273 +224,77 @@ internal fun AfterCameraScreen(
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(topSectionHeight)
-                            .background(Color.Black.copy(alpha = 0.45f))
-                            .padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .padding(start = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier.size(40.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            IconButton(onClick = onNavigateBack) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowLeft,
-                                    contentDescription = "뒤로가기",
-                                    tint = Color.White,
-                                )
-                            }
-                        }
-                        Text(
-                            text = "$completedCount/$totalPairCount 완료",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-                }
+                AfterCameraTopBar(
+                    onNavigateBack = onNavigateBack,
+                    completedCount = completedCount,
+                    totalPairCount = totalPairCount,
+                    height = topSectionHeight,
+                )
 
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(previewSectionHeight)
-                            .pointerInput(cameraControl, zoomUiState.minRatio, zoomUiState.maxRatio) {
-                                detectTransformGestures { _, _, zoom, _ ->
-                                    val control = cameraControl ?: return@detectTransformGestures
-                                    val newRatio =
-                                        (latestZoomRatio * zoom)
-                                            .coerceIn(zoomUiState.minRatio, zoomUiState.maxRatio)
-                                    control.setZoomRatio(newRatio)
-                                    viewModel.updateZoomRatio(newRatio)
-                                }
-                            },
-                ) {
-                    surfaceRequest?.let { request ->
-                        Box {
-                            CameraXViewfinder(
-                                surfaceRequest = request,
-                                contentScale = ContentScale.Fit,
+                CameraPreviewPane(
+                    surfaceRequest = surfaceRequest,
+                    cameraControl = cameraControl,
+                    zoomUiState = zoomUiState,
+                    blackoutAlpha = blackoutAlpha,
+                    gridEnabled = settingsState.gridEnabled,
+                    levelEnabled = settingsState.levelEnabled,
+                    roll = roll,
+                    exposureRange = capabilities.exposureRange,
+                    currentExposureIndex = settingsState.exposureIndex,
+                    exposureStep = capabilities.exposureStep,
+                    height = previewSectionHeight,
+                    onZoomRatioChanged = { newRatio ->
+                        cameraControl?.setZoomRatio(newRatio)
+                        viewModel.updateZoomRatio(newRatio)
+                    },
+                    onPresetTapped = { preset ->
+                        viewModel.onPresetTapped(preset)
+                        cameraControl?.setZoomRatio(viewModel.zoomUiState.value.currentRatio)
+                    },
+                    onDragEnd = { viewModel.applyCustomRatio() },
+                    onExposureReset = {
+                        viewModel.setExposureIndex(0)
+                        cameraControl?.setExposureCompensationIndex(0)
+                    },
+                    onExposureAdjust = { index ->
+                        viewModel.setExposureIndex(index)
+                        cameraControl?.setExposureCompensationIndex(index)
+                    },
+                    overlayContent = {
+                        if (overlayEnabled) {
+                            OverlayGuide(
+                                imageUri = currentPair?.beforePhotoUri,
+                                alpha = overlayAlpha,
                                 modifier = Modifier.fillMaxSize(),
                             )
-                            if (blackoutAlpha > 0f) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxSize()
-                                            .background(Color.Black.copy(alpha = blackoutAlpha)),
-                                )
-                            }
                         }
-                    }
+                    },
+                )
 
-                    if (overlayEnabled) {
-                        OverlayGuide(
-                            imageUri = currentPair?.beforePhotoUri,
-                            alpha = overlayAlpha,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                BeforePreviewStrip(
+                    beforePreviewUris = beforePreviewUris,
+                    modifier = Modifier.height(stripSectionHeight),
+                    selectedIndex = if (totalCount > 0) currentIndex else null,
+                    onSelectIndex = viewModel::selectIndex,
+                    listState = thumbnailListState,
+                    emptyMessage = "촬영할 Before가 없습니다",
+                    stripHeight = stripSectionHeight,
+                )
 
-                    AfterCameraPreviewOverlays(
-                        gridEnabled = settingsState.gridEnabled,
-                        levelEnabled = settingsState.levelEnabled,
-                        roll = roll,
-                    )
-
-                    // 탭-투-포커스 + 드래그 노출 보정 오버레이
-                    FocusExposureOverlay(
-                        onTapToFocus = { x, y, viewWidth, viewHeight ->
-                            val control = cameraControl ?: return@FocusExposureOverlay
-                            val factory =
-                                SurfaceOrientedMeteringPointFactory(
-                                    viewWidth.toFloat(),
-                                    viewHeight.toFloat(),
-                                )
-                            val point = factory.createPoint(x, y)
-                            val action =
-                                FocusMeteringAction
-                                    .Builder(point)
-                                    .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                                    .build()
-                            control.startFocusAndMetering(action)
-                        },
-                        onExposureReset = {
-                            viewModel.setExposureIndex(0)
-                            cameraControl?.setExposureCompensationIndex(0)
-                        },
-                        onExposureAdjust = { index ->
-                            viewModel.setExposureIndex(index)
-                            cameraControl?.setExposureCompensationIndex(index)
-                        },
-                        exposureRange = capabilities.exposureRange,
-                        currentExposureIndex = settingsState.exposureIndex,
-                        exposureStep = capabilities.exposureStep,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-
-                    BoxWithConstraints(
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .fillMaxSize(),
-                    ) {
-                        val containerRatio =
-                            if (maxHeight.value > 0f) {
-                                maxWidth.value / maxHeight.value
-                            } else {
-                                3f / 4f
-                            }
-                        val requestedRatioRaw =
-                            surfaceRequest?.resolution?.let { size ->
-                                if (size.height > 0) {
-                                    size.width.toFloat() / size.height.toFloat()
-                                } else {
-                                    containerRatio
-                                }
-                            } ?: containerRatio
-                        val requestedRatio =
-                            when {
-                                requestedRatioRaw <= 0f -> containerRatio
-                                (requestedRatioRaw > 1f) != (containerRatio > 1f) -> 1f / requestedRatioRaw
-                                else -> requestedRatioRaw
-                            }
-
-                        val previewFrameModifier =
-                            if (containerRatio > requestedRatio) {
-                                Modifier
-                                    .fillMaxHeight()
-                                    .aspectRatio(requestedRatio)
-                            } else {
-                                Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(requestedRatio)
-                            }
-
-                        Box(modifier = previewFrameModifier.align(Alignment.Center)) {
-                            // 배율 프리셋 버튼 + 수평 줌 다이얼
-                            ZoomControls(
-                                zoomUiState = zoomUiState,
-                                onZoomRatioChanged = { newRatio ->
-                                    cameraControl?.setZoomRatio(newRatio)
-                                    viewModel.updateZoomRatio(newRatio)
-                                },
-                                onPresetTapped = { preset ->
-                                    viewModel.onPresetTapped(preset)
-                                    cameraControl?.setZoomRatio(
-                                        viewModel.zoomUiState.value.currentRatio,
-                                    )
-                                },
-                                onDragEnd = { viewModel.applyCustomRatio() },
-                                modifier =
-                                    Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(bottom = 12.dp),
-                            )
-                        }
-                    }
-                }
-
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(Color.Black),
-                ) {
-                    BeforePreviewStrip(
-                        beforePreviewUris = beforePreviewUris,
-                        modifier = Modifier.height(stripSectionHeight),
-                        selectedIndex = if (totalCount > 0) currentIndex else null,
-                        onSelectIndex = viewModel::selectIndex,
-                        listState = thumbnailListState,
-                        emptyMessage = "촬영할 Before가 없습니다",
-                        stripHeight = stripSectionHeight,
-                    )
-                }
-
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(shutterSectionHeight)
-                            .background(Color.Black)
-                            .padding(horizontal = 32.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconButton(onClick = { viewModel.toggleLensFacing() }) {
-                            Icon(
-                                imageVector = Icons.Default.FlipCameraAndroid,
-                                contentDescription = "카메라 전환",
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                        IconButton(onClick = { viewModel.toggleSettingsPanel() }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "설정",
-                                tint = Color.White,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                    }
-
-                    ShutterButton(
-                        onClick = {
-                            shutterPlayer?.let { player ->
-                                val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                                val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                                val ratio = if (max > 0) current.toFloat() / max else 0f
-                                val vol = ratio * 0.10f
-                                player.setVolume(vol, vol)
-                                if (player.isPlaying) player.seekTo(0) else player.start()
-                            }
-                            showBlackout = true
-
-                            val tempDir = File(context.cacheDir, "temp").also { it.mkdirs() }
-                            val tempFile = File(tempDir, "after_${System.currentTimeMillis()}.jpg")
-                            val outputFileOptions =
-                                ImageCapture.OutputFileOptions
-                                    .Builder(tempFile)
-                                    .build()
-                            viewModel.imageCapture.takePicture(
-                                outputFileOptions,
-                                ContextCompat.getMainExecutor(context),
-                                object : ImageCapture.OnImageSavedCallback {
-                                    override fun onError(exception: ImageCaptureException) {
-                                        tempFile.delete()
-                                        viewModel.emitCaptureError(exception.message ?: "촬영 실패")
-                                    }
-
-                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                        val savedUri =
-                                            outputFileResults.savedUri
-                                                ?: Uri.fromFile(tempFile)
-                                        viewModel.onAfterCaptured(savedUri.toString())
-                                    }
-                                },
-                            )
-                        },
-                        enabled = !isSaving && currentPair != null,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
+                CameraBottomBar(
+                    imageCapture = viewModel.imageCapture,
+                    isSaving = isSaving,
+                    shutterEnabled = currentPair != null,
+                    shutterPlayer = shutterPlayer,
+                    audioManager = audioManager,
+                    tempFilePrefix = "after_",
+                    height = shutterSectionHeight,
+                    onToggleLens = { viewModel.toggleLensFacing() },
+                    onToggleSettings = { viewModel.toggleSettingsPanel() },
+                    onShowBlackout = { showBlackout = true },
+                    onImageSaved = { uri -> viewModel.onAfterCaptured(uri) },
+                    onCaptureError = { msg -> viewModel.emitCaptureError(msg) },
+                )
 
                 Spacer(modifier = Modifier.height(bottomSpacerHeight))
             }
@@ -618,7 +322,7 @@ internal fun AfterCameraScreen(
                         .align(Alignment.BottomCenter)
                         .padding(horizontal = 16.dp, vertical = 112.dp),
                 snackbar = { snackbarData ->
-                    androidx.compose.material3.Snackbar(
+                    Snackbar(
                         snackbarData = snackbarData,
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -626,31 +330,6 @@ internal fun AfterCameraScreen(
                     )
                 },
             )
-        }
-    }
-}
-
-@Composable
-private fun AfterCameraPreviewOverlays(
-    gridEnabled: Boolean,
-    levelEnabled: Boolean,
-    roll: Float,
-) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = gridEnabled,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            GridOverlay()
-        }
-
-        AnimatedVisibility(
-            visible = levelEnabled,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            LevelOverlay(roll = roll)
         }
     }
 }
