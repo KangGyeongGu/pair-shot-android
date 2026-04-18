@@ -1,7 +1,6 @@
 package com.pairshot.feature.camera.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.feature.camera.ui.state.CameraCapabilities
@@ -79,8 +79,8 @@ fun CameraSettingsSheet(
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(animationSpec = tween(200)),
-            exit = fadeOut(animationSpec = tween(160)),
+            enter = fadeIn(animationSpec = PairShotMotionTokens.panelEnterTween()),
+            exit = fadeOut(animationSpec = PairShotMotionTokens.panelExitTween()),
         ) {
             Box(
                 modifier =
@@ -96,8 +96,12 @@ fun CameraSettingsSheet(
 
         AnimatedVisibility(
             visible = visible,
-            enter = fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)),
-            exit = fadeOut(animationSpec = tween(160)) + scaleOut(targetScale = 0.98f, animationSpec = tween(160)),
+            enter =
+                fadeIn(animationSpec = PairShotMotionTokens.panelEnterTween()) +
+                    scaleIn(initialScale = 0.96f, animationSpec = PairShotMotionTokens.panelEnterTween()),
+            exit =
+                fadeOut(animationSpec = PairShotMotionTokens.panelExitTween()) +
+                    scaleOut(targetScale = 0.98f, animationSpec = PairShotMotionTokens.panelExitTween()),
             modifier = Modifier.align(Alignment.Center),
         ) {
             Column(

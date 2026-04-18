@@ -1,8 +1,5 @@
 package com.pairshot.app.navigation
 
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -28,6 +25,7 @@ import com.pairshot.app.navigation.route.ProjectDetail
 import com.pairshot.app.navigation.route.ProjectList
 import com.pairshot.app.navigation.route.Settings
 import com.pairshot.app.navigation.route.WatermarkSettings
+import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.feature.camera.ui.route.AfterCameraRoute
 import com.pairshot.feature.camera.ui.route.CameraRoute
 import com.pairshot.feature.compare.ui.route.CompareRoute
@@ -63,42 +61,16 @@ fun PairShotNavHost(
                 .fillMaxSize()
                 .background(Color.Black),
         enterTransition = {
-            fadeIn(
-                animationSpec =
-                    tween(
-                        durationMillis = 220,
-                        delayMillis = 130,
-                        easing = LinearOutSlowInEasing,
-                    ),
-            )
+            fadeIn(animationSpec = PairShotMotionTokens.enterTween())
         },
         exitTransition = {
-            fadeOut(
-                animationSpec =
-                    tween(
-                        durationMillis = 180,
-                        easing = FastOutLinearInEasing,
-                    ),
-            )
+            fadeOut(animationSpec = PairShotMotionTokens.exitTween())
         },
         popEnterTransition = {
-            fadeIn(
-                animationSpec =
-                    tween(
-                        durationMillis = 210,
-                        delayMillis = 120,
-                        easing = LinearOutSlowInEasing,
-                    ),
-            )
+            fadeIn(animationSpec = PairShotMotionTokens.popEnterTween())
         },
         popExitTransition = {
-            fadeOut(
-                animationSpec =
-                    tween(
-                        durationMillis = 170,
-                        easing = FastOutLinearInEasing,
-                    ),
-            )
+            fadeOut(animationSpec = PairShotMotionTokens.popExitTween())
         },
         sizeTransform = { null },
     ) {
