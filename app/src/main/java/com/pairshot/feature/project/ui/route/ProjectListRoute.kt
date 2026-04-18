@@ -1,0 +1,44 @@
+package com.pairshot.feature.project.ui.route
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.feature.project.ui.screen.ProjectListScreen
+import com.pairshot.feature.project.ui.viewmodel.ProjectViewModel
+
+@Composable
+fun ProjectListRoute(
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToProject: (Long) -> Unit = {},
+    viewModel: ProjectViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val selectionMode by viewModel.selectionMode.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+
+    var showCreateDialog by remember { mutableStateOf(false) }
+    var showDeleteSelectedDialog by remember { mutableStateOf(false) }
+    var showTopMenu by remember { mutableStateOf(false) }
+
+    ProjectListScreen(
+        uiState = uiState,
+        selectionMode = selectionMode,
+        selectedIds = selectedIds,
+        showCreateDialog = showCreateDialog,
+        showDeleteSelectedDialog = showDeleteSelectedDialog,
+        showTopMenu = showTopMenu,
+        viewModel = viewModel,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToProject = onNavigateToProject,
+        onShowCreateDialog = { showCreateDialog = true },
+        onDismissCreateDialog = { showCreateDialog = false },
+        onShowDeleteSelectedDialog = { showDeleteSelectedDialog = true },
+        onDismissDeleteSelectedDialog = { showDeleteSelectedDialog = false },
+        onShowTopMenu = { showTopMenu = true },
+        onDismissTopMenu = { showTopMenu = false },
+    )
+}

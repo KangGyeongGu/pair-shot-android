@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
-import com.pairshot.ui.export.ExportAction
+import com.pairshot.feature.export.ui.viewmodel.ExportAction
 import kotlinx.coroutines.flow.Flow
 import java.io.File
 
