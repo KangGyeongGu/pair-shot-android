@@ -32,12 +32,6 @@ import com.pairshot.feature.camera.ui.component.ZoomControls
 import com.pairshot.feature.camera.ui.component.ZoomUiState
 import java.util.concurrent.TimeUnit
 
-/**
- * 카메라 프리뷰 영역 — CameraXViewfinder, 블랙아웃 오버레이, 핀치-투-줌, FocusExposureOverlay,
- * ZoomControls, 격자/수평계 오버레이 포함.
- *
- * @param overlayContent 화면별 추가 오버레이 슬롯 (예: AfterCamera 의 OverlayGuide). null이면 생략.
- */
 @Composable
 internal fun CameraPreviewPane(
     surfaceRequest: SurfaceRequest?,

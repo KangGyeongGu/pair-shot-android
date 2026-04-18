@@ -96,7 +96,7 @@ fun CameraSettingsSheet(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
-                        ) { /* consume clicks so they don't reach the dismiss layer */ },
+                        ) { },
             ) {
                 val settingItems =
                     buildSettingItems(

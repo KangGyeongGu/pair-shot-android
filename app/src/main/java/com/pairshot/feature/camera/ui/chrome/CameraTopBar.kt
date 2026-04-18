@@ -23,9 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/**
- * Before 카메라 화면 상단 바 — 뒤로가기 버튼만 포함.
- */
 @Composable
 internal fun BeforeCameraTopBar(
     onNavigateBack: () -> Unit,
@@ -56,9 +53,6 @@ internal fun BeforeCameraTopBar(
     }
 }
 
-/**
- * After 카메라 화면 상단 바 — 뒤로가기 버튼 + 완료 개수 표시.
- */
 @Composable
 internal fun AfterCameraTopBar(
     onNavigateBack: () -> Unit,

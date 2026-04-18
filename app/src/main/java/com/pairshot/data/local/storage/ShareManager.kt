@@ -15,10 +15,6 @@ class ShareManager
     constructor(
         @ApplicationContext private val context: Context,
     ) {
-        /**
-         * 다중 이미지 공유 Intent 생성 (ACTION_SEND_MULTIPLE)
-         * content:// URI 목록을 그대로 전달 (MediaStore URI)
-         */
         fun createShareImagesIntent(uris: List<Uri>): Intent =
             if (uris.size == 1) {
                 Intent(Intent.ACTION_SEND).apply {
@@ -34,10 +30,6 @@ class ShareManager
                 }
             }
 
-        /**
-         * ZIP 파일 공유 Intent 생성
-         * cacheDir의 ZIP → FileProvider URI → ACTION_SEND
-         */
         fun createShareZipIntent(zipFile: File): Intent {
             val authority = "${context.packageName}.fileprovider"
             val uri = FileProvider.getUriForFile(context, authority, zipFile)
@@ -48,14 +40,9 @@ class ShareManager
             }
         }
 
-        /**
-         * cacheDir에 임시 ZIP 파일 경로 반환
-         * 호출자가 ZipManager로 이 경로에 ZIP을 생성한 뒤 공유
-         */
         fun createTempZipFile(projectName: String): File {
             val shareDir = File(context.cacheDir, "share")
             shareDir.mkdirs()
-            // 기존 임시 파일 정리
             shareDir.listFiles()?.forEach { it.delete() }
             return File(shareDir, "PairShot_$projectName.zip")
         }

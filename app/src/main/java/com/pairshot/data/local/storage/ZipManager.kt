@@ -21,13 +21,6 @@ class ZipManager
     constructor(
         @ApplicationContext private val context: Context,
     ) {
-        /**
-         * 이미지 항목들을 ZIP으로 묶어 SAF URI에 저장한다.
-         *
-         * @param entries 압축할 이미지 목록 (URI + ZIP 내부 경로)
-         * @param outputUri SAF ACTION_CREATE_DOCUMENT에서 받은 출력 URI
-         * @param onProgress (current, total) — 각 파일 처리 후 호출
-         */
         suspend fun createZip(
             entries: List<ZipImageEntry>,
             outputUri: Uri,
@@ -48,13 +41,6 @@ class ZipManager
             } ?: throw IllegalStateException("SAF 출력 스트림을 열 수 없습니다: $outputUri")
         }
 
-        /**
-         * 이미지 항목들을 ZIP으로 묶어 지정된 파일 경로에 저장한다 (공유용 임시 파일).
-         *
-         * @param entries 압축할 이미지 목록 (URI + ZIP 내부 경로)
-         * @param outputFile 저장할 파일 (cacheDir 내 임시 경로)
-         * @param onProgress (current, total) — 각 파일 처리 후 호출
-         */
         suspend fun createZipToFile(
             entries: List<ZipImageEntry>,
             outputFile: java.io.File,

@@ -42,14 +42,6 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/**
- * 줌 컨트롤: 프리셋 버튼 카드 ↔ 수평 다이얼 전환.
- *
- * - 기본: 프리셋 버튼들이 하나의 pill 카드 안에 나란히 표시
- * - 카드 영역 드래그 시: 카드가 위로 페이드아웃, 다이얼이 아래에서 페이드인
- * - 드래그 종료: 다이얼 사라지고 카드 복귀, 조정된 배율이 가장 가까운 프리셋 버튼에 반영
- * - 커스텀 배율 버튼 탭: 원래 프리셋으로 초기화
- */
 @Composable
 fun ZoomControls(
     zoomUiState: ZoomUiState,
@@ -71,7 +63,6 @@ fun ZoomControls(
     val pxPerZoom = rangeSpanPx / zoomRange
 
     var dragAccumulator by remember { mutableFloatStateOf(0f) }
-    // 햅틱용: 현재 0.1x 단위 틱 인덱스 추적
     var lastTickIndex by remember { mutableIntStateOf((zoomUiState.currentRatio * 10).roundToInt()) }
 
     Box(
@@ -102,7 +93,6 @@ fun ZoomControls(
                             latestOnZoomChanged(newRatio)
                             dragAccumulator = 0f
 
-                            // 0.1x 틱을 넘을 때마다 햅틱 피드백
                             val newTickIndex = (newRatio * 10).roundToInt()
                             if (newTickIndex != lastTickIndex) {
                                 val isMajorTick = newTickIndex % 10 == 0
@@ -122,11 +112,9 @@ fun ZoomControls(
             targetState = isDragging,
             transitionSpec = {
                 if (targetState) {
-                    // 카드→다이얼: 다이얼 아래에서 페이드인, 카드 위로 페이드아웃
                     (fadeIn() + slideInVertically { it / 2 })
                         .togetherWith(fadeOut() + slideOutVertically { -it / 2 })
                 } else {
-                    // 다이얼→카드: 카드 위에서 페이드인, 다이얼 아래로 페이드아웃
                     (fadeIn() + slideInVertically { -it / 2 })
                         .togetherWith(fadeOut() + slideOutVertically { it / 2 })
                 }.using(SizeTransform(clip = false) { _, _ -> snap() })
@@ -156,11 +144,6 @@ fun ZoomControls(
     }
 }
 
-/**
- * 프리셋 버튼들을 하나의 pill 카드 안에 배치.
- * 현재 배율에 가장 가까운 프리셋이 하이라이트된다.
- * 커스텀 배율이 있으면 해당 프리셋 버튼의 수치가 변경되어 표시된다.
- */
 @Composable
 private fun ZoomPresetCard(
     zoomUiState: ZoomUiState,
@@ -211,10 +194,6 @@ private fun ZoomPresetCard(
     }
 }
 
-/**
- * 다이얼 + 현재 배율 텍스트 (드래그 중 표시).
- * 다이얼은 순수 시각 표현 — 드래그 제스처는 상위 ZoomControls에서 처리.
- */
 @Composable
 private fun ZoomDialWithLabel(
     zoomUiState: ZoomUiState,
@@ -228,7 +207,6 @@ private fun ZoomDialWithLabel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        // 현재 배율 텍스트 (반투명 카드)
         Box(
             modifier =
                 Modifier
@@ -246,7 +224,6 @@ private fun ZoomDialWithLabel(
             )
         }
 
-        // 눈금 캔버스
         Canvas(
             modifier =
                 Modifier
@@ -264,7 +241,6 @@ private fun ZoomDialWithLabel(
                 (zoomUiState.currentRatio + visibleZoomSpan / 2)
                     .coerceAtMost(zoomUiState.maxRatio)
 
-            // 정수 기반 반복으로 float 누적 오차 제거
             val startTick = (visibleMin * 10).toInt()
             val endTick = ((visibleMax * 10).toInt()) + 1
             for (i in startTick..endTick) {
@@ -289,7 +265,6 @@ private fun ZoomDialWithLabel(
                 )
             }
 
-            // 중앙 인디케이터
             val indicatorH = with(density) { 18.dp.toPx() }
             val indicatorW = with(density) { 2.dp.toPx() }
             drawLine(

@@ -16,13 +16,6 @@ class MediaStoreManager
     constructor(
         @ApplicationContext private val context: Context,
     ) {
-        /**
-         * 임시 파일 URI의 이미지를 MediaStore에 저장.
-         * Pictures/PairShot/{projectName}/ 경로에 저장.
-         * IS_PENDING=1 → 쓰기 → IS_PENDING=0 패턴 사용.
-         *
-         * @return 저장된 MediaStore URI (content:// scheme)
-         */
         fun saveToGallery(
             tempFileUri: Uri,
             projectName: String,
@@ -68,9 +61,6 @@ class MediaStoreManager
             return imageUri
         }
 
-        /**
-         * Bitmap을 MediaStore에 직접 저장 (합성 이미지용).
-         */
         fun deleteFromGallery(contentUri: Uri): Boolean =
             try {
                 context.contentResolver.delete(contentUri, null, null) > 0

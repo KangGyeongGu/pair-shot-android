@@ -120,7 +120,6 @@ internal fun AfterCameraScreen(
         finishedListener = { if (showBlackout) showBlackout = false },
     )
 
-    // unpairedPhotos 갱신 시 인덱스 보정 및 완료 체크
     LaunchedEffect(unpairedPhotos) {
         viewModel.onUnpairedPhotosUpdated(unpairedPhotos)
         if (unpairedPhotos.isEmpty()) {
@@ -128,7 +127,6 @@ internal fun AfterCameraScreen(
         }
     }
 
-    // 현재 인덱스 변경 시 썸네일 스트립 자동 스크롤
     LaunchedEffect(currentIndex) {
         if (unpairedPhotos.isNotEmpty()) {
             val index = currentIndex.coerceIn(0, unpairedPhotos.lastIndex)
@@ -136,7 +134,6 @@ internal fun AfterCameraScreen(
         }
     }
 
-    // 현재 pair 변경 시 해당 Before의 zoomLevel을 카메라에 적용
     LaunchedEffect(currentIndex, unpairedPhotos) {
         val pair = unpairedPhotos.getOrNull(currentIndex) ?: return@LaunchedEffect
         viewModel.restoreZoomForPair(pair.zoomLevel)
@@ -144,7 +141,6 @@ internal fun AfterCameraScreen(
         cameraControl?.setZoomRatio(restored)
     }
 
-    // 이벤트 수신
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -169,7 +165,6 @@ internal fun AfterCameraScreen(
         }
     }
 
-    // 카메라 바인딩 사이드이펙트
     CameraSessionCoordinator(
         lensFacing = lensFacing,
         nightModeEnabled = settingsState.nightModeEnabled,

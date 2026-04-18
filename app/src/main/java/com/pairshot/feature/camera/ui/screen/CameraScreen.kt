@@ -129,7 +129,6 @@ internal fun CameraScreen(
         }
     }
 
-    // 카메라 바인딩 사이드이펙트
     CameraSessionCoordinator(
         lensFacing = lensFacing,
         nightModeEnabled = settingsState.nightModeEnabled,

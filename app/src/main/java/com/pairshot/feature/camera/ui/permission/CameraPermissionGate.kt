@@ -33,14 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-/**
- * 카메라 권한을 요청하고 허용된 경우 content를 표시하는 공통 게이트.
- * Before(CameraScreen)와 After(AfterCameraScreen) 모두에서 사용한다.
- *
- * 권한이 거부된 경우: 설정 화면 유도 UI 표시
- * 권한 설명이 필요한 경우: 이유 설명 UI 표시
- * 권한이 허용된 경우: content 표시
- */
 @Composable
 fun CameraPermissionGate(
     onNavigateBack: () -> Unit,
@@ -120,7 +112,6 @@ fun CameraPermissionGate(
         }
 
         else -> {
-            // 권한 요청 중 — 빈 검은 화면 유지
         }
     }
 }

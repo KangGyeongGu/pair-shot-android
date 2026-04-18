@@ -8,10 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-/**
- * 격자선 + 수평계 오버레이 레이어.
- * CameraScreen 과 AfterCameraScreen 양쪽에서 동일하게 사용된다.
- */
 @Composable
 internal fun CameraOverlayLayer(
     gridEnabled: Boolean,

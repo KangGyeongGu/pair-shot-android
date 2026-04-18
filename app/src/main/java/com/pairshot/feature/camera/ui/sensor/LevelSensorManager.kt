@@ -9,10 +9,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * TYPE_ROTATION_VECTOR 센서를 이용해 roll 값을 StateFlow<Float>으로 노출한다 (도 단위).
- * ViewModel.onCleared() 또는 DisposableEffect에서 stop()을 호출해 리스너를 해제해야 한다.
- */
 class LevelSensorManager(
     context: Context,
 ) {
@@ -31,7 +27,6 @@ class LevelSensorManager(
             override fun onSensorChanged(event: SensorEvent) {
                 val rotationMatrix = FloatArray(9)
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                // 세로 모드(카메라 뷰파인더) 기준으로 좌표계 리맵
                 SensorManager.remapCoordinateSystem(
                     rotationMatrix,
                     SensorManager.AXIS_X,
@@ -42,10 +37,8 @@ class LevelSensorManager(
                 SensorManager.getOrientation(remappedMatrix, orientation)
                 val rawRoll = Math.toDegrees(orientation[2].toDouble()).toFloat()
 
-                // 로우패스 필터로 떨림 억제
                 smoothedRoll = smoothedRoll + SMOOTHING_FACTOR * (rawRoll - smoothedRoll)
 
-                // 임계값 이상 변화만 반영하여 리컴포지션 최소화
                 if (kotlin.math.abs(smoothedRoll - _roll.value) >= UPDATE_THRESHOLD) {
                     _roll.value = smoothedRoll
                 }

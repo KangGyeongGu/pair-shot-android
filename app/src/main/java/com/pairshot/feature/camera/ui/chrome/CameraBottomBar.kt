@@ -29,13 +29,6 @@ import androidx.core.content.ContextCompat
 import com.pairshot.feature.camera.ui.component.ShutterButton
 import java.io.File
 
-/**
- * 카메라 하단 바 — 렌즈 전환, 설정, 셔터 버튼.
- *
- * @param tempFilePrefix 임시 캡처 파일 접두어 (Before: "capture_", After: "after_")
- * @param onImageSaved 캡처 성공 시 savedUri(String) 전달
- * @param onCaptureError 캡처 실패 시 errorMessage 전달
- */
 @Composable
 internal fun CameraBottomBar(
     imageCapture: ImageCapture,

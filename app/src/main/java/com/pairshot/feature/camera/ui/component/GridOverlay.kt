@@ -16,11 +16,9 @@ fun GridOverlay(modifier: Modifier = Modifier) {
         val thirdW = size.width / 3f
         val thirdH = size.height / 3f
 
-        // 세로선 2개
         drawLine(color, Offset(thirdW, 0f), Offset(thirdW, size.height), strokeWidth)
         drawLine(color, Offset(thirdW * 2, 0f), Offset(thirdW * 2, size.height), strokeWidth)
 
-        // 가로선 2개
         drawLine(color, Offset(0f, thirdH), Offset(size.width, thirdH), strokeWidth)
         drawLine(color, Offset(0f, thirdH * 2), Offset(size.width, thirdH * 2), strokeWidth)
     }
