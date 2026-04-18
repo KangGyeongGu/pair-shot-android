@@ -3,7 +3,6 @@ package com.pairshot.feature.export.ui.route
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,6 +12,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.app.navigation.effect.ExportShareEffect
+import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.export.ui.screen.ExportLoadingScreen
 import com.pairshot.feature.export.ui.screen.ExportScreen
 import com.pairshot.feature.export.ui.viewmodel.ExportFormat
@@ -41,13 +41,13 @@ fun ExportRoute(
             uri?.let { viewModel.saveToDevice(it.toString()) }
         }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarController = remember { PairShotSnackbarController() }
     val hapticFeedback = LocalHapticFeedback.current
 
     LaunchedEffect("snackbar") {
-        viewModel.snackbarMessage.collect { message ->
+        viewModel.snackbarMessage.collect { event ->
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-            snackbarHostState.showSnackbar(message)
+            snackbarController.show(event)
         }
     }
 
@@ -71,7 +71,7 @@ fun ExportRoute(
         is ExportUiState.Loading -> {
             ExportLoadingScreen(
                 onNavigateBack = onNavigateBack,
-                snackbarHostState = snackbarHostState,
+                snackbarController = snackbarController,
             )
         }
 
@@ -95,7 +95,7 @@ fun ExportRoute(
                 onSaveToDevice = onSaveToDevice,
                 onShare = viewModel::share,
                 onNavigateBack = onNavigateBack,
-                snackbarHostState = snackbarHostState,
+                snackbarController = snackbarController,
             )
         }
 
@@ -122,7 +122,7 @@ fun ExportRoute(
                 onNavigateBack = onNavigateBack,
                 isExporting = isExporting,
                 exportProgress = exportProgress,
-                snackbarHostState = snackbarHostState,
+                snackbarController = snackbarController,
             )
         }
     }

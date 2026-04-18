@@ -16,13 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +35,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ui.component.PairShotSnackbar
+import com.pairshot.core.ui.component.PairShotSnackbarController
+import com.pairshot.core.ui.component.SnackbarEvent
+import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.feature.camera.ui.chrome.AfterCameraTopBar
 import com.pairshot.feature.camera.ui.chrome.CameraBottomBar
 import com.pairshot.feature.camera.ui.component.BeforePreviewStrip
@@ -83,7 +84,7 @@ internal fun AfterCameraScreen(
     val cameraProviderState = remember { mutableStateOf<ProcessCameraProvider?>(null) }
     val extensionsManagerState = remember { mutableStateOf<ExtensionsManager?>(null) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarController = remember { PairShotSnackbarController() }
     val thumbnailListState = rememberLazyListState()
 
     val audioManager =
@@ -153,17 +154,23 @@ internal fun AfterCameraScreen(
                 }
 
                 is AfterCameraEvent.AllCompleted -> {
-                    snackbarHostState.showSnackbar("모든 After 촬영이 완료되었습니다!")
+                    snackbarController.show(
+                        SnackbarEvent("모든 Pair 촬영이 완료되었습니다.", SnackbarVariant.SUCCESS),
+                    )
                     delay(2000L)
                     onNavigateBack()
                 }
 
                 is AfterCameraEvent.CaptureError -> {
-                    snackbarHostState.showSnackbar("촬영에 실패했습니다. 다시 시도해주세요.")
+                    snackbarController.show(
+                        SnackbarEvent("촬영에 실패했습니다. 다시 시도해주세요.", SnackbarVariant.ERROR),
+                    )
                 }
 
                 is AfterCameraEvent.SaveError -> {
-                    snackbarHostState.showSnackbar(event.message)
+                    snackbarController.show(
+                        SnackbarEvent("오류", SnackbarVariant.ERROR),
+                    )
                 }
             }
         }
@@ -315,17 +322,18 @@ internal fun AfterCameraScreen(
             )
 
             SnackbarHost(
-                hostState = snackbarHostState,
+                hostState = snackbarController.hostState,
                 modifier =
                     Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 16.dp, vertical = 112.dp),
-                snackbar = { snackbarData ->
-                    Snackbar(
-                        snackbarData = snackbarData,
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                        shape = RoundedCornerShape(16.dp),
+                        .align(Alignment.TopCenter)
+                        .statusBarsPadding()
+                        .padding(top = 8.dp),
+                snackbar = { data ->
+                    PairShotSnackbar(
+                        message = data.visuals.message,
+                        variant = snackbarController.currentVariant,
+                        actionLabel = data.visuals.actionLabel,
+                        onAction = { data.performAction() },
                     )
                 },
             )

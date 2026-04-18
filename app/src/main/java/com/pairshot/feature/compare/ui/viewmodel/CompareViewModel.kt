@@ -9,6 +9,8 @@ import com.pairshot.core.domain.pair.CombineImagesUseCase
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
+import com.pairshot.core.ui.component.SnackbarEvent
+import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,8 +49,8 @@ class CompareViewModel
         private val _retakeReady = MutableSharedFlow<PhotoPair>()
         val retakeReady: SharedFlow<PhotoPair> = _retakeReady.asSharedFlow()
 
-        private val _combineComplete = MutableSharedFlow<String>()
-        val combineComplete: SharedFlow<String> = _combineComplete.asSharedFlow()
+        private val _combineComplete = MutableSharedFlow<SnackbarEvent>()
+        val combineComplete: SharedFlow<SnackbarEvent> = _combineComplete.asSharedFlow()
 
         private val _isCombining = MutableStateFlow(false)
         val isCombining: StateFlow<Boolean> = _isCombining.asStateFlow()
@@ -108,9 +110,9 @@ class CompareViewModel
                 try {
                     val targetPair = _pair.value ?: return@launch
                     combineImagesUseCase(targetPair.id)
-                    _combineComplete.emit("합성 완료")
+                    _combineComplete.emit(SnackbarEvent("합성 완료", SnackbarVariant.SUCCESS))
                 } catch (_: Exception) {
-                    _combineComplete.emit("합성 실패")
+                    _combineComplete.emit(SnackbarEvent("합성 실패", SnackbarVariant.ERROR, actionLabel = "재시도"))
                 } finally {
                     _isCombining.value = false
                 }

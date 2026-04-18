@@ -13,6 +13,8 @@ import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.ExportPreset
 import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
+import com.pairshot.core.ui.component.SnackbarEvent
+import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,8 +91,8 @@ class ExportViewModel
         private val _exportProgress = MutableStateFlow(0f)
         val exportProgress: StateFlow<Float> = _exportProgress.asStateFlow()
 
-        private val _snackbarMessage = MutableSharedFlow<String>()
-        val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
+        private val _snackbarMessage = MutableSharedFlow<SnackbarEvent>()
+        val snackbarMessage: SharedFlow<SnackbarEvent> = _snackbarMessage.asSharedFlow()
 
         private val _applyWatermark = MutableStateFlow(false)
         val applyWatermark: StateFlow<Boolean> = _applyWatermark.asStateFlow()
@@ -202,7 +204,6 @@ class ExportViewModel
                     if (pair?.status == PairStatus.PAIRED) id else null
                 }
             if (uncombinedIds.isEmpty()) return
-            _snackbarMessage.emit("${uncombinedIds.size}개 페어 합성 중...")
             uncombinedIds.forEach { id ->
                 try {
                     photoPairRepository.combinePair(id)
@@ -238,7 +239,7 @@ class ExportViewModel
                                         if (total > 0) current.toFloat() / total else 0f
                                 },
                             )
-                            _snackbarMessage.emit("ZIP 파일 저장 완료")
+                            _snackbarMessage.emit(SnackbarEvent("ZIP 파일 저장 완료", SnackbarVariant.SUCCESS))
                         }
 
                         ExportFormat.INDIVIDUAL -> {
@@ -255,11 +256,11 @@ class ExportViewModel
                                         if (total > 0) current.toFloat() / total else 0f
                                 },
                             )
-                            _snackbarMessage.emit("갤러리에 저장 완료")
+                            _snackbarMessage.emit(SnackbarEvent("갤러리에 저장 완료", SnackbarVariant.SUCCESS))
                         }
                     }
                 } catch (e: Exception) {
-                    _snackbarMessage.emit("저장 실패: ${e.message}")
+                    _snackbarMessage.emit(SnackbarEvent("저장 실패. 다시 시도해주세요.", SnackbarVariant.ERROR))
                 } finally {
                     _isExporting.value = false
                     _exportProgress.value = 0f
@@ -311,7 +312,7 @@ class ExportViewModel
                         }
                     }
                 } catch (e: Exception) {
-                    _snackbarMessage.emit("공유 준비 실패: ${e.message}")
+                    _snackbarMessage.emit(SnackbarEvent("공유 실패. 다시 시도해주세요.", SnackbarVariant.ERROR))
                 } finally {
                     _isExporting.value = false
                     _exportProgress.value = 0f
@@ -321,7 +322,7 @@ class ExportViewModel
 
         private suspend fun validateSelection(): Boolean {
             if (!_includeBefore.value && !_includeAfter.value && !_includeCombined.value) {
-                _snackbarMessage.emit("최소 하나의 항목을 선택해주세요")
+                _snackbarMessage.emit(SnackbarEvent("한 개 이상 항목을 선택해주세요.", SnackbarVariant.WARNING))
                 return false
             }
             val state = _uiState.value as? ExportUiState.Success ?: return false
@@ -330,7 +331,7 @@ class ExportViewModel
                     (_includeAfter.value && state.afterCount > 0) ||
                     (_includeCombined.value && state.combinedCount > 0)
             if (!hasContent) {
-                _snackbarMessage.emit("내보낼 수 있는 파일이 없습니다")
+                _snackbarMessage.emit(SnackbarEvent("내보낼 수 있는 파일이 없습니다", SnackbarVariant.WARNING))
                 return false
             }
             return true

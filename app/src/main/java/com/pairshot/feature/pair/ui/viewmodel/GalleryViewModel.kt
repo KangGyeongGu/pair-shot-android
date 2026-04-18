@@ -12,6 +12,8 @@ import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.project.DeleteProjectUseCase
 import com.pairshot.core.domain.project.ProjectRepository
+import com.pairshot.core.ui.component.SnackbarEvent
+import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,17 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+sealed interface DeleteConfirmation {
+    data class PairsOnly(
+        val count: Int,
+    ) : DeleteConfirmation
+
+    data class WithCombined(
+        val pairCount: Int,
+        val combinedCount: Int,
+    ) : DeleteConfirmation
+}
 
 sealed interface GalleryUiState {
     data object Loading : GalleryUiState
@@ -72,11 +85,14 @@ class GalleryViewModel
         private val _combineProgress = MutableStateFlow<CombineProgress?>(null)
         val combineProgress: StateFlow<CombineProgress?> = _combineProgress.asStateFlow()
 
-        private val _snackbarMessage = MutableSharedFlow<String>()
-        val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
+        private val _snackbarMessage = MutableSharedFlow<SnackbarEvent>()
+        val snackbarMessage: SharedFlow<SnackbarEvent> = _snackbarMessage.asSharedFlow()
 
         private val _projectDeletedEvent = MutableSharedFlow<Unit>()
         val projectDeletedEvent: SharedFlow<Unit> = _projectDeletedEvent.asSharedFlow()
+
+        private val _deleteConfirmation = MutableStateFlow<DeleteConfirmation?>(null)
+        val deleteConfirmation: StateFlow<DeleteConfirmation?> = _deleteConfirmation.asStateFlow()
 
         init {
             loadPairs()
@@ -172,43 +188,67 @@ class GalleryViewModel
                         }
                     }
                 if (pairedIds.isEmpty()) {
-                    _snackbarMessage.emit("합성할 수 있는 페어가 없습니다")
+                    _snackbarMessage.emit(SnackbarEvent("합성할 수 있는 페어가 없습니다", SnackbarVariant.WARNING))
                     return@launch
                 }
-                _snackbarMessage.emit("원본 합성 시작 · ${pairedIds.size}개")
                 _combineProgress.value = CombineProgress(0, pairedIds.size)
                 val success =
                     batchCombineUseCase(pairedIds) { current, total ->
                         _combineProgress.value = CombineProgress(current, total)
                     }
                 _combineProgress.value = null
-                _snackbarMessage.emit("합성 완료 · ${success}개")
+                _snackbarMessage.emit(SnackbarEvent("${success}개 합성완료", SnackbarVariant.SUCCESS))
                 exitSelectionMode()
             }
         }
 
-        fun deleteSelected() {
+        fun onDeleteClick() {
+            val state = _uiState.value as? GalleryUiState.Success ?: return
+            val selectedPairs = state.pairs.filter { it.id in _selectedIds.value }
+            val combinedCount = selectedPairs.count { it.status == PairStatus.COMBINED }
+            _deleteConfirmation.value =
+                if (combinedCount > 0) {
+                    DeleteConfirmation.WithCombined(selectedPairs.size, combinedCount)
+                } else {
+                    DeleteConfirmation.PairsOnly(selectedPairs.size)
+                }
+        }
+
+        fun dismissDeleteConfirmation() {
+            _deleteConfirmation.value = null
+        }
+
+        fun confirmDeleteAll() {
             viewModelScope.launch {
+                _deleteConfirmation.value = null
                 val ids = _selectedIds.value.toList()
-                val state = _uiState.value
-                if (state is GalleryUiState.Success) {
-                    if (_showCombinedOnly.value) {
-                        ids.forEach { id ->
-                            try {
-                                photoPairRepository.removeCombinedPhoto(id)
-                            } catch (_: Exception) {
-                            }
-                        }
-                        _snackbarMessage.emit("${ids.size}개 합성 이미지 삭제")
-                    } else {
-                        ids.forEach { id ->
-                            state.pairs.find { it.id == id }?.let { pair ->
-                                photoPairRepository.delete(pair)
-                            }
-                        }
-                        _snackbarMessage.emit("${ids.size}개 삭제 완료")
+                val state = _uiState.value as? GalleryUiState.Success ?: return@launch
+                ids.forEach { id ->
+                    state.pairs.find { it.id == id }?.let { pair ->
+                        photoPairRepository.delete(pair)
                     }
                 }
+                _snackbarMessage.emit(SnackbarEvent("${ids.size}개 삭제 완료", SnackbarVariant.INFO))
+                exitSelectionMode()
+            }
+        }
+
+        fun confirmDeleteCombinedOnly() {
+            viewModelScope.launch {
+                _deleteConfirmation.value = null
+                val ids = _selectedIds.value.toList()
+                val state = _uiState.value as? GalleryUiState.Success ?: return@launch
+                val combinedIds =
+                    ids.filter { id ->
+                        state.pairs.find { it.id == id }?.status == PairStatus.COMBINED
+                    }
+                combinedIds.forEach { id ->
+                    try {
+                        photoPairRepository.removeCombinedPhoto(id)
+                    } catch (_: Exception) {
+                    }
+                }
+                _snackbarMessage.emit(SnackbarEvent("${combinedIds.size}개 합성 삭제", SnackbarVariant.INFO))
                 exitSelectionMode()
             }
         }

@@ -1,6 +1,5 @@
 package com.pairshot.feature.settings.ui.route
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,6 +9,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.settings.ui.screen.SettingsScreen
 import com.pairshot.feature.settings.ui.viewmodel.SettingsViewModel
 
@@ -22,7 +22,7 @@ fun SettingsRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarController = remember { PairShotSnackbarController() }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(lifecycleOwner) {
@@ -32,8 +32,8 @@ fun SettingsRoute(
     }
 
     LaunchedEffect("snackbar") {
-        viewModel.snackbarMessage.collect { message ->
-            snackbarHostState.showSnackbar(message)
+        viewModel.snackbarMessage.collect { event ->
+            snackbarController.show(event)
         }
     }
 
@@ -49,6 +49,6 @@ fun SettingsRoute(
         onFileNamePrefixChange = viewModel::updateFileNamePrefix,
         onOverlayEnabledChange = viewModel::updateOverlayEnabled,
         onOverlayAlphaChange = viewModel::updateOverlayAlpha,
-        snackbarHostState = snackbarHostState,
+        snackbarController = snackbarController,
     )
 }

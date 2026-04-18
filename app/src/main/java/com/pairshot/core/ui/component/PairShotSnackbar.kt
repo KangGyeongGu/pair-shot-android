@@ -1,17 +1,13 @@
 package com.pairshot.core.ui.component
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,15 +15,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.designsystem.LocalPairShotExtendedColors
-import com.pairshot.core.designsystem.ModalShape
-
-private val SnackbarMinHeight = 52.dp
-private val SnackbarHorizontalPadding = 12.dp
-private val SnackbarVerticalPadding = 10.dp
 
 enum class SnackbarVariant { SUCCESS, INFO, WARNING, ERROR }
+
+private val SnackbarBackground = Color(0xF01C1C1E)
+
+private fun dotColor(variant: SnackbarVariant): Color =
+    when (variant) {
+        SnackbarVariant.SUCCESS -> Color(0xFF30D158)
+        SnackbarVariant.INFO -> Color(0xFF0A84FF)
+        SnackbarVariant.WARNING -> Color(0xFFFF9F0A)
+        SnackbarVariant.ERROR -> Color(0xFFFF453A)
+    }
 
 @Composable
 fun PairShotSnackbar(
@@ -37,74 +38,35 @@ fun PairShotSnackbar(
     onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val extended = LocalPairShotExtendedColors.current
-    val colorScheme = MaterialTheme.colorScheme
-
-    val (containerColor, contentColor, icon) =
-        when (variant) {
-            SnackbarVariant.SUCCESS -> {
-                Triple(
-                    extended.success.copy(alpha = 0.15f),
-                    extended.success,
-                    Icons.Filled.CheckCircle,
-                )
-            }
-
-            SnackbarVariant.INFO -> {
-                Triple(
-                    colorScheme.primaryContainer,
-                    colorScheme.onPrimaryContainer,
-                    Icons.Filled.Info,
-                )
-            }
-
-            SnackbarVariant.WARNING -> {
-                Triple(
-                    extended.warning.copy(alpha = 0.15f),
-                    extended.warning,
-                    Icons.Filled.Warning,
-                )
-            }
-
-            SnackbarVariant.ERROR -> {
-                Triple(
-                    colorScheme.errorContainer,
-                    colorScheme.onErrorContainer,
-                    Icons.Filled.Error,
-                )
-            }
-        }
-
     Surface(
-        modifier = modifier.heightIn(min = SnackbarMinHeight),
-        shape = ModalShape,
-        color = containerColor,
-        border = BorderStroke(1.dp, colorScheme.outlineVariant),
+        shape = RoundedCornerShape(999.dp),
+        color = SnackbarBackground,
+        shadowElevation = 8.dp,
+        modifier = modifier,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = SnackbarHorizontalPadding, vertical = SnackbarVerticalPadding),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(18.dp),
+            Box(
+                modifier =
+                    Modifier
+                        .size(8.dp)
+                        .background(dotColor(variant), CircleShape),
             )
             Text(
                 text = message,
+                color = Color.White,
                 style = MaterialTheme.typography.bodyMedium,
-                color = contentColor,
                 maxLines = 2,
-                modifier = Modifier.weight(1f),
             )
             if (actionLabel != null && onAction != null) {
                 TextButton(onClick = onAction) {
                     Text(
                         text = actionLabel,
+                        color = dotColor(variant),
                         style = MaterialTheme.typography.labelLarge,
-                        color = contentColor,
                     )
                 }
             }

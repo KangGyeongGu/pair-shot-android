@@ -9,6 +9,8 @@ import com.pairshot.core.domain.settings.GetStorageInfoUseCase
 import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.ui.component.SnackbarEvent
+import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -75,8 +77,8 @@ class SettingsViewModel
                 initialValue = SettingsUiState.Loading,
             )
 
-        private val _snackbarMessage = MutableSharedFlow<String>()
-        val snackbarMessage: SharedFlow<String> = _snackbarMessage.asSharedFlow()
+        private val _snackbarMessage = MutableSharedFlow<SnackbarEvent>()
+        val snackbarMessage: SharedFlow<SnackbarEvent> = _snackbarMessage.asSharedFlow()
 
         val watermarkConfig: StateFlow<WatermarkConfig> =
             watermarkRepository.watermarkConfigFlow.stateIn(
@@ -110,16 +112,19 @@ class SettingsViewModel
             }
         }
 
-        fun showMessage(message: String) {
+        fun showMessage(
+            message: String,
+            variant: SnackbarVariant = SnackbarVariant.INFO,
+        ) {
             viewModelScope.launch {
-                _snackbarMessage.emit(message)
+                _snackbarMessage.emit(SnackbarEvent(message, variant))
             }
         }
 
         fun clearCache() {
             viewModelScope.launch {
                 val freed = clearCacheUseCase()
-                _snackbarMessage.emit("캐시 ${formatBytes(freed)} 정리됨")
+                _snackbarMessage.emit(SnackbarEvent("캐시 ${formatBytes(freed)} 정리됨", SnackbarVariant.SUCCESS))
                 loadStorageInfo()
             }
         }
@@ -137,7 +142,7 @@ class SettingsViewModel
                     val current = watermarkConfig.value
                     watermarkRepository.saveConfig(current.copy(logoPath = path))
                 } catch (_: Exception) {
-                    _snackbarMessage.emit("로고 파일을 불러올 수 없습니다")
+                    _snackbarMessage.emit(SnackbarEvent("로고 파일을 불러올 수 없습니다", SnackbarVariant.ERROR))
                 }
             }
         }

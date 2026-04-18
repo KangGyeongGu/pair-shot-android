@@ -1,9 +1,8 @@
 package com.pairshot.feature.pair.ui.dialog
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -14,11 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotDialog
-import com.pairshot.core.ui.component.PairShotProgressBar
-import com.pairshot.feature.pair.ui.viewmodel.CombineProgress
 
 @Composable
 internal fun DeletePairsDialog(
@@ -121,23 +118,34 @@ internal fun DeleteProjectDialog(
 }
 
 @Composable
-internal fun CombineProgressDialog(progress: CombineProgress) {
+internal fun DeleteWithCombinedDialog(
+    pairCount: Int,
+    combinedCount: Int,
+    onDismiss: () -> Unit,
+    onDeleteAll: () -> Unit,
+    onDeleteCombinedOnly: () -> Unit,
+) {
     PairShotDialog(
-        onDismissRequest = { },
-        title = { Text(text = "합성 중") },
+        onDismissRequest = onDismiss,
+        title = { Text("삭제 방식 선택", style = MaterialTheme.typography.titleMedium) },
         text = {
-            Column {
-                PairShotProgressBar(
-                    progress = progress.current.toFloat() / progress.total,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                Text(
-                    text = "${progress.current}/${progress.total} 처리 중...",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
+            Text(
+                text = "${pairCount}개 선택됨, ${combinedCount}개 합성본.",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        confirmButton = {
+            Row {
+                TextButton(onClick = onDeleteAll) {
+                    Text("일괄 삭제", color = MaterialTheme.colorScheme.error)
+                }
+                TextButton(onClick = onDeleteCombinedOnly) {
+                    Text("합성본만", color = MaterialTheme.colorScheme.primary)
+                }
+                TextButton(onClick = onDismiss) {
+                    Text("취소")
+                }
             }
         },
-        confirmButton = { },
     )
 }

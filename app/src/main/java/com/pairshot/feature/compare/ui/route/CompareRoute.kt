@@ -1,6 +1,6 @@
 package com.pairshot.feature.compare.ui.route
 
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,6 +9,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.compare.ui.screen.CompareScreen
 import com.pairshot.feature.compare.ui.viewmodel.CompareViewModel
 
@@ -24,7 +25,7 @@ fun CompareRoute(
     val currentPairId by viewModel.currentPairId.collectAsStateWithLifecycle()
     val isCombining by viewModel.isCombining.collectAsStateWithLifecycle()
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarController = remember { PairShotSnackbarController() }
     val hapticFeedback = LocalHapticFeedback.current
 
     LaunchedEffect(Unit) {
@@ -38,9 +39,12 @@ fun CompareRoute(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.combineComplete.collect { message ->
+        viewModel.combineComplete.collect { event ->
             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-            snackbarHostState.showSnackbar(message)
+            val result = snackbarController.show(event)
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.combinePair()
+            }
         }
     }
 
@@ -50,7 +54,7 @@ fun CompareRoute(
         pairs = pairs,
         currentPairId = currentPairId,
         isCombining = isCombining,
-        snackbarHostState = snackbarHostState,
+        snackbarController = snackbarController,
         onNavigateBack = onNavigateBack,
         onSelectPair = viewModel::selectPair,
         onCombinePair = viewModel::combinePair,

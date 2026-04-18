@@ -26,6 +26,7 @@ import com.pairshot.core.designsystem.PairShotSpacing
 internal fun ExportActionSection(
     onSaveToDevice: () -> Unit,
     onShare: () -> Unit,
+    enabled: Boolean = true,
 ) {
     Text(
         text = "내보내기 방식",
@@ -39,11 +40,13 @@ internal fun ExportActionSection(
             icon = Icons.Default.Save,
             label = "기기에 저장",
             onClick = onSaveToDevice,
+            enabled = enabled,
         )
         ExportActionCard(
             icon = Icons.Default.Share,
             label = "공유",
             onClick = onShare,
+            enabled = enabled,
         )
     }
 }
@@ -54,12 +57,14 @@ private fun ExportActionCard(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         onClick = onClick,
+        enabled = enabled,
     ) {
         Row(
             modifier =
