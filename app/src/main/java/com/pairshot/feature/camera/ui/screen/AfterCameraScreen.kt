@@ -306,8 +306,8 @@ internal fun AfterCameraScreen(
                 onDismiss = viewModel::dismissSettingsPanel,
                 overlayEnabled = overlayEnabled,
                 onToggleOverlay = viewModel::toggleOverlay,
-                overlayAlpha = if (overlayEnabled) overlayAlpha else null,
-                onOverlayAlphaChange = if (overlayEnabled) viewModel::updateOverlayAlpha else null,
+                overlayAlpha = overlayAlpha,
+                onOverlayAlphaChange = viewModel::updateOverlayAlpha,
             )
 
             SnackbarHost(

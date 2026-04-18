@@ -235,10 +235,8 @@ internal fun ProjectListScreen(
                             items = groups,
                             key = { it.key },
                         ) { group ->
-                            group.label?.let { label ->
-                                ProjectGroupLabel(label = label)
-                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                            }
+                            ProjectGroupLabel(label = group.label ?: "")
+                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
 
                             ProjectGroupCard(
                                 projects = group.projects,

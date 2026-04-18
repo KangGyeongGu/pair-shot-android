@@ -82,7 +82,14 @@ fun PairCard(
                                     .weight(1f)
                                     .aspectRatio(3f / 4f)
                                     .background(MaterialTheme.colorScheme.surfaceVariant),
-                        )
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "After",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
 
                     PairStatus.PAIRED,

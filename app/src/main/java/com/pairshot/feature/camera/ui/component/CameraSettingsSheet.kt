@@ -1,11 +1,15 @@
 package com.pairshot.feature.camera.ui.component
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +49,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
 import com.pairshot.feature.camera.ui.state.FlashMode
@@ -66,13 +73,20 @@ fun CameraSettingsSheet(
     onOverlayAlphaChange: ((Float) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val isDark = isSystemInDarkTheme()
+    val scrimAlpha = if (isDark) 0.62f else 0.45f
+
     Box(modifier = modifier.fillMaxSize()) {
-        if (visible) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(160)),
+        ) {
             Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.5f))
+                        .background(Color.Black.copy(alpha = scrimAlpha))
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
@@ -82,16 +96,17 @@ fun CameraSettingsSheet(
 
         AnimatedVisibility(
             visible = visible,
-            enter = slideInVertically { it },
-            exit = slideOutVertically { it },
-            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = fadeIn(animationSpec = tween(200)) + scaleIn(initialScale = 0.96f, animationSpec = tween(200)),
+            exit = fadeOut(animationSpec = tween(160)) + scaleOut(targetScale = 0.98f, animationSpec = tween(160)),
+            modifier = Modifier.align(Alignment.Center),
         ) {
             Column(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(horizontal = 16.dp)
+                        .widthIn(max = 520.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceContainer)
                         .padding(horizontal = 20.dp, vertical = 20.dp)
                         .clickable(
                             indication = null,
@@ -119,7 +134,6 @@ fun CameraSettingsSheet(
                         SettingIconItem(
                             icon = item.icon,
                             label = item.label,
-                            statusText = item.statusText,
                             isActive = item.isActive,
                             onClick = item.onClick,
                             modifier = Modifier.weight(1f),
@@ -128,14 +142,13 @@ fun CameraSettingsSheet(
                 }
 
                 if (overlayAlpha != null && onOverlayAlphaChange != null) {
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
                     OverlayAlphaSlider(
                         alpha = overlayAlpha,
+                        enabled = overlayEnabled == true,
                         onAlphaChange = onOverlayAlphaChange,
                     )
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }
@@ -144,7 +157,6 @@ fun CameraSettingsSheet(
 private data class SettingItem(
     val icon: ImageVector,
     val label: String,
-    val statusText: String,
     val isActive: Boolean,
     val onClick: () -> Unit,
 )
@@ -166,25 +178,23 @@ private fun buildSettingItems(
         SettingItem(
             icon = Icons.Outlined.Grid3x3,
             label = "격자",
-            statusText = if (state.gridEnabled) "ON" else "OFF",
             isActive = state.gridEnabled,
             onClick = onToggleGrid,
         ),
     )
 
     if (capabilities.hasFlash) {
-        val (flashIcon, flashStatus) =
+        val flashIcon =
             when (state.flashMode) {
-                FlashMode.OFF -> Icons.Outlined.FlashOff to "OFF"
-                FlashMode.AUTO -> Icons.Outlined.FlashAuto to "AUTO"
-                FlashMode.ON -> Icons.Outlined.FlashOn to "ON"
-                FlashMode.TORCH -> Icons.Outlined.FlashlightOn to "TORCH"
+                FlashMode.OFF -> Icons.Outlined.FlashOff
+                FlashMode.AUTO -> Icons.Outlined.FlashAuto
+                FlashMode.ON -> Icons.Outlined.FlashOn
+                FlashMode.TORCH -> Icons.Outlined.FlashlightOn
             }
         items.add(
             SettingItem(
                 icon = flashIcon,
                 label = "플래시",
-                statusText = flashStatus,
                 isActive = state.flashMode != FlashMode.OFF,
                 onClick = onCycleFlash,
             ),
@@ -196,7 +206,6 @@ private fun buildSettingItems(
             SettingItem(
                 icon = Icons.Outlined.NightsStay,
                 label = "야간모드",
-                statusText = if (state.nightModeEnabled) "ON" else "OFF",
                 isActive = state.nightModeEnabled,
                 onClick = onToggleNightMode,
             ),
@@ -208,7 +217,6 @@ private fun buildSettingItems(
             SettingItem(
                 icon = Icons.Outlined.HdrOn,
                 label = "HDR",
-                statusText = if (state.hdrEnabled) "ON" else "OFF",
                 isActive = state.hdrEnabled,
                 onClick = onToggleHdr,
             ),
@@ -220,7 +228,6 @@ private fun buildSettingItems(
             SettingItem(
                 icon = Icons.Outlined.Layers,
                 label = "오버레이",
-                statusText = if (overlayEnabled) "ON" else "OFF",
                 isActive = overlayEnabled,
                 onClick = onToggleOverlay,
             ),
@@ -231,7 +238,6 @@ private fun buildSettingItems(
         SettingItem(
             icon = Icons.Outlined.Straighten,
             label = "수평계",
-            statusText = if (state.levelEnabled) "ON" else "OFF",
             isActive = state.levelEnabled,
             onClick = onToggleLevel,
         ),
@@ -244,19 +250,17 @@ private fun buildSettingItems(
 private fun SettingIconItem(
     icon: ImageVector,
     label: String,
-    statusText: String,
     isActive: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
-            modifier
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                    onClick = onClick,
-                ),
+            modifier.clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick,
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -267,7 +271,7 @@ private fun SettingIconItem(
                     .clip(CircleShape)
                     .background(
                         if (isActive) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                         } else {
                             Color.Transparent
                         },
@@ -278,18 +282,13 @@ private fun SettingIconItem(
                 imageVector = icon,
                 contentDescription = label,
                 modifier = Modifier.size(24.dp),
-                tint = if (isActive) MaterialTheme.colorScheme.primary else Color.White,
+                tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
-        )
-        Text(
-            text = statusText,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = PairShotTypographyTokens.labelExtraSmall,
+            color = if (isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -298,14 +297,21 @@ private fun SettingIconItem(
 @Composable
 private fun OverlayAlphaSlider(
     alpha: Float,
+    enabled: Boolean,
     onAlphaChange: (Float) -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val contentColor =
+        if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    val primaryColor =
+        if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     val sliderColors =
         SliderDefaults.colors(
-            thumbColor = MaterialTheme.colorScheme.primary,
-            activeTrackColor = MaterialTheme.colorScheme.primary,
-            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+            thumbColor = primaryColor,
+            activeTrackColor = primaryColor,
+            inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant,
+            disabledThumbColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+            disabledActiveTrackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
         )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -317,18 +323,19 @@ private fun OverlayAlphaSlider(
             Text(
                 text = "오버레이 투명도",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
+                color = contentColor,
             )
             Text(
                 text = "${(alpha * 100).roundToInt()}%",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = primaryColor,
             )
         }
         Slider(
             value = alpha,
             onValueChange = onAlphaChange,
             valueRange = 0f..0.5f,
+            enabled = enabled,
             interactionSource = interactionSource,
             colors = sliderColors,
             thumb = {
