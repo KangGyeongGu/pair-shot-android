@@ -3,12 +3,12 @@ package com.pairshot.feature.settings.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.BuildConfig
+import com.pairshot.core.domain.model.WatermarkConfig
+import com.pairshot.core.domain.repository.AppSettingsRepository
+import com.pairshot.core.domain.repository.WatermarkRepository
+import com.pairshot.core.domain.usecase.ClearCacheUseCase
+import com.pairshot.core.domain.usecase.GetStorageInfoUseCase
 import com.pairshot.core.infra.image.WatermarkRenderer
-import com.pairshot.feature.settings.domain.model.WatermarkConfig
-import com.pairshot.feature.settings.domain.repository.AppSettingsRepository
-import com.pairshot.feature.settings.domain.repository.WatermarkRepository
-import com.pairshot.feature.settings.domain.usecase.ClearCacheUseCase
-import com.pairshot.feature.settings.domain.usecase.GetStorageInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -16,9 +16,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.domain.model.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
-import com.pairshot.feature.pair.domain.model.PhotoPair
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

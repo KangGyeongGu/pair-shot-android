@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.Success
-import com.pairshot.feature.project.domain.model.Project
+import com.pairshot.core.domain.model.Project
 import com.pairshot.feature.project.ui.viewmodel.ProjectGroupMode
 import java.time.Instant
 import java.time.LocalDate

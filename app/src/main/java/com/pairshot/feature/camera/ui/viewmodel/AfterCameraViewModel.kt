@@ -8,8 +8,11 @@ import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.data.local.datastore.AppPreferences
-import com.pairshot.feature.camera.domain.usecase.SaveAfterPhotoUseCase
+import com.pairshot.core.domain.model.PhotoPair
+import com.pairshot.core.domain.repository.AppSettingsRepository
+import com.pairshot.core.domain.usecase.GetPairsByProjectUseCase
+import com.pairshot.core.domain.usecase.GetUnpairedPhotosUseCase
+import com.pairshot.core.domain.usecase.SaveAfterPhotoUseCase
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
 import com.pairshot.feature.camera.ui.component.ZoomUiState
 import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
@@ -17,10 +20,6 @@ import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
 import com.pairshot.feature.camera.ui.state.CameraSettingsStateHolder
 import com.pairshot.feature.camera.ui.state.FlashMode
-import com.pairshot.feature.pair.domain.model.PhotoPair
-import com.pairshot.feature.pair.domain.usecase.GetPairsByProjectUseCase
-import com.pairshot.feature.pair.domain.usecase.GetUnpairedPhotosUseCase
-import com.pairshot.feature.settings.domain.repository.AppSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -63,7 +62,6 @@ class AfterCameraViewModel
         getUnpairedPhotosUseCase: GetUnpairedPhotosUseCase,
         private val saveAfterPhotoUseCase: SaveAfterPhotoUseCase,
         private val appSettingsRepository: AppSettingsRepository,
-        private val appPreferences: AppPreferences,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle["projectId"] ?: 0L
         private val initialPairId: Long? = savedStateHandle["initialPairId"]
@@ -73,16 +71,13 @@ class AfterCameraViewModel
                 .map { pairs -> pairs.size }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
-        // 미완료 Before 목록 (Flow로 실시간 반영)
         val unpairedPhotos: StateFlow<List<PhotoPair>> =
             getUnpairedPhotosUseCase(projectId)
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-        // 현재 선택된 인덱스
         private val _currentIndex = MutableStateFlow(0)
         val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
 
-        // 카메라 상태
         private val _lensFacing = MutableStateFlow(CameraSelector.LENS_FACING_BACK)
         val lensFacing: StateFlow<Int> = _lensFacing.asStateFlow()
 
@@ -92,31 +87,28 @@ class AfterCameraViewModel
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
-        // 오버레이 활성화 여부 — 설정에서 읽어옴
         private val _overlayEnabled = MutableStateFlow(true)
         val overlayEnabled: StateFlow<Boolean> = _overlayEnabled.asStateFlow()
 
-        // 오버레이 투명도 (0f ~ 0.5f) — 초기값은 설정에서 읽어옴, 세션 내 변경은 임시 적용
         private val _overlayAlpha = MutableStateFlow(0.3f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
-        // 카메라 설정 상태 — DataStore에서 동기 복원하여 초기값으로 전달
         private val settingsHolder =
             CameraSettingsStateHolder(
                 runBlocking {
+                    val s = appSettingsRepository.settingsFlow.first()
                     CameraSettingsState(
-                        gridEnabled = appPreferences.cameraGridEnabled.first(),
-                        levelEnabled = appPreferences.cameraLevelEnabled.first(),
-                        flashMode = FlashMode.valueOf(appPreferences.cameraFlashMode.first()),
-                        nightModeEnabled = appPreferences.cameraNightMode.first(),
-                        hdrEnabled = appPreferences.cameraHdr.first(),
+                        gridEnabled = s.cameraGridEnabled,
+                        levelEnabled = s.cameraLevelEnabled,
+                        flashMode = FlashMode.valueOf(s.cameraFlashMode),
+                        nightModeEnabled = s.cameraNightModeEnabled,
+                        hdrEnabled = s.cameraHdrEnabled,
                     )
                 },
             )
         val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
         val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
 
-        // 수평계 센서
         val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
 
         init {
@@ -130,24 +122,17 @@ class AfterCameraViewModel
             }
         }
 
-        // 이벤트
         private val _events = MutableSharedFlow<AfterCameraEvent>()
         val events: SharedFlow<AfterCameraEvent> = _events.asSharedFlow()
 
-        // CameraScreen에서 bindToLifecycle 시 함께 바인딩
         val imageCapture: ImageCapture =
             ImageCapture
                 .Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build()
 
-        // 초기 인덱스 설정 (initialPairId가 있으면 해당 pair로 이동)
         private var initialIndexSet = false
 
-        /**
-         * Screen에서 cameraInfo.zoomState를 observe해 최초 non-null 값을 이 함수에 전달한다.
-         * min/max만 받아 Android 의존성을 ViewModel에서 제거한다.
-         */
         fun initFromZoomState(
             minRatio: Float,
             maxRatio: Float,
@@ -181,7 +166,6 @@ class AfterCameraViewModel
                 if (idx >= 0) _currentIndex.value = idx
                 initialIndexSet = true
             }
-            // 인덱스가 범위를 벗어나면 보정
             if (photos.isNotEmpty() && _currentIndex.value >= photos.size) {
                 _currentIndex.value = photos.size - 1
             }
@@ -217,8 +201,6 @@ class AfterCameraViewModel
                         tempFileUri = tempFileUri,
                     )
                     _events.emit(AfterCameraEvent.AfterSaved(currentPair.id))
-                    // 촬영 완료 후 → unpairedPhotos Flow 자동 갱신
-                    // 인덱스 범위 보정은 onUnpairedPhotosUpdated에서 처리됨
                 } catch (e: Exception) {
                     _events.emit(AfterCameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
                 } finally {
@@ -226,7 +208,6 @@ class AfterCameraViewModel
                         val path = java.net.URI(tempFileUri).path
                         if (path != null) java.io.File(path).delete()
                     } catch (_: Exception) {
-                        // cleanup 실패는 무시
                     }
                     _isSaving.value = false
                 }
@@ -265,8 +246,6 @@ class AfterCameraViewModel
                     CameraSelector.LENS_FACING_BACK
                 }
         }
-
-        // --- 카메라 설정 ---
 
         fun updateCapabilities(
             cameraInfo: CameraInfo,
@@ -323,11 +302,11 @@ class AfterCameraViewModel
         private fun persistSettings() {
             val state = settingsHolder.settingsState.value
             viewModelScope.launch {
-                appPreferences.setCameraGridEnabled(state.gridEnabled)
-                appPreferences.setCameraLevelEnabled(state.levelEnabled)
-                appPreferences.setCameraFlashMode(state.flashMode.name)
-                appPreferences.setCameraNightMode(state.nightModeEnabled)
-                appPreferences.setCameraHdr(state.hdrEnabled)
+                appSettingsRepository.updateCameraGridEnabled(state.gridEnabled)
+                appSettingsRepository.updateCameraLevelEnabled(state.levelEnabled)
+                appSettingsRepository.updateCameraFlashMode(state.flashMode.name)
+                appSettingsRepository.updateCameraNightMode(state.nightModeEnabled)
+                appSettingsRepository.updateCameraHdr(state.hdrEnabled)
             }
         }
 

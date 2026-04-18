@@ -33,7 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.feature.settings.domain.model.WatermarkConfig
+import com.pairshot.core.domain.model.WatermarkConfig
 import com.pairshot.feature.settings.ui.component.ClearCacheDialog
 import com.pairshot.feature.settings.ui.component.FileNamePrefixDialog
 import com.pairshot.feature.settings.ui.component.ImageQualityDialog

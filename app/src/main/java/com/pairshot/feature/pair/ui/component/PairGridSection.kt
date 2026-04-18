@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.feature.pair.domain.model.PairStatus
-import com.pairshot.feature.pair.domain.model.PhotoPair
+import com.pairshot.core.domain.model.PairStatus
+import com.pairshot.core.domain.model.PhotoPair
 import com.pairshot.feature.pair.ui.component.CombinedCard
 import com.pairshot.feature.pair.ui.component.PairCard
 

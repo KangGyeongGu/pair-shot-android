@@ -7,8 +7,9 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.data.local.datastore.AppPreferences
-import com.pairshot.feature.camera.domain.usecase.SaveBeforePhotoUseCase
+import com.pairshot.core.domain.repository.AppSettingsRepository
+import com.pairshot.core.domain.usecase.GetPairsByProjectUseCase
+import com.pairshot.core.domain.usecase.SaveBeforePhotoUseCase
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
 import com.pairshot.feature.camera.ui.component.ZoomUiState
 import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
@@ -16,7 +17,6 @@ import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
 import com.pairshot.feature.camera.ui.state.CameraSettingsStateHolder
 import com.pairshot.feature.camera.ui.state.FlashMode
-import com.pairshot.feature.pair.domain.usecase.GetPairsByProjectUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -52,7 +52,7 @@ class CameraViewModel
         @ApplicationContext context: Context,
         private val saveBeforePhotoUseCase: SaveBeforePhotoUseCase,
         private val getPairsByProjectUseCase: GetPairsByProjectUseCase,
-        private val appPreferences: AppPreferences,
+        private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
         private val _events = MutableSharedFlow<CameraEvent>()
         val events: SharedFlow<CameraEvent> = _events.asSharedFlow()
@@ -69,23 +69,22 @@ class CameraViewModel
         private val _beforePreviewUris = MutableStateFlow<List<String>>(emptyList())
         val beforePreviewUris: StateFlow<List<String>> = _beforePreviewUris.asStateFlow()
 
-        // 카메라 설정 상태 — DataStore에서 동기 복원하여 초기값으로 전달
         private val settingsHolder =
             CameraSettingsStateHolder(
                 runBlocking {
+                    val s = appSettingsRepository.settingsFlow.first()
                     CameraSettingsState(
-                        gridEnabled = appPreferences.cameraGridEnabled.first(),
-                        levelEnabled = appPreferences.cameraLevelEnabled.first(),
-                        flashMode = FlashMode.valueOf(appPreferences.cameraFlashMode.first()),
-                        nightModeEnabled = appPreferences.cameraNightMode.first(),
-                        hdrEnabled = appPreferences.cameraHdr.first(),
+                        gridEnabled = s.cameraGridEnabled,
+                        levelEnabled = s.cameraLevelEnabled,
+                        flashMode = FlashMode.valueOf(s.cameraFlashMode),
+                        nightModeEnabled = s.cameraNightModeEnabled,
+                        hdrEnabled = s.cameraHdrEnabled,
                     )
                 },
             )
         val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
         val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
 
-        // 수평계 센서
         val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
 
         init {
@@ -97,17 +96,12 @@ class CameraViewModel
         private var observedProjectId: Long? = null
         private var observeProjectJob: Job? = null
 
-        // CameraScreen에서 bindToLifecycle 시 함께 바인딩
         val imageCapture: ImageCapture =
             ImageCapture
                 .Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build()
 
-        /**
-         * Screen에서 cameraInfo.zoomState를 observe해 최초 non-null 값을 이 함수에 전달한다.
-         * min/max만 받아 Android 의존성을 ViewModel에서 제거한다.
-         */
         fun initFromZoomState(
             minRatio: Float,
             maxRatio: Float,
@@ -150,12 +144,10 @@ class CameraViewModel
                 } catch (e: Exception) {
                     _events.emit(CameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
                 } finally {
-                    // 임시 파일 cleanup (file:// URI → path 추출)
                     try {
                         val path = java.net.URI(tempFileUri).path
                         if (path != null) java.io.File(path).delete()
                     } catch (_: Exception) {
-                        // cleanup 실패는 무시
                     }
                     _isSaving.value = false
                 }
@@ -190,12 +182,6 @@ class CameraViewModel
                 }
         }
 
-        // --- 카메라 설정 ---
-
-        /**
-         * 카메라 바인딩 완료 후 CameraInfo와 ExtensionsManager를 전달해 capabilities를 갱신한다.
-         * 렌즈 전환 시에도 재호출해야 한다.
-         */
         fun updateCapabilities(
             cameraInfo: CameraInfo,
             extensionsManager: ExtensionsManager,
@@ -208,16 +194,12 @@ class CameraViewModel
             persistSettings()
         }
 
-        /**
-         * 수평계 ON/OFF. 활성화 시 센서 리스너를 등록하고 비활성화 시 해제한다.
-         */
         fun toggleLevel() {
             val active = settingsHolder.toggleLevel()
             if (active) levelSensorManager.start() else levelSensorManager.stop()
             persistSettings()
         }
 
-        /** OFF → AUTO → ON → TORCH → OFF 순환 */
         fun cycleFlash() {
             settingsHolder.cycleFlash()
             persistSettings()
@@ -245,17 +227,9 @@ class CameraViewModel
             settingsHolder.dismissSettingsPanel()
         }
 
-        /**
-         * 현재 활성화된 Extension에 따라 적절한 CameraSelector를 반환한다.
-         * 야간모드/HDR 비활성 시에는 기본 selector를 반환한다.
-         */
         fun getExtensionCameraSelector(extensionsManager: ExtensionsManager): CameraSelector =
             settingsHolder.getExtensionCameraSelector(extensionsManager, _lensFacing.value)
 
-        /**
-         * 현재 flashMode에 따라 ImageCapture의 flashMode를 설정한다.
-         * TORCH는 CameraControl.enableTorch(true)로 처리하므로 Screen에서 별도 처리 필요.
-         */
         fun applyFlashMode(imageCapture: ImageCapture) {
             settingsHolder.applyFlashMode(imageCapture)
         }
@@ -263,11 +237,11 @@ class CameraViewModel
         private fun persistSettings() {
             val state = settingsHolder.settingsState.value
             viewModelScope.launch {
-                appPreferences.setCameraGridEnabled(state.gridEnabled)
-                appPreferences.setCameraLevelEnabled(state.levelEnabled)
-                appPreferences.setCameraFlashMode(state.flashMode.name)
-                appPreferences.setCameraNightMode(state.nightModeEnabled)
-                appPreferences.setCameraHdr(state.hdrEnabled)
+                appSettingsRepository.updateCameraGridEnabled(state.gridEnabled)
+                appSettingsRepository.updateCameraLevelEnabled(state.levelEnabled)
+                appSettingsRepository.updateCameraFlashMode(state.flashMode.name)
+                appSettingsRepository.updateCameraNightMode(state.nightModeEnabled)
+                appSettingsRepository.updateCameraHdr(state.hdrEnabled)
             }
         }
 

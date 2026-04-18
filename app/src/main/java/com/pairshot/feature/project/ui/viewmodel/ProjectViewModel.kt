@@ -2,11 +2,11 @@ package com.pairshot.feature.project.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pairshot.core.domain.model.Project
+import com.pairshot.core.domain.repository.ProjectRepository
+import com.pairshot.core.domain.usecase.DeleteProjectUseCase
 import com.pairshot.core.infra.location.LocationProvider
 import com.pairshot.core.infra.location.LocationResult
-import com.pairshot.feature.project.domain.model.Project
-import com.pairshot.feature.project.domain.repository.ProjectRepository
-import com.pairshot.feature.project.domain.usecase.DeleteProjectUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

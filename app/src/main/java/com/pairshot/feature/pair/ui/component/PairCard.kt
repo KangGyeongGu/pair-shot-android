@@ -26,10 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.Success
+import com.pairshot.core.domain.model.PairStatus
+import com.pairshot.core.domain.model.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
-import com.pairshot.feature.pair.domain.model.PairStatus
-import com.pairshot.feature.pair.domain.model.PhotoPair
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
