@@ -44,6 +44,7 @@ import com.pairshot.ui.export.ExportUiState
 import com.pairshot.ui.export.ExportViewModel
 import com.pairshot.ui.gallery.GalleryScreen
 import com.pairshot.ui.project.ProjectListScreen
+import com.pairshot.ui.settings.LicenseScreen
 import com.pairshot.ui.settings.SettingsScreen
 import com.pairshot.ui.settings.SettingsViewModel
 import com.pairshot.ui.settings.WatermarkSettingsScreen
@@ -84,6 +85,9 @@ data object Settings
 
 @Serializable
 data object WatermarkSettings
+
+@Serializable
+data object License
 
 @Composable
 fun PairShotNavGraph(navController: NavHostController = rememberNavController()) {
@@ -368,9 +372,7 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                 uiState = uiState,
                 watermarkConfig = watermarkConfig,
                 onClearCache = viewModel::clearCache,
-                onLicenseClick = {
-                    viewModel.showMessage("준비 중")
-                },
+                onLicenseClick = { navController.navigate(License) },
                 onNavigateBack = { navController.popBackStack() },
                 onWatermarkConfigChange = viewModel::updateWatermarkConfig,
                 onWatermarkSettingsClick = { navController.navigate(WatermarkSettings) },
@@ -379,6 +381,11 @@ fun PairShotNavGraph(navController: NavHostController = rememberNavController())
                 onOverlayEnabledChange = viewModel::updateOverlayEnabled,
                 onOverlayAlphaChange = viewModel::updateOverlayAlpha,
                 snackbarHostState = snackbarHostState,
+            )
+        }
+        composable<License> {
+            LicenseScreen(
+                onNavigateBack = { navController.popBackStack() },
             )
         }
         composable<WatermarkSettings> {
