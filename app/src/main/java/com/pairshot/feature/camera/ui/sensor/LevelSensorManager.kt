@@ -22,14 +22,33 @@ class LevelSensorManager(
     private val _roll = MutableStateFlow(0f)
     val roll: StateFlow<Float> = _roll.asStateFlow()
 
+    private var smoothedRoll = 0f
+
+    private val remappedMatrix = FloatArray(9)
+
     private val listener =
         object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 val rotationMatrix = FloatArray(9)
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                // 세로 모드(카메라 뷰파인더) 기준으로 좌표계 리맵
+                SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    SensorManager.AXIS_X,
+                    SensorManager.AXIS_Z,
+                    remappedMatrix,
+                )
                 val orientation = FloatArray(3)
-                SensorManager.getOrientation(rotationMatrix, orientation)
-                _roll.value = Math.toDegrees(orientation[2].toDouble()).toFloat()
+                SensorManager.getOrientation(remappedMatrix, orientation)
+                val rawRoll = Math.toDegrees(orientation[2].toDouble()).toFloat()
+
+                // 로우패스 필터로 떨림 억제
+                smoothedRoll = smoothedRoll + SMOOTHING_FACTOR * (rawRoll - smoothedRoll)
+
+                // 임계값 이상 변화만 반영하여 리컴포지션 최소화
+                if (kotlin.math.abs(smoothedRoll - _roll.value) >= UPDATE_THRESHOLD) {
+                    _roll.value = smoothedRoll
+                }
             }
 
             override fun onAccuracyChanged(
@@ -37,6 +56,11 @@ class LevelSensorManager(
                 accuracy: Int,
             ) {}
         }
+
+    companion object {
+        private const val SMOOTHING_FACTOR = 0.04f
+        private const val UPDATE_THRESHOLD = 0.3f
+    }
 
     fun start() {
         rotationSensor?.let {

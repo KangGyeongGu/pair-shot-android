@@ -8,6 +8,7 @@ import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pairshot.data.local.datastore.AppPreferences
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.AppSettingsRepository
 import com.pairshot.domain.usecase.capture.SaveAfterPhotoUseCase
@@ -19,6 +20,7 @@ import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
 import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
 import com.pairshot.feature.camera.ui.state.CameraSettingsStateHolder
+import com.pairshot.feature.camera.ui.state.FlashMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 sealed interface AfterCameraEvent {
@@ -60,6 +63,7 @@ class AfterCameraViewModel
         getUnpairedPhotosUseCase: GetUnpairedPhotosUseCase,
         private val saveAfterPhotoUseCase: SaveAfterPhotoUseCase,
         private val appSettingsRepository: AppSettingsRepository,
+        private val appPreferences: AppPreferences,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle["projectId"] ?: 0L
         private val initialPairId: Long? = savedStateHandle["initialPairId"]
@@ -96,21 +100,35 @@ class AfterCameraViewModel
         private val _overlayAlpha = MutableStateFlow(0.3f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
+        // 카메라 설정 상태 — DataStore에서 동기 복원하여 초기값으로 전달
+        private val settingsHolder =
+            CameraSettingsStateHolder(
+                runBlocking {
+                    CameraSettingsState(
+                        gridEnabled = appPreferences.cameraGridEnabled.first(),
+                        levelEnabled = appPreferences.cameraLevelEnabled.first(),
+                        flashMode = FlashMode.valueOf(appPreferences.cameraFlashMode.first()),
+                        nightModeEnabled = appPreferences.cameraNightMode.first(),
+                        hdrEnabled = appPreferences.cameraHdr.first(),
+                    )
+                },
+            )
+        val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
+        val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
+
+        // 수평계 센서
+        val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
+
         init {
             viewModelScope.launch {
                 val settings = appSettingsRepository.settingsFlow.first()
                 _overlayEnabled.value = settings.overlayEnabled
                 _overlayAlpha.value = settings.defaultOverlayAlpha.coerceIn(0f, 0.5f)
             }
+            if (settingsHolder.settingsState.value.levelEnabled) {
+                levelSensorManager.start()
+            }
         }
-
-        // 카메라 설정 상태 — CameraSettingsStateHolder로 위임
-        private val settingsHolder = CameraSettingsStateHolder()
-        val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
-        val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
-
-        // 수평계 센서
-        val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
 
         // 이벤트
         private val _events = MutableSharedFlow<AfterCameraEvent>()
@@ -259,23 +277,28 @@ class AfterCameraViewModel
 
         fun toggleGrid() {
             settingsHolder.toggleGrid()
+            persistSettings()
         }
 
         fun toggleLevel() {
             val active = settingsHolder.toggleLevel()
             if (active) levelSensorManager.start() else levelSensorManager.stop()
+            persistSettings()
         }
 
         fun cycleFlash() {
             settingsHolder.cycleFlash()
+            persistSettings()
         }
 
         fun toggleNightMode() {
             settingsHolder.toggleNightMode()
+            persistSettings()
         }
 
         fun toggleHdr() {
             settingsHolder.toggleHdr()
+            persistSettings()
         }
 
         fun setExposureIndex(index: Int) {
@@ -295,6 +318,17 @@ class AfterCameraViewModel
 
         fun applyFlashMode(imageCapture: ImageCapture) {
             settingsHolder.applyFlashMode(imageCapture)
+        }
+
+        private fun persistSettings() {
+            val state = settingsHolder.settingsState.value
+            viewModelScope.launch {
+                appPreferences.setCameraGridEnabled(state.gridEnabled)
+                appPreferences.setCameraLevelEnabled(state.levelEnabled)
+                appPreferences.setCameraFlashMode(state.flashMode.name)
+                appPreferences.setCameraNightMode(state.nightModeEnabled)
+                appPreferences.setCameraHdr(state.hdrEnabled)
+            }
         }
 
         override fun onCleared() {

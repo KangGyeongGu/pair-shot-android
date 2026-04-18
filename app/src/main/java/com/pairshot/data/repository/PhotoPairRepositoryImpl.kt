@@ -187,6 +187,20 @@ class PhotoPairRepositoryImpl
                 projectDao.getById(entity.projectId)
                     ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
 
+            // 재촬영 시 이전 after/combined 파일 정리
+            entity.afterPhotoUri?.let {
+                try {
+                    mediaStoreManager.deleteFromGallery(Uri.parse(it))
+                } catch (_: Exception) {
+                }
+            }
+            entity.combinedPhotoUri?.let {
+                try {
+                    mediaStoreManager.deleteFromGallery(Uri.parse(it))
+                } catch (_: Exception) {
+                }
+            }
+
             val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
             val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
             val fileName = fileNameGenerator.generateAfterFileName(sequenceNumber, prefix)
@@ -202,6 +216,7 @@ class PhotoPairRepositoryImpl
                 entity.copy(
                     afterPhotoUri = savedUri.toString(),
                     afterTimestamp = System.currentTimeMillis(),
+                    combinedPhotoUri = null,
                     status = PairStatus.PAIRED.name,
                 ),
             )

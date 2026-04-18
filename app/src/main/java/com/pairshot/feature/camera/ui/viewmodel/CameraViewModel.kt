@@ -7,6 +7,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionsManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.pairshot.data.local.datastore.AppPreferences
 import com.pairshot.domain.usecase.capture.SaveBeforePhotoUseCase
 import com.pairshot.domain.usecase.pair.GetPairsByProjectUseCase
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
@@ -15,6 +16,7 @@ import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
 import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
 import com.pairshot.feature.camera.ui.state.CameraSettingsStateHolder
+import com.pairshot.feature.camera.ui.state.FlashMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -24,7 +26,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 sealed interface CameraEvent {
@@ -48,6 +52,7 @@ class CameraViewModel
         @ApplicationContext context: Context,
         private val saveBeforePhotoUseCase: SaveBeforePhotoUseCase,
         private val getPairsByProjectUseCase: GetPairsByProjectUseCase,
+        private val appPreferences: AppPreferences,
     ) : ViewModel() {
         private val _events = MutableSharedFlow<CameraEvent>()
         val events: SharedFlow<CameraEvent> = _events.asSharedFlow()
@@ -64,13 +69,30 @@ class CameraViewModel
         private val _beforePreviewUris = MutableStateFlow<List<String>>(emptyList())
         val beforePreviewUris: StateFlow<List<String>> = _beforePreviewUris.asStateFlow()
 
-        // 카메라 설정 상태 — CameraSettingsStateHolder로 위임
-        private val settingsHolder = CameraSettingsStateHolder()
+        // 카메라 설정 상태 — DataStore에서 동기 복원하여 초기값으로 전달
+        private val settingsHolder =
+            CameraSettingsStateHolder(
+                runBlocking {
+                    CameraSettingsState(
+                        gridEnabled = appPreferences.cameraGridEnabled.first(),
+                        levelEnabled = appPreferences.cameraLevelEnabled.first(),
+                        flashMode = FlashMode.valueOf(appPreferences.cameraFlashMode.first()),
+                        nightModeEnabled = appPreferences.cameraNightMode.first(),
+                        hdrEnabled = appPreferences.cameraHdr.first(),
+                    )
+                },
+            )
         val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
         val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
 
         // 수평계 센서
         val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
+
+        init {
+            if (settingsHolder.settingsState.value.levelEnabled) {
+                levelSensorManager.start()
+            }
+        }
 
         private var observedProjectId: Long? = null
         private var observeProjectJob: Job? = null
@@ -183,6 +205,7 @@ class CameraViewModel
 
         fun toggleGrid() {
             settingsHolder.toggleGrid()
+            persistSettings()
         }
 
         /**
@@ -191,27 +214,23 @@ class CameraViewModel
         fun toggleLevel() {
             val active = settingsHolder.toggleLevel()
             if (active) levelSensorManager.start() else levelSensorManager.stop()
+            persistSettings()
         }
 
         /** OFF → AUTO → ON → TORCH → OFF 순환 */
         fun cycleFlash() {
             settingsHolder.cycleFlash()
+            persistSettings()
         }
 
-        /**
-         * 야간모드 토글. HDR과 동시 활성화 불가 — 야간모드를 켜면 HDR은 자동 OFF.
-         * Extension 재바인딩은 Screen에서 settingsState를 collect해 처리한다.
-         */
         fun toggleNightMode() {
             settingsHolder.toggleNightMode()
+            persistSettings()
         }
 
-        /**
-         * HDR 토글. 야간모드와 동시 활성화 불가 — HDR을 켜면 야간모드는 자동 OFF.
-         * Extension 재바인딩은 Screen에서 settingsState를 collect해 처리한다.
-         */
         fun toggleHdr() {
             settingsHolder.toggleHdr()
+            persistSettings()
         }
 
         fun setExposureIndex(index: Int) {
@@ -239,6 +258,17 @@ class CameraViewModel
          */
         fun applyFlashMode(imageCapture: ImageCapture) {
             settingsHolder.applyFlashMode(imageCapture)
+        }
+
+        private fun persistSettings() {
+            val state = settingsHolder.settingsState.value
+            viewModelScope.launch {
+                appPreferences.setCameraGridEnabled(state.gridEnabled)
+                appPreferences.setCameraLevelEnabled(state.levelEnabled)
+                appPreferences.setCameraFlashMode(state.flashMode.name)
+                appPreferences.setCameraNightMode(state.nightModeEnabled)
+                appPreferences.setCameraHdr(state.hdrEnabled)
+            }
         }
 
         override fun onCleared() {

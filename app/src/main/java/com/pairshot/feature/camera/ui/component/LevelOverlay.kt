@@ -22,7 +22,7 @@ fun LevelOverlay(
     roll: Float,
     modifier: Modifier = Modifier,
 ) {
-    val isLevel = abs(roll) <= 1f
+    val isLevel = abs(roll) <= 2f
     val lineColor = if (isLevel) MaterialTheme.colorScheme.primary else Color.White
     val strokeWidth = if (isLevel) 2.dp else 1.dp
     val angleText = if (isLevel) "0°" else "${roll.roundToInt()}°"

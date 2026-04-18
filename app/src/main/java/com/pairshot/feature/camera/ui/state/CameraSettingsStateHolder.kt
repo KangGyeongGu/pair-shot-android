@@ -16,11 +16,13 @@ import kotlinx.coroutines.flow.update
  *
  * ZoomStateHolder 패턴과 동일하게 ViewModel이 직접 생성하여 보유한다.
  */
-class CameraSettingsStateHolder {
+class CameraSettingsStateHolder(
+    initialState: CameraSettingsState = CameraSettingsState(),
+) {
     private val _capabilities = MutableStateFlow(CameraCapabilities())
     val capabilities: StateFlow<CameraCapabilities> = _capabilities.asStateFlow()
 
-    private val _settingsState = MutableStateFlow(CameraSettingsState())
+    private val _settingsState = MutableStateFlow(initialState)
     val settingsState: StateFlow<CameraSettingsState> = _settingsState.asStateFlow()
 
     /**

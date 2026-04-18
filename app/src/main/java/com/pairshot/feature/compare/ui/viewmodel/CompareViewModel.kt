@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.pairshot.app.navigation.route.Compare
+import com.pairshot.domain.model.PairStatus
 import com.pairshot.domain.model.PhotoPair
 import com.pairshot.domain.repository.PhotoPairRepository
 import com.pairshot.domain.usecase.combine.CombineImagesUseCase
@@ -93,7 +94,10 @@ class CompareViewModel
         fun prepareRetake() {
             viewModelScope.launch {
                 _pair.value?.let { pair ->
-                    photoPairRepository.resetAfterPhoto(pair.id)
+                    // 상태만 BEFORE_ONLY로 변경 — 파일 삭제는 새 After 저장 시 처리
+                    photoPairRepository.update(
+                        pair.copy(status = PairStatus.BEFORE_ONLY),
+                    )
                     _retakeReady.emit(pair)
                 }
             }

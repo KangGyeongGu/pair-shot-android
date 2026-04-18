@@ -30,6 +30,11 @@ class AppPreferences
             val FILE_NAME_PREFIX = stringPreferencesKey("file_name_prefix")
             val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
             val OVERLAY_ALPHA = floatPreferencesKey("overlay_alpha")
+            val CAMERA_GRID_ENABLED = booleanPreferencesKey("camera_grid_enabled")
+            val CAMERA_LEVEL_ENABLED = booleanPreferencesKey("camera_level_enabled")
+            val CAMERA_FLASH_MODE = stringPreferencesKey("camera_flash_mode")
+            val CAMERA_NIGHT_MODE = booleanPreferencesKey("camera_night_mode")
+            val CAMERA_HDR = booleanPreferencesKey("camera_hdr")
         }
 
         val jpegQuality: Flow<Int> =
@@ -73,6 +78,61 @@ class AppPreferences
         suspend fun setOverlayAlpha(alpha: Float) {
             context.appDataStore.edit { prefs ->
                 prefs[Keys.OVERLAY_ALPHA] = alpha
+            }
+        }
+
+        val cameraGridEnabled: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.CAMERA_GRID_ENABLED] ?: false
+            }
+
+        val cameraLevelEnabled: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.CAMERA_LEVEL_ENABLED] ?: false
+            }
+
+        val cameraFlashMode: Flow<String> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.CAMERA_FLASH_MODE] ?: "OFF"
+            }
+
+        val cameraNightMode: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.CAMERA_NIGHT_MODE] ?: false
+            }
+
+        val cameraHdr: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.CAMERA_HDR] ?: false
+            }
+
+        suspend fun setCameraGridEnabled(enabled: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.CAMERA_GRID_ENABLED] = enabled
+            }
+        }
+
+        suspend fun setCameraLevelEnabled(enabled: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.CAMERA_LEVEL_ENABLED] = enabled
+            }
+        }
+
+        suspend fun setCameraFlashMode(mode: String) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.CAMERA_FLASH_MODE] = mode
+            }
+        }
+
+        suspend fun setCameraNightMode(enabled: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.CAMERA_NIGHT_MODE] = enabled
+            }
+        }
+
+        suspend fun setCameraHdr(enabled: Boolean) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.CAMERA_HDR] = enabled
             }
         }
     }
