@@ -1,6 +1,7 @@
 package com.pairshot.feature.project.ui.dialog
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +31,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.ui.component.PairShotDialog
@@ -45,6 +48,7 @@ internal fun CreateProjectDialog(
     val focusRequester = remember { FocusRequester() }
     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
     val isLocationLoading by viewModel.isLocationLoading.collectAsStateWithLifecycle()
+    var showLocationRationale by remember { mutableStateOf(false) }
 
     val locationPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -68,13 +72,68 @@ internal fun CreateProjectDialog(
         if (hasPermission) {
             viewModel.fetchCurrentLocation()
         } else {
-            locationPermissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                ),
-            )
+            val activity = context as? Activity
+            val needsRationale =
+                activity != null &&
+                    (
+                        ActivityCompat.shouldShowRequestPermissionRationale(
+                            activity,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                        ) ||
+                            ActivityCompat.shouldShowRequestPermissionRationale(
+                                activity,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            )
+                    )
+            if (needsRationale) {
+                showLocationRationale = true
+            } else {
+                locationPermissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    ),
+                )
+            }
         }
+    }
+
+    if (showLocationRationale) {
+        AlertDialog(
+            onDismissRequest = { showLocationRationale = false },
+            title = {
+                Text(
+                    text = "위치 권한 필요",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            text = {
+                Text(
+                    text = "사진 촬영 위치를 프로젝트에 기록하기 위해 위치 권한이 필요합니다.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLocationRationale = false
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION,
+                            ),
+                        )
+                    },
+                ) {
+                    Text("확인", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLocationRationale = false }) {
+                    Text("취소")
+                }
+            },
+        )
     }
 
     val placeholderText = currentLocation?.shortAddress ?: "프로젝트 이름"

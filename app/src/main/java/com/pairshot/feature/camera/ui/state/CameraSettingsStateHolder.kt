@@ -56,6 +56,10 @@ class CameraSettingsStateHolder(
         }
     }
 
+    fun applyPersistedSettings(state: CameraSettingsState) {
+        _settingsState.update { state }
+    }
+
     fun toggleGrid() {
         _settingsState.update { it.copy(gridEnabled = !it.gridEnabled) }
     }

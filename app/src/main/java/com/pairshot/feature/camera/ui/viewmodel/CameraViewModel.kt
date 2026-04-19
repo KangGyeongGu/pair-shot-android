@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 sealed interface CameraEvent {
@@ -69,27 +68,27 @@ class CameraViewModel
         private val _beforePreviewUris = MutableStateFlow<List<String>>(emptyList())
         val beforePreviewUris: StateFlow<List<String>> = _beforePreviewUris.asStateFlow()
 
-        private val settingsHolder =
-            CameraSettingsStateHolder(
-                runBlocking {
-                    val s = appSettingsRepository.settingsFlow.first()
-                    CameraSettingsState(
-                        gridEnabled = s.cameraGridEnabled,
-                        levelEnabled = s.cameraLevelEnabled,
-                        flashMode = FlashMode.valueOf(s.cameraFlashMode),
-                        nightModeEnabled = s.cameraNightModeEnabled,
-                        hdrEnabled = s.cameraHdrEnabled,
-                    )
-                },
-            )
+        private val settingsHolder = CameraSettingsStateHolder()
         val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
         val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
 
         val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
 
         init {
-            if (settingsHolder.settingsState.value.levelEnabled) {
-                levelSensorManager.start()
+            viewModelScope.launch {
+                val s = appSettingsRepository.settingsFlow.first()
+                settingsHolder.applyPersistedSettings(
+                    CameraSettingsState(
+                        gridEnabled = s.cameraGridEnabled,
+                        levelEnabled = s.cameraLevelEnabled,
+                        flashMode = FlashMode.valueOf(s.cameraFlashMode),
+                        nightModeEnabled = s.cameraNightModeEnabled,
+                        hdrEnabled = s.cameraHdrEnabled,
+                    ),
+                )
+                if (settingsHolder.settingsState.value.levelEnabled) {
+                    levelSensorManager.start()
+                }
             }
         }
 

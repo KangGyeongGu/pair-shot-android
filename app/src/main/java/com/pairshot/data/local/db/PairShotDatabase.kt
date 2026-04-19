@@ -10,6 +10,7 @@ import com.pairshot.data.local.db.entity.ProjectEntity
 @Database(
     entities = [ProjectEntity::class, PhotoPairEntity::class],
     version = 1,
+    exportSchema = true,
 )
 abstract class PairShotDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao

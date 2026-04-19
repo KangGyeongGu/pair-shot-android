@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         val metricsStateHolder = PerformanceMetricsState.getHolderForHierarchy(window.decorView)
         jankStats =
             JankStats.createAndTrack(window) { frameData ->
-                if (frameData.isJank) {
+                if (frameData.isJank && BuildConfig.DEBUG) {
                     Log.w("JankStats", frameData.toString())
                 }
             }
