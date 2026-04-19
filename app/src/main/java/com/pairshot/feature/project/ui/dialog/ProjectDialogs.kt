@@ -7,9 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
@@ -27,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -42,7 +42,9 @@ internal fun CreateProjectDialog(
 ) {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
+    val isLocationLoading by viewModel.isLocationLoading.collectAsStateWithLifecycle()
 
     val locationPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -57,6 +59,7 @@ internal fun CreateProjectDialog(
         }
 
     LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
         val hasPermission =
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED ||
@@ -85,36 +88,53 @@ internal fun CreateProjectDialog(
             )
         },
         text = {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 TextField(
                     value = name,
                     onValueChange = { name = it },
-                    placeholder = { Text(placeholderText) },
+                    placeholder = {
+                        Text(
+                            text = placeholderText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                     shape = MaterialTheme.shapes.medium,
+                    textStyle = MaterialTheme.typography.bodyMedium,
                     colors =
                         TextFieldDefaults.colors(
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceBright,
                         ),
                 )
-                if (currentLocation?.address != null) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.LocationOn,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(14.dp),
-                        )
+                when {
+                    currentLocation?.address != null -> {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.LocationOn,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(13.dp),
+                            )
+                            Text(
+                                text = currentLocation?.address ?: "",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                            )
+                        }
+                    }
+
+                    isLocationLoading -> {
                         Text(
-                            text = currentLocation?.address ?: "",
+                            text = "위치 정보 가져오는 중…",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         )
                     }
                 }
@@ -220,24 +240,15 @@ internal fun DeleteSelectedProjectsDialog(
 ) {
     PairShotDialog(
         onDismissRequest = onDismiss,
-        title = { Text("선택 프로젝트 삭제", style = MaterialTheme.typography.titleMedium) },
-        text = {
-            Text(
-                text = "${selectedCount}개 프로젝트를 삭제하시겠습니까?",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
+        title = { Text("선택 항목 삭제") },
+        text = { Text("${selectedCount}개 프로젝트를 삭제하겠습니까?", style = MaterialTheme.typography.bodyMedium) },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-            ) {
+            TextButton(onClick = onConfirm) {
                 Text("삭제", color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("취소")
-            }
+            TextButton(onClick = onDismiss) { Text("취소") }
         },
     )
 }

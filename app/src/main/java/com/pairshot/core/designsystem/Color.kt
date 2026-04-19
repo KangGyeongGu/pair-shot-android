@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 val LightBackground = Color(0xFFEEF1F6)
 val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceContainer = Color(0xFFEEF1F6)
+val LightSurfaceContainer = Color(0xFFDFE3EE)
 val LightSurfaceContainerHigh = Color(0xFFE6EAF2)
 val LightOnSurface = Color(0xFF171B22)
 val LightOnSurfaceVariant = Color(0xFF4A5568)

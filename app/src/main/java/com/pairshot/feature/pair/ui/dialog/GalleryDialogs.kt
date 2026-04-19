@@ -1,8 +1,9 @@
 package com.pairshot.feature.pair.ui.dialog
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -13,8 +14,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.pairshot.core.ui.component.PairShotBottomSheet
 import com.pairshot.core.ui.component.PairShotDialog
 
 @Composable
@@ -25,22 +27,15 @@ internal fun DeletePairsDialog(
 ) {
     PairShotDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "선택 항목 삭제") },
-        text = { Text(text = "${selectedCount}개 페어를 삭제하시겠습니까?") },
+        title = { Text("${selectedCount}개 페어 삭제") },
+        text = { Text("삭제된 사진은 복구할 수 없습니다.", style = MaterialTheme.typography.bodyMedium) },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-            ) {
-                Text(
-                    text = "삭제",
-                    color = MaterialTheme.colorScheme.error,
-                )
+            TextButton(onClick = onConfirm) {
+                Text("삭제", color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = "취소")
-            }
+            TextButton(onClick = onDismiss) { Text("취소") }
         },
     )
 }
@@ -71,9 +66,7 @@ internal fun RenameProjectDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = {
-                    onConfirm(newName)
-                },
+                onClick = { onConfirm(newName) },
                 enabled = newName.isNotBlank(),
             ) {
                 Text("저장", color = MaterialTheme.colorScheme.primary)
@@ -95,24 +88,15 @@ internal fun DeleteProjectDialog(
 ) {
     PairShotDialog(
         onDismissRequest = onDismiss,
-        title = { Text("프로젝트 삭제", style = MaterialTheme.typography.titleMedium) },
-        text = {
-            Text(
-                "'$projectName' 프로젝트와 모든 사진이 삭제됩니다.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
+        title = { Text("프로젝트 삭제") },
+        text = { Text("'$projectName' 프로젝트와 모든 사진이 삭제됩니다.", style = MaterialTheme.typography.bodyMedium) },
         confirmButton = {
-            TextButton(
-                onClick = onConfirm,
-            ) {
+            TextButton(onClick = onConfirm) {
                 Text("삭제", color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("취소")
-            }
+            TextButton(onClick = onDismiss) { Text("취소") }
         },
     )
 }
@@ -125,27 +109,52 @@ internal fun DeleteWithCombinedDialog(
     onDeleteAll: () -> Unit,
     onDeleteCombinedOnly: () -> Unit,
 ) {
-    PairShotDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("삭제 방식 선택", style = MaterialTheme.typography.titleMedium) },
-        text = {
+    PairShotBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = "삭제 방식 선택",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "${pairCount}개 선택됨, ${combinedCount}개 합성본",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(modifier = Modifier.height(20.dp))
+        TextButton(
+            onClick = onDeleteAll,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(vertical = 14.dp),
+        ) {
             Text(
-                text = "${pairCount}개 선택됨, ${combinedCount}개 합성본.",
-                style = MaterialTheme.typography.bodyMedium,
+                text = "일괄 삭제",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error,
             )
-        },
-        confirmButton = {
-            Row {
-                TextButton(onClick = onDeleteAll) {
-                    Text("일괄 삭제", color = MaterialTheme.colorScheme.error)
-                }
-                TextButton(onClick = onDeleteCombinedOnly) {
-                    Text("합성본만", color = MaterialTheme.colorScheme.primary)
-                }
-                TextButton(onClick = onDismiss) {
-                    Text("취소")
-                }
-            }
-        },
-    )
+        }
+        TextButton(
+            onClick = onDeleteCombinedOnly,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(vertical = 14.dp),
+        ) {
+            Text(
+                text = "합성본만 삭제",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        TextButton(
+            onClick = onDismiss,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(vertical = 14.dp),
+        ) {
+            Text(
+                text = "취소",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }

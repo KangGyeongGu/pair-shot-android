@@ -1,24 +1,31 @@
 package com.pairshot.feature.export.ui.component
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.core.ui.component.SettingsDivider
+import com.pairshot.core.ui.component.SettingsSwitchItem
 import com.pairshot.feature.export.ui.viewmodel.ExportFormat
 
 @Composable
@@ -33,26 +40,23 @@ internal fun ExportIncludeSection(
     onIncludeAfterChange: (Boolean) -> Unit,
     onIncludeCombinedChange: (Boolean) -> Unit,
 ) {
-    Text(
-        text = "포함할 항목",
-        style = MaterialTheme.typography.titleMedium,
-    )
-    Spacer(modifier = Modifier.size(PairShotSpacing.itemGap))
-    Column {
-        ExportCheckboxRow(
-            label = "Before 원본 (${beforeCount}장)",
+    SettingsCard {
+        SettingsSwitchItem(
+            label = "Before 원본",
             checked = includeBefore,
             onCheckedChange = onIncludeBeforeChange,
             enabled = beforeCount > 0,
         )
-        ExportCheckboxRow(
-            label = "After 원본 (${afterCount}장)",
+        SettingsDivider()
+        SettingsSwitchItem(
+            label = "After 원본",
             checked = includeAfter,
             onCheckedChange = onIncludeAfterChange,
             enabled = afterCount > 0,
         )
-        ExportCheckboxRow(
-            label = "합성 이미지 (${combinedCount}장)",
+        SettingsDivider()
+        SettingsSwitchItem(
+            label = "합성 이미지",
             checked = includeCombined,
             onCheckedChange = onIncludeCombinedChange,
             enabled = combinedCount > 0,
@@ -65,18 +69,14 @@ internal fun ExportFormatSection(
     exportFormat: ExportFormat,
     onExportFormatChange: (ExportFormat) -> Unit,
 ) {
-    Text(
-        text = "내보내기 형식",
-        style = MaterialTheme.typography.titleMedium,
-    )
-    Spacer(modifier = Modifier.size(PairShotSpacing.itemGap))
-    Column {
-        ExportRadioButtonRow(
+    SettingsCard {
+        ExportFormatItem(
             label = "이미지 개별",
             selected = exportFormat == ExportFormat.INDIVIDUAL,
             onClick = { onExportFormatChange(ExportFormat.INDIVIDUAL) },
         )
-        ExportRadioButtonRow(
+        SettingsDivider()
+        ExportFormatItem(
             label = "ZIP 압축",
             selected = exportFormat == ExportFormat.ZIP,
             onClick = { onExportFormatChange(ExportFormat.ZIP) },
@@ -90,81 +90,71 @@ internal fun ExportWatermarkSection(
     onApplyWatermarkChange: (Boolean) -> Unit,
     onWatermarkSettingsClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "워터마크",
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Spacer(modifier = Modifier.weight(1f))
-        IconButton(onClick = onWatermarkSettingsClick) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "워터마크 설정",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(PairShotSpacing.iconSize),
+    SettingsCard {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(PairShotSpacing.inputRow)
+                    .padding(start = PairShotSpacing.cardPadding, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "워터마크 적용",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
             )
+            Switch(
+                checked = applyWatermark,
+                onCheckedChange = onApplyWatermarkChange,
+                colors =
+                    SwitchDefaults.colors(
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                modifier = Modifier.scale(0.67f),
+            )
+            VerticalDivider(
+                modifier =
+                    Modifier
+                        .height(20.dp)
+                        .width(1.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+            IconButton(onClick = onWatermarkSettingsClick) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "워터마크 설정",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
-    ExportCheckboxRow(
-        label = "워터마크 적용",
-        checked = applyWatermark,
-        onCheckedChange = onApplyWatermarkChange,
-    )
 }
 
 @Composable
-internal fun ExportCheckboxRow(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(vertical = PairShotSpacing.cardPadding / 2),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            enabled = enabled,
-        )
-        Spacer(modifier = Modifier.width(PairShotSpacing.iconTextGap))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color =
-                if (enabled) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-        )
-    }
-}
-
-@Composable
-private fun ExportRadioButtonRow(
+private fun ExportFormatItem(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
-            modifier
+            Modifier
                 .fillMaxWidth()
-                .padding(vertical = PairShotSpacing.cardPadding / 2),
+                .clickable(onClick = onClick)
+                .height(PairShotSpacing.inputRow)
+                .padding(horizontal = PairShotSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
         RadioButton(selected = selected, onClick = onClick)
-        Spacer(modifier = Modifier.width(PairShotSpacing.iconTextGap))
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
     }
 }

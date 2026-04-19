@@ -11,4 +11,5 @@ data class Project(
     val updatedAt: Long,
     val pairCount: Int = 0,
     val completedCount: Int = 0,
+    val combinedCount: Int = 0,
 )

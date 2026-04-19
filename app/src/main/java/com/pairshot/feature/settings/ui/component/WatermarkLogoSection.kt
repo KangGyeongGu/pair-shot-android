@@ -22,7 +22,12 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.settings.LogoPosition
 import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.core.ui.component.SettingsDivider
+import com.pairshot.core.ui.component.SettingsItem
+import com.pairshot.core.ui.component.SettingsSliderItem
 import java.io.File
+import kotlin.math.roundToInt
 
 private val logoPositionOrder =
     listOf(
@@ -66,26 +71,18 @@ internal fun WatermarkLogoSection(
             label = "로고 크기",
             value = watermarkConfig.logoSizeRatio,
             valueRange = 0f..1.0f,
-            displayText = "${(watermarkConfig.logoSizeRatio * 100).toInt()}%",
-            onValueChange = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(logoSizeRatio = v))
-            },
-            onValueChangeImmediate = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(logoSizeRatio = v))
-            },
+            valueLabel = { "${(it * 100).roundToInt()}%" },
+            onValueChange = { v -> onWatermarkConfigChange(watermarkConfig.copy(logoSizeRatio = v)) },
+            onLiveUpdate = { v -> onWatermarkConfigChange(watermarkConfig.copy(logoSizeRatio = v)) },
         )
         SettingsDivider()
         SettingsSliderItem(
             label = "로고 투명도",
             value = watermarkConfig.logoAlpha,
             valueRange = 0f..1f,
-            displayText = "${(watermarkConfig.logoAlpha * 100).toInt()}%",
-            onValueChange = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(logoAlpha = v))
-            },
-            onValueChangeImmediate = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(logoAlpha = v))
-            },
+            valueLabel = { "${(it * 100).roundToInt()}%" },
+            onValueChange = { v -> onWatermarkConfigChange(watermarkConfig.copy(logoAlpha = v)) },
+            onLiveUpdate = { v -> onWatermarkConfigChange(watermarkConfig.copy(logoAlpha = v)) },
         )
     }
 }

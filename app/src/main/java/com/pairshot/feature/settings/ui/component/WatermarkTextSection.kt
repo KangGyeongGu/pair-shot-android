@@ -40,6 +40,10 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkType
+import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.core.ui.component.SettingsDivider
+import com.pairshot.core.ui.component.SettingsSliderItem
+import kotlin.math.roundToInt
 
 @Composable
 internal fun WatermarkTextSection(
@@ -58,13 +62,9 @@ internal fun WatermarkTextSection(
             label = "투명도",
             value = watermarkConfig.alpha,
             valueRange = 0f..1f,
-            displayText = "${(watermarkConfig.alpha * 100).toInt()}%",
-            onValueChange = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(alpha = v))
-            },
-            onValueChangeImmediate = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(alpha = v))
-            },
+            valueLabel = { "${(it * 100).roundToInt()}%" },
+            onValueChange = { v -> onWatermarkConfigChange(watermarkConfig.copy(alpha = v)) },
+            onLiveUpdate = { v -> onWatermarkConfigChange(watermarkConfig.copy(alpha = v)) },
         )
         SettingsDivider()
         SettingsSliderItem(
@@ -72,26 +72,18 @@ internal fun WatermarkTextSection(
             value = watermarkConfig.diagonalCount.toFloat(),
             valueRange = 0f..20f,
             steps = 19,
-            displayText = "${watermarkConfig.diagonalCount}",
-            onValueChange = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(diagonalCount = v.toInt()))
-            },
-            onValueChangeImmediate = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(diagonalCount = v.toInt()))
-            },
+            valueLabel = { it.toInt().toString() },
+            onValueChange = { v -> onWatermarkConfigChange(watermarkConfig.copy(diagonalCount = v.toInt())) },
+            onLiveUpdate = { v -> onWatermarkConfigChange(watermarkConfig.copy(diagonalCount = v.toInt())) },
         )
         SettingsDivider()
         SettingsSliderItem(
             label = "반복 밀도",
             value = watermarkConfig.repeatDensity,
             valueRange = 0f..3.0f,
-            displayText = "%.1f".format(watermarkConfig.repeatDensity),
-            onValueChange = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(repeatDensity = v))
-            },
-            onValueChangeImmediate = { v ->
-                onWatermarkConfigChange(watermarkConfig.copy(repeatDensity = v))
-            },
+            valueLabel = { "%.1f".format(it) },
+            onValueChange = { v -> onWatermarkConfigChange(watermarkConfig.copy(repeatDensity = v)) },
+            onLiveUpdate = { v -> onWatermarkConfigChange(watermarkConfig.copy(repeatDensity = v)) },
         )
     }
 }

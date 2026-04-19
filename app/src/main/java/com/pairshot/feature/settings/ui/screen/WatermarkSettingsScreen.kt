@@ -22,10 +22,10 @@ import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkType
 import com.pairshot.core.infra.image.WatermarkRenderer
-import com.pairshot.feature.settings.ui.component.SettingsCard
-import com.pairshot.feature.settings.ui.component.SettingsDivider
-import com.pairshot.feature.settings.ui.component.SettingsSectionLabel
-import com.pairshot.feature.settings.ui.component.SettingsSwitchItem
+import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.core.ui.component.SettingsDivider
+import com.pairshot.core.ui.component.SettingsSectionLabel
+import com.pairshot.core.ui.component.SettingsSwitchItem
 import com.pairshot.feature.settings.ui.component.WatermarkLogoSection
 import com.pairshot.feature.settings.ui.component.WatermarkPreviewSection
 import com.pairshot.feature.settings.ui.component.WatermarkTextSection

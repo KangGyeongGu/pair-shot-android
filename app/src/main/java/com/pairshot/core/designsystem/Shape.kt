@@ -13,4 +13,5 @@ val PairShotShapes =
         extraLarge = RoundedCornerShape(32.dp),
     )
 
-val ModalShape = RoundedCornerShape(12.dp)
+val ModalShape = RoundedCornerShape(24.dp)
+val ActionSheetShape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)

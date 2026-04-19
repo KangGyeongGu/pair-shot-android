@@ -58,7 +58,7 @@ class AppPreferences
 
         val overlayAlpha: Flow<Float> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.OVERLAY_ALPHA] ?: 0.3f
+                prefs[Keys.OVERLAY_ALPHA] ?: 0.5f
             }
 
         suspend fun setJpegQuality(quality: Int) {

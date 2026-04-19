@@ -40,19 +40,14 @@ internal fun DeleteConfirmDialog(
     PairShotDialog(
         onDismissRequest = onDismiss,
         title = { Text("페어 삭제") },
-        text = { Text("이 페어를 삭제하시겠습니까? Before/After 사진이 모두 삭제됩니다.") },
+        text = { Text("Before/After 사진이 모두 삭제됩니다.", style = MaterialTheme.typography.bodyMedium) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(
-                    text = "삭제",
-                    color = MaterialTheme.colorScheme.error,
-                )
+                Text("삭제", color = MaterialTheme.colorScheme.error)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("취소")
-            }
+            TextButton(onClick = onDismiss) { Text("취소") }
         },
     )
 }

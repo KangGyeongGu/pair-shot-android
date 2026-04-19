@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -55,53 +56,65 @@ class LocationProvider
         }
 
         @SuppressWarnings("MissingPermission")
-        private suspend fun getLastLocation(): Location? =
-            suspendCancellableCoroutine { cont ->
-                val cancellationToken = CancellationTokenSource()
-                cont.invokeOnCancellation { cancellationToken.cancel() }
+        private suspend fun getLastLocation(): Location? {
+            // 1순위: 캐시된 마지막 위치 (즉시 반환)
+            val cached =
+                suspendCancellableCoroutine<Location?> { cont ->
+                    fusedClient.lastLocation
+                        .addOnSuccessListener { cont.resume(it) }
+                        .addOnFailureListener { cont.resume(null) }
+                }
+            if (cached != null) return cached
 
-                fusedClient
-                    .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancellationToken.token)
-                    .addOnSuccessListener { location -> cont.resume(location) }
-                    .addOnFailureListener { cont.resume(null) }
+            // 2순위: 새 위치 요청 (최대 8초 대기)
+            return withTimeoutOrNull(8_000L) {
+                suspendCancellableCoroutine { cont ->
+                    val cancellationToken = CancellationTokenSource()
+                    cont.invokeOnCancellation { cancellationToken.cancel() }
+                    fusedClient
+                        .getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, cancellationToken.token)
+                        .addOnSuccessListener { location -> cont.resume(location) }
+                        .addOnFailureListener { cont.resume(null) }
+                }
             }
+        }
 
         private suspend fun reverseGeocode(
             latitude: Double,
             longitude: Double,
         ): Pair<String, String>? =
             withContext(Dispatchers.IO) {
-                try {
-                    val geocoder = Geocoder(context, Locale.getDefault())
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        suspendCancellableCoroutine { cont ->
-                            geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
-                                cont.resume(addresses.firstOrNull()?.let { formatAddresses(it) })
+                withTimeoutOrNull(5_000L) {
+                    try {
+                        val geocoder = Geocoder(context, Locale.getDefault())
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            suspendCancellableCoroutine { cont ->
+                                geocoder.getFromLocation(latitude, longitude, 1) { addresses ->
+                                    cont.resume(addresses.firstOrNull()?.let { formatAddresses(it) })
+                                }
                             }
+                        } else {
+                            @Suppress("DEPRECATION")
+                            val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+                            addresses?.firstOrNull()?.let { formatAddresses(it) }
                         }
-                    } else {
-                        @Suppress("DEPRECATION")
-                        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-                        addresses?.firstOrNull()?.let { formatAddresses(it) }
+                    } catch (_: Exception) {
+                        null
                     }
-                } catch (_: Exception) {
-                    null
                 }
             }
 
         private fun formatAddresses(address: android.location.Address): Pair<String, String> {
-            val full = address.getAddressLine(0) ?: ""
-
-            val prefixes =
+            val full =
                 listOfNotNull(
-                    address.countryName,
-                    address.adminArea,
-                )
-            var short = full
-            for (prefix in prefixes) {
-                short = short.removePrefix(prefix).trimStart()
-            }
-            if (short.isBlank()) short = full
+                    address.locality?.takeIf { it.isNotBlank() },
+                    address.subLocality?.takeIf { it.isNotBlank() },
+                    address.thoroughfare?.takeIf { it.isNotBlank() },
+                    address.premises?.takeIf { it.isNotBlank() },
+                ).joinToString(" ")
+                    .ifBlank { address.getAddressLine(0) ?: "" }
+
+            val short = full
 
             return Pair(full, short)
         }

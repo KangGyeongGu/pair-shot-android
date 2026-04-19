@@ -25,7 +25,13 @@ interface ProjectDao {
                 FROM photo_pairs pp
                 WHERE pp.projectId = p.id
                 AND pp.status IN ('PAIRED', 'COMBINED')
-            ) AS completedCount
+            ) AS completedCount,
+            (
+                SELECT COUNT(*)
+                FROM photo_pairs pp
+                WHERE pp.projectId = p.id
+                AND pp.status = 'COMBINED'
+            ) AS combinedCount
         FROM projects p
         ORDER BY p.updatedAt DESC
         """,
@@ -40,6 +46,12 @@ interface ProjectDao {
 
     @Update
     suspend fun update(project: ProjectEntity)
+
+    @Query("UPDATE projects SET updatedAt = :timestamp WHERE id = :id")
+    suspend fun updateTimestamp(
+        id: Long,
+        timestamp: Long,
+    )
 
     @Delete
     suspend fun delete(project: ProjectEntity)

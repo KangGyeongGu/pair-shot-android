@@ -6,9 +6,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,11 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +53,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotGlassTokens
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
@@ -73,9 +79,6 @@ fun CameraSettingsSheet(
     onOverlayAlphaChange: ((Float) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val isDark = isSystemInDarkTheme()
-    val scrimAlpha = if (isDark) 0.62f else 0.45f
-
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = visible,
@@ -86,7 +89,7 @@ fun CameraSettingsSheet(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = scrimAlpha))
+                        .background(Color.Black.copy(alpha = 0.52f))
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
@@ -109,8 +112,9 @@ fun CameraSettingsSheet(
                     Modifier
                         .padding(horizontal = PairShotSpacing.cardPadding)
                         .widthIn(max = 520.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .clip(PairShotGlassTokens.shape)
+                        .background(PairShotGlassTokens.surfaceColor)
+                        .border(PairShotGlassTokens.border.width, PairShotGlassTokens.border.brush, PairShotGlassTokens.shape)
                         .padding(horizontal = PairShotSpacing.screenPadding, vertical = PairShotSpacing.screenPadding)
                         .clickable(
                             indication = null,
@@ -275,7 +279,7 @@ private fun SettingIconItem(
                     .clip(CircleShape)
                     .background(
                         if (isActive) {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            Color.White.copy(alpha = 0.18f)
                         } else {
                             Color.Transparent
                         },
@@ -286,13 +290,13 @@ private fun SettingIconItem(
                 imageVector = icon,
                 contentDescription = label,
                 modifier = Modifier.size(24.dp),
-                tint = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (isActive) Color.White else Color.White.copy(alpha = 0.55f),
             )
         }
         Text(
             text = label,
             style = PairShotTypographyTokens.labelExtraSmall,
-            color = if (isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isActive) Color.White else Color.White.copy(alpha = 0.55f),
         )
     }
 }
@@ -304,7 +308,15 @@ private fun OverlayAlphaSlider(
     enabled: Boolean,
     onAlphaChange: (Float) -> Unit,
 ) {
+    var localAlpha by remember { mutableStateOf(alpha) }
     val interactionSource = remember { MutableInteractionSource() }
+    val isDragged by interactionSource.collectIsDraggedAsState()
+
+    // 드래그 중에는 ViewModel 값 동기화 차단
+    LaunchedEffect(alpha) {
+        if (!isDragged) localAlpha = alpha
+    }
+
     val contentColor =
         if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     val primaryColor =
@@ -330,15 +342,16 @@ private fun OverlayAlphaSlider(
                 color = contentColor,
             )
             Text(
-                text = "${(alpha * 100).roundToInt()}%",
+                text = "${(localAlpha * 100).roundToInt()}%",
                 style = MaterialTheme.typography.labelSmall,
                 color = primaryColor,
             )
         }
         Slider(
-            value = alpha,
-            onValueChange = onAlphaChange,
-            valueRange = 0f..0.5f,
+            value = localAlpha,
+            onValueChange = { localAlpha = it },
+            onValueChangeFinished = { onAlphaChange(localAlpha) },
+            valueRange = 0f..1.0f,
             enabled = enabled,
             interactionSource = interactionSource,
             colors = sliderColors,

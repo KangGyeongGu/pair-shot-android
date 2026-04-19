@@ -24,9 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
@@ -43,14 +43,14 @@ fun PairCard(
     isSelected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val successColor = LocalPairShotExtendedColors.current.success
     val borderStroke =
-        if (selectionMode && isSelected) BorderStroke(2.dp, successColor) else null
+        if (selectionMode && isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
 
     Card(
         modifier =
             modifier
                 .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,
@@ -132,14 +132,14 @@ fun CombinedCard(
     isSelected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
 ) {
-    val successColor = LocalPairShotExtendedColors.current.success
     val borderStroke =
-        if (selectionMode && isSelected) BorderStroke(2.dp, successColor) else null
+        if (selectionMode && isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
 
     Card(
         modifier =
             modifier
                 .fillMaxWidth()
+                .clip(MaterialTheme.shapes.medium)
                 .combinedClickable(
                     onClick = onClick,
                     onLongClick = onLongClick,

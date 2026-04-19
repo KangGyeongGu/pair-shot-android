@@ -57,6 +57,7 @@ class PhotoPairRepositoryImpl
         override suspend fun update(pair: PhotoPair) =
             withContext(Dispatchers.IO) {
                 photoPairDao.update(pair.toEntity())
+                projectDao.updateTimestamp(pair.projectId, System.currentTimeMillis())
             }
 
         override suspend fun delete(pair: PhotoPair) =
@@ -65,6 +66,7 @@ class PhotoPairRepositoryImpl
                 pair.afterPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
                 pair.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
                 photoPairDao.delete(pair.toEntity())
+                projectDao.updateTimestamp(pair.projectId, System.currentTimeMillis())
             }
 
         override suspend fun resetAfterPhoto(pairId: Long) =
@@ -82,6 +84,7 @@ class PhotoPairRepositoryImpl
                         status = PairStatus.BEFORE_ONLY.name,
                     ),
                 )
+                projectDao.updateTimestamp(entity.projectId, System.currentTimeMillis())
             }
 
         override suspend fun removeCombinedPhoto(pairId: Long) =
@@ -96,6 +99,7 @@ class PhotoPairRepositoryImpl
                         status = PairStatus.PAIRED.name,
                     ),
                 )
+                projectDao.updateTimestamp(entity.projectId, System.currentTimeMillis())
             }
 
         override fun countByProject(projectId: Long): Flow<Int> = photoPairDao.countByProject(projectId)
@@ -167,7 +171,9 @@ class PhotoPairRepositoryImpl
                         zoomLevel = zoomLevel,
                         lensId = lensId,
                     )
-                photoPairDao.insert(entity)
+                val pairId = photoPairDao.insert(entity)
+                projectDao.updateTimestamp(projectId, System.currentTimeMillis())
+                pairId
             }
 
         override suspend fun saveAfterPhoto(
@@ -205,14 +211,16 @@ class PhotoPairRepositoryImpl
                     displayName = fileName,
                 )
 
+            val now = System.currentTimeMillis()
             photoPairDao.update(
                 entity.copy(
                     afterPhotoUri = savedUri.toString(),
-                    afterTimestamp = System.currentTimeMillis(),
+                    afterTimestamp = now,
                     combinedPhotoUri = null,
                     status = PairStatus.PAIRED.name,
                 ),
             )
+            projectDao.updateTimestamp(entity.projectId, now)
         }
 
         override suspend fun combinePair(pairId: Long): String =
@@ -251,6 +259,7 @@ class PhotoPairRepositoryImpl
                         status = PairStatus.COMBINED.name,
                     ),
                 )
+                projectDao.updateTimestamp(entity.projectId, System.currentTimeMillis())
 
                 uriString
             }

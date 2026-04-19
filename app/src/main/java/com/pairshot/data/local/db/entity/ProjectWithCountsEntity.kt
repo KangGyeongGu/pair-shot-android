@@ -13,6 +13,7 @@ data class ProjectWithCountsEntity(
     val updatedAt: Long,
     val pairCount: Int,
     val completedCount: Int,
+    val combinedCount: Int,
 )
 
 fun ProjectWithCountsEntity.toDomain() =
@@ -27,4 +28,5 @@ fun ProjectWithCountsEntity.toDomain() =
         updatedAt = updatedAt,
         pairCount = pairCount,
         completedCount = completedCount,
+        combinedCount = combinedCount,
     )

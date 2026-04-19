@@ -1,7 +1,11 @@
 package com.pairshot.feature.settings.ui.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,10 +27,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,17 +44,17 @@ import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.settings.WatermarkConfig
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
-import com.pairshot.feature.settings.ui.component.ClearCacheDialog
-import com.pairshot.feature.settings.ui.component.FileNamePrefixDialog
-import com.pairshot.feature.settings.ui.component.ImageQualityDialog
-import com.pairshot.feature.settings.ui.component.OverlayAlphaDialog
-import com.pairshot.feature.settings.ui.component.SettingsCard
-import com.pairshot.feature.settings.ui.component.SettingsDivider
-import com.pairshot.feature.settings.ui.component.SettingsItem
-import com.pairshot.feature.settings.ui.component.SettingsSectionLabel
-import com.pairshot.feature.settings.ui.component.SettingsSwitchItem
+import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.core.ui.component.SettingsDivider
+import com.pairshot.core.ui.component.SettingsItem
+import com.pairshot.core.ui.component.SettingsSectionLabel
+import com.pairshot.core.ui.component.SettingsSliderItem
+import com.pairshot.feature.settings.ui.dialog.ClearCacheDialog
+import com.pairshot.feature.settings.ui.dialog.FileNamePrefixDialog
+import com.pairshot.feature.settings.ui.dialog.ImageQualityDialog
 import com.pairshot.feature.settings.ui.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.ui.viewmodel.formatBytes
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,19 +75,10 @@ fun SettingsScreen(
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
     var showPrefixDialog by remember { mutableStateOf(false) }
-    var showOverlayDialog by remember { mutableStateOf(false) }
 
     val currentQuality = (uiState as? SettingsUiState.Success)?.jpegQuality ?: 85
     val currentPrefix = (uiState as? SettingsUiState.Success)?.fileNamePrefix ?: "PAIRSHOT"
-    val currentAlpha = (uiState as? SettingsUiState.Success)?.overlayAlpha ?: 0.3f
-
-    if (showOverlayDialog) {
-        OverlayAlphaDialog(
-            currentAlpha = currentAlpha,
-            onAlphaChange = onOverlayAlphaChange,
-            onDismiss = { showOverlayDialog = false },
-        )
-    }
+    val currentAlpha = (uiState as? SettingsUiState.Success)?.overlayAlpha ?: 0.5f
 
     if (showClearCacheDialog) {
         ClearCacheDialog(
@@ -200,12 +197,50 @@ fun SettingsScreen(
                                     onClick = { showQualityDialog = true },
                                 )
                                 SettingsDivider()
-                                SettingsSwitchItem(
-                                    label = "오버레이 투명도",
-                                    checked = uiState.overlayEnabled,
-                                    onCheckedChange = onOverlayEnabledChange,
-                                    onClick = { showOverlayDialog = true },
-                                )
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    Row(
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .height(PairShotSpacing.inputRow)
+                                                .padding(horizontal = PairShotSpacing.cardPadding),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            text = "오버레이 투명도",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        Switch(
+                                            checked = uiState.overlayEnabled,
+                                            onCheckedChange = onOverlayEnabledChange,
+                                            colors =
+                                                SwitchDefaults.colors(
+                                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                ),
+                                            modifier =
+                                                Modifier
+                                                    .wrapContentHeight(unbounded = true)
+                                                    .scale(0.67f),
+                                        )
+                                    }
+                                    AnimatedVisibility(
+                                        visible = uiState.overlayEnabled,
+                                        enter = expandVertically(),
+                                        exit = shrinkVertically(),
+                                    ) {
+                                        SettingsSliderItem(
+                                            label = "",
+                                            value = currentAlpha,
+                                            valueRange = 0f..1.0f,
+                                            steps = 9,
+                                            valueLabel = { "${(it * 100).roundToInt()}%" },
+                                            onValueChange = onOverlayAlphaChange,
+                                        )
+                                    }
+                                }
                                 SettingsDivider()
                                 SettingsItem(
                                     label = "파일명 접두어",
@@ -230,7 +265,6 @@ fun SettingsScreen(
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
-                                            .clickable(onClick = onWatermarkSettingsClick)
                                             .height(PairShotSpacing.inputRow)
                                             .padding(horizontal = PairShotSpacing.cardPadding),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -251,6 +285,19 @@ fun SettingsScreen(
                                                 .wrapContentHeight(unbounded = true)
                                                 .scale(0.67f),
                                     )
+                                }
+                                AnimatedVisibility(
+                                    visible = watermarkConfig.enabled,
+                                    enter = expandVertically(),
+                                    exit = shrinkVertically(),
+                                ) {
+                                    Column {
+                                        SettingsDivider()
+                                        SettingsItem(
+                                            label = "상세설정",
+                                            onClick = onWatermarkSettingsClick,
+                                        )
+                                    }
                                 }
                             }
                         }

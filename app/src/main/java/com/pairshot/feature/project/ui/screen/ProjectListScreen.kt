@@ -1,13 +1,9 @@
 package com.pairshot.feature.project.ui.screen
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -15,28 +11,22 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.EditOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.feature.project.ui.component.ProjectGroupCard
 import com.pairshot.feature.project.ui.component.ProjectGroupFilterRow
 import com.pairshot.feature.project.ui.component.ProjectGroupLabel
 import com.pairshot.feature.project.ui.component.ProjectListTopBar
+import com.pairshot.feature.project.ui.component.ProjectSelectionBottomBar
 import com.pairshot.feature.project.ui.component.groupProjectsForDisplay
 import com.pairshot.feature.project.ui.dialog.CreateProjectDialog
 import com.pairshot.feature.project.ui.dialog.DeleteSelectedProjectsDialog
@@ -86,75 +76,11 @@ internal fun ProjectListScreen(
         },
         bottomBar = {
             if (selectionMode) {
-                Surface(
-                    modifier = Modifier.navigationBarsPadding(),
-                    color = MaterialTheme.colorScheme.background,
-                    tonalElevation = 0.dp,
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(PairShotSpacing.actionBar)
-                                .padding(horizontal = PairShotSpacing.screenPadding),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement =
-                                Arrangement.spacedBy(
-                                    PairShotSpacing.sectionGap,
-                                    Alignment.CenterHorizontally,
-                                ),
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                val editEnabled = selectedIds.size == 1
-                                IconButton(
-                                    onClick = onShowRenameDialog,
-                                    enabled = editEnabled,
-                                ) {
-                                    Icon(
-                                        imageVector = if (editEnabled) Icons.Default.Edit else Icons.Filled.EditOff,
-                                        contentDescription = "이름 변경",
-                                        tint =
-                                            if (editEnabled) {
-                                                MaterialTheme.colorScheme.onSurface
-                                            } else {
-                                                MaterialTheme.colorScheme.outline
-                                            },
-                                    )
-                                }
-                                Text(
-                                    text = "수정",
-                                    style = PairShotTypographyTokens.labelExtraSmall,
-                                    color =
-                                        if (editEnabled) {
-                                            MaterialTheme.colorScheme.onSurface
-                                        } else {
-                                            MaterialTheme.colorScheme.outline
-                                        },
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                IconButton(
-                                    onClick = onShowDeleteSelectedDialog,
-                                    enabled = selectedIds.isNotEmpty(),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.DeleteForever,
-                                        contentDescription = "선택 삭제",
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                }
-                                Text(
-                                    text = "삭제",
-                                    style = PairShotTypographyTokens.labelExtraSmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                        }
-                    }
-                }
+                ProjectSelectionBottomBar(
+                    selectedCount = selectedIds.size,
+                    onShowRenameDialog = onShowRenameDialog,
+                    onShowDeleteDialog = onShowDeleteSelectedDialog,
+                )
             }
         },
         floatingActionButton = {

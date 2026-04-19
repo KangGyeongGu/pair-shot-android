@@ -9,10 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
+import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.TopProgressPill
 import com.pairshot.feature.export.ui.component.ExportActionSection
 import com.pairshot.feature.export.ui.component.ExportFormatSection
@@ -67,19 +67,26 @@ fun ExportScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = {
+                ExportActionSection(
+                    onSaveToDevice = onSaveToDevice,
+                    onShare = onShare,
+                    enabled = !isExporting,
+                )
+            },
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text(text = "내보내기") },
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.Default.KeyboardArrowLeft,
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                                 contentDescription = "뒤로가기",
                             )
                         }
                     },
                     colors =
-                        TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.background,
                         ),
                 )
@@ -115,13 +122,10 @@ fun ExportScreen(
                     }
                 }
 
-                item(key = "divider_after_summary") {
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                }
-
                 item(key = "include_section") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    SettingsSectionLabel(label = "포함할 항목")
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     ExportIncludeSection(
                         beforeCount = beforeCount,
                         afterCount = afterCount,
@@ -135,44 +139,24 @@ fun ExportScreen(
                     )
                 }
 
-                item(key = "divider_after_include") {
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                }
-
                 item(key = "format_section") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    SettingsSectionLabel(label = "내보내기 형식")
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     ExportFormatSection(
                         exportFormat = exportFormat,
                         onExportFormatChange = onExportFormatChange,
                     )
                 }
 
-                item(key = "divider_after_format") {
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                }
-
                 item(key = "watermark_section") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    SettingsSectionLabel(label = "워터마크")
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     ExportWatermarkSection(
                         applyWatermark = applyWatermark,
                         onApplyWatermarkChange = onApplyWatermarkChange,
                         onWatermarkSettingsClick = onWatermarkSettingsClick,
-                    )
-                }
-
-                item(key = "divider_after_watermark") {
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
-                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                }
-
-                item(key = "destination_section") {
-                    ExportActionSection(
-                        onSaveToDevice = onSaveToDevice,
-                        onShare = onShare,
-                        enabled = !isExporting,
                     )
                 }
             }

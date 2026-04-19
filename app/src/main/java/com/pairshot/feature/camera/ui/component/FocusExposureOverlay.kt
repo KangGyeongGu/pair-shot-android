@@ -37,10 +37,10 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private val FOCUS_RING_SIZE = 64.dp
-private val FOCUS_RING_STROKE = 2.dp
-private val EV_BAR_HEIGHT = 120.dp
-private val EV_BAR_WIDTH = 3.dp
-private val EV_SUN_SIZE = 16.dp
+private val FOCUS_RING_STROKE = 1.dp
+private val EV_BAR_HEIGHT = 100.dp
+private val EV_BAR_WIDTH = 1.5.dp
+private val EV_SUN_SIZE = 12.dp
 private const val DRAG_DP_PER_EV_STEP = 30f
 
 @Composable
@@ -233,7 +233,7 @@ fun FocusExposureOverlay(
                         color = Color.White.copy(alpha = alpha),
                         radius = sunSizePx / 2f,
                         center = Offset(barX, sunY),
-                        style = Stroke(width = with(density) { 1.5.dp.toPx() }),
+                        style = Stroke(width = with(density) { 1.dp.toPx() }),
                     )
                 }
             }

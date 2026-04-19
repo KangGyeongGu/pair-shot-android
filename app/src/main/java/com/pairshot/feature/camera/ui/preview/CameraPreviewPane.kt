@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -90,30 +91,6 @@ internal fun CameraPreviewPane(
 
         overlayContent?.invoke()
 
-        FocusExposureOverlay(
-            onTapToFocus = { x, y, viewWidth, viewHeight ->
-                val control = cameraControl ?: return@FocusExposureOverlay
-                val factory =
-                    SurfaceOrientedMeteringPointFactory(
-                        viewWidth.toFloat(),
-                        viewHeight.toFloat(),
-                    )
-                val point = factory.createPoint(x, y)
-                val action =
-                    FocusMeteringAction
-                        .Builder(point)
-                        .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                        .build()
-                control.startFocusAndMetering(action)
-            },
-            onExposureReset = onExposureReset,
-            onExposureAdjust = onExposureAdjust,
-            exposureRange = exposureRange,
-            currentExposureIndex = currentExposureIndex,
-            exposureStep = exposureStep,
-            modifier = Modifier.fillMaxSize(),
-        )
-
         BoxWithConstraints(
             modifier =
                 Modifier
@@ -152,11 +129,35 @@ internal fun CameraPreviewPane(
                         .aspectRatio(requestedRatio)
                 }
 
-            Box(modifier = previewFrameModifier.align(Alignment.Center)) {
+            Box(modifier = previewFrameModifier.align(Alignment.Center).clipToBounds()) {
                 CameraOverlayLayer(
                     gridEnabled = gridEnabled,
                     levelEnabled = levelEnabled,
                     roll = roll,
+                )
+
+                FocusExposureOverlay(
+                    onTapToFocus = { x, y, viewWidth, viewHeight ->
+                        val control = cameraControl ?: return@FocusExposureOverlay
+                        val factory =
+                            SurfaceOrientedMeteringPointFactory(
+                                viewWidth.toFloat(),
+                                viewHeight.toFloat(),
+                            )
+                        val point = factory.createPoint(x, y)
+                        val action =
+                            FocusMeteringAction
+                                .Builder(point)
+                                .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                                .build()
+                        control.startFocusAndMetering(action)
+                    },
+                    onExposureReset = onExposureReset,
+                    onExposureAdjust = onExposureAdjust,
+                    exposureRange = exposureRange,
+                    currentExposureIndex = currentExposureIndex,
+                    exposureStep = exposureStep,
+                    modifier = Modifier.fillMaxSize(),
                 )
 
                 ZoomControls(

@@ -8,6 +8,7 @@ import com.pairshot.core.domain.project.ProjectRepository
 import com.pairshot.core.infra.location.LocationProvider
 import com.pairshot.core.infra.location.LocationResult
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class ProjectGroupMode {
-    NONE,
     CREATED_DATE,
     UPDATED_DATE,
 }
@@ -46,6 +46,11 @@ class ProjectViewModel
 
         private val _currentLocation = MutableStateFlow<LocationResult?>(null)
         val currentLocation: StateFlow<LocationResult?> = _currentLocation.asStateFlow()
+
+        private val _isLocationLoading = MutableStateFlow(false)
+        val isLocationLoading: StateFlow<Boolean> = _isLocationLoading.asStateFlow()
+
+        private var locationJob: Job? = null
 
         private val _selectionMode = MutableStateFlow(false)
         val selectionMode: StateFlow<Boolean> = _selectionMode.asStateFlow()
@@ -77,9 +82,13 @@ class ProjectViewModel
         }
 
         fun fetchCurrentLocation() {
-            viewModelScope.launch {
-                _currentLocation.value = locationProvider.getCurrentLocation()
-            }
+            locationJob?.cancel()
+            locationJob =
+                viewModelScope.launch {
+                    _isLocationLoading.value = true
+                    _currentLocation.value = locationProvider.getCurrentLocation()
+                    _isLocationLoading.value = false
+                }
         }
 
         fun createProject(name: String) {

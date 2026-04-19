@@ -1,7 +1,8 @@
-package com.pairshot.feature.settings.ui.component
+package com.pairshot.core.ui.component
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -102,13 +103,14 @@ fun SettingsSwitchItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     onClick: (() -> Unit)? = null,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .then(
-                    if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+                    if (onClick != null) Modifier.clickable(enabled = enabled, onClick = onClick) else Modifier,
                 ).height(PairShotSpacing.inputRow)
                 .padding(horizontal = PairShotSpacing.cardPadding),
         verticalAlignment = Alignment.CenterVertically,
@@ -116,12 +118,13 @@ fun SettingsSwitchItem(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            enabled = enabled,
             colors =
                 SwitchDefaults.colors(
                     uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -141,18 +144,20 @@ fun SettingsSliderItem(
     label: String,
     value: Float,
     valueRange: ClosedFloatingPointRange<Float>,
-    displayText: String,
+    valueLabel: (Float) -> String,
     onValueChange: (Float) -> Unit,
     steps: Int = 0,
-    onValueChangeImmediate: ((Float) -> Unit)? = null,
+    // 드래그 중 실시간 업데이트가 필요한 경우(미리보기 등)에만 사용. null이면 onValueChangeFinished에만 호출
+    onLiveUpdate: ((Float) -> Unit)? = null,
 ) {
     var sliderValue by remember { mutableStateOf(value) }
-    LaunchedEffect(value) { if (abs(sliderValue - value) > 1e-4f) sliderValue = value }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isDragged by interactionSource.collectIsDraggedAsState()
 
-    val interactionSource =
-        remember {
-            MutableInteractionSource()
-        }
+    // 드래그 중에는 외부 값 동기화 차단 — DataStore 비동기 emit이 드래그 위치를 덮어쓰지 않도록
+    LaunchedEffect(value) {
+        if (!isDragged && abs(sliderValue - value) > 1e-4f) sliderValue = value
+    }
 
     Column(
         modifier =
@@ -174,7 +179,7 @@ fun SettingsSliderItem(
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = displayText,
+                text = valueLabel(sliderValue),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -183,7 +188,7 @@ fun SettingsSliderItem(
             value = sliderValue,
             onValueChange = {
                 sliderValue = it
-                onValueChangeImmediate?.invoke(it)
+                onLiveUpdate?.invoke(it)
             },
             onValueChangeFinished = { onValueChange(sliderValue) },
             valueRange = valueRange,
