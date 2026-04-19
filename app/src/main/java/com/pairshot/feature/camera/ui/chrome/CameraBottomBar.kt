@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.pairshot.core.designsystem.PairShotGlassTokens
 import com.pairshot.feature.camera.ui.component.ShutterButton
 import java.io.File
 
@@ -52,7 +51,7 @@ internal fun CameraBottomBar(
             Modifier
                 .fillMaxWidth()
                 .height(height)
-                .background(PairShotGlassTokens.surfaceColor)
+                .background(Color.Black)
                 .padding(horizontal = 32.dp),
     ) {
         Row(
@@ -64,7 +63,7 @@ internal fun CameraBottomBar(
                 Icon(
                     imageVector = Icons.Default.FlipCameraAndroid,
                     contentDescription = "카메라 전환",
-                    tint = PairShotGlassTokens.contentColor,
+                    tint = Color.White,
                     modifier = Modifier.size(28.dp),
                 )
             }
@@ -72,7 +71,7 @@ internal fun CameraBottomBar(
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "설정",
-                    tint = PairShotGlassTokens.contentColor,
+                    tint = Color.White,
                     modifier = Modifier.size(28.dp),
                 )
             }

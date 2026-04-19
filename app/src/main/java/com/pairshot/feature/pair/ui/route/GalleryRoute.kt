@@ -33,6 +33,7 @@ fun GalleryRoute(
     var showMoreMenu by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showProjectDeleteDialog by remember { mutableStateOf(false) }
+    var showCombineDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessage.collect { event ->
@@ -57,6 +58,7 @@ fun GalleryRoute(
         showMoreMenu = showMoreMenu,
         showRenameDialog = showRenameDialog,
         showProjectDeleteDialog = showProjectDeleteDialog,
+        showCombineDialog = showCombineDialog,
         onNavigateBack = onNavigateBack,
         onNavigateToCamera = onNavigateToCamera,
         onNavigateToAfterCamera = onNavigateToAfterCamera,
@@ -79,6 +81,8 @@ fun GalleryRoute(
         onToggleFilter = { viewModel.toggleFilter() },
         onToggleSelection = { viewModel.toggleSelection(it) },
         onLongPressSelect = { viewModel.longPressSelect(it) },
+        onShowCombineDialog = { showCombineDialog = true },
+        onDismissCombineDialog = { showCombineDialog = false },
         onCombineSelected = { viewModel.combineSelected() },
         onRenameProject = { viewModel.renameProject(it) },
         onDeleteProject = { viewModel.deleteProject() },

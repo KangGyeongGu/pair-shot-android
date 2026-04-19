@@ -31,6 +31,7 @@ import com.pairshot.feature.pair.ui.component.GalleryFilterRow
 import com.pairshot.feature.pair.ui.component.GallerySelectionBottomBar
 import com.pairshot.feature.pair.ui.component.GalleryTopBar
 import com.pairshot.feature.pair.ui.component.PairGridSection
+import com.pairshot.feature.pair.ui.dialog.CombinePairsDialog
 import com.pairshot.feature.pair.ui.dialog.DeletePairsDialog
 import com.pairshot.feature.pair.ui.dialog.DeleteProjectDialog
 import com.pairshot.feature.pair.ui.dialog.DeleteWithCombinedDialog
@@ -51,6 +52,7 @@ internal fun GalleryScreen(
     showMoreMenu: Boolean,
     showRenameDialog: Boolean,
     showProjectDeleteDialog: Boolean,
+    showCombineDialog: Boolean,
     onNavigateBack: () -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToAfterCamera: (Long) -> Unit,
@@ -73,6 +75,8 @@ internal fun GalleryScreen(
     onToggleFilter: () -> Unit,
     onToggleSelection: (Long) -> Unit,
     onLongPressSelect: (Long) -> Unit,
+    onShowCombineDialog: () -> Unit,
+    onDismissCombineDialog: () -> Unit,
     onCombineSelected: () -> Unit,
     onRenameProject: (String) -> Unit,
     onDeleteProject: () -> Unit,
@@ -112,7 +116,7 @@ internal fun GalleryScreen(
                 if (selectionMode) {
                     GallerySelectionBottomBar(
                         selectedCount = selectedIds.size,
-                        onCombineSelected = onCombineSelected,
+                        onCombineSelected = onShowCombineDialog,
                         onExportSelected = { onNavigateToExport(selectedIds) },
                         onShowDeleteDialog = onDeleteClick,
                     )
@@ -282,6 +286,17 @@ internal fun GalleryScreen(
             onConfirm = {
                 onDismissProjectDeleteDialog()
                 onDeleteProject()
+            },
+        )
+    }
+
+    if (showCombineDialog) {
+        CombinePairsDialog(
+            selectedCount = selectedIds.size,
+            onDismiss = onDismissCombineDialog,
+            onConfirm = {
+                onDismissCombineDialog()
+                onCombineSelected()
             },
         )
     }

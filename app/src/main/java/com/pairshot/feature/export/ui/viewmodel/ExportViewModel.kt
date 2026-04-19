@@ -136,6 +136,10 @@ class ExportViewModel
 
         fun setApplyWatermark(value: Boolean) {
             _applyWatermark.update { value }
+            viewModelScope.launch {
+                val config = watermarkRepository.getConfig()
+                watermarkRepository.saveConfig(config.copy(enabled = value))
+            }
         }
 
         private suspend fun loadSelectedPairsInfo() {

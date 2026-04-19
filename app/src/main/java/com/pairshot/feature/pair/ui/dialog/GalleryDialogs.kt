@@ -102,6 +102,27 @@ internal fun DeleteProjectDialog(
 }
 
 @Composable
+internal fun CombinePairsDialog(
+    selectedCount: Int,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    PairShotDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("${selectedCount}개 페어 합성") },
+        text = { Text("선택한 페어의 Before/After를 합성합니다.", style = MaterialTheme.typography.bodyMedium) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("합성", color = MaterialTheme.colorScheme.primary)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("취소") }
+        },
+    )
+}
+
+@Composable
 internal fun DeleteWithCombinedDialog(
     pairCount: Int,
     combinedCount: Int,
