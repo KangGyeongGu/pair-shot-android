@@ -15,6 +15,7 @@ import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
 import com.pairshot.feature.camera.ui.component.ZoomUiState
+import com.pairshot.feature.camera.ui.sensor.CaptureOrientationManager
 import com.pairshot.feature.camera.ui.sensor.LevelSensorManager
 import com.pairshot.feature.camera.ui.state.CameraCapabilities
 import com.pairshot.feature.camera.ui.state.CameraSettingsState
@@ -33,7 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 import javax.inject.Inject
 
 sealed interface AfterCameraEvent {
@@ -93,29 +94,37 @@ class AfterCameraViewModel
         private val _overlayAlpha = MutableStateFlow(0.3f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
-        private val settingsHolder =
-            CameraSettingsStateHolder(
-                runBlocking {
-                    val s = appSettingsRepository.settingsFlow.first()
+        private val settingsHolder = CameraSettingsStateHolder()
+        val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
+        val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
+
+        val imageCapture: ImageCapture =
+            ImageCapture
+                .Builder()
+                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                .build()
+
+        val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
+        private val captureOrientationManager = CaptureOrientationManager(context, imageCapture)
+
+        init {
+            captureOrientationManager.start()
+            viewModelScope.launch {
+                val s = appSettingsRepository.settingsFlow.first()
+                settingsHolder.applyPersistedSettings(
                     CameraSettingsState(
                         gridEnabled = s.cameraGridEnabled,
                         levelEnabled = s.cameraLevelEnabled,
                         flashMode = FlashMode.valueOf(s.cameraFlashMode),
                         nightModeEnabled = s.cameraNightModeEnabled,
                         hdrEnabled = s.cameraHdrEnabled,
-                    )
-                },
-            )
-        val capabilities: StateFlow<CameraCapabilities> = settingsHolder.capabilities
-        val settingsState: StateFlow<CameraSettingsState> = settingsHolder.settingsState
-
-        val levelSensorManager: LevelSensorManager = LevelSensorManager(context)
-
-        init {
-            viewModelScope.launch {
-                val settings = appSettingsRepository.settingsFlow.first()
-                _overlayEnabled.value = settings.overlayEnabled
-                _overlayAlpha.value = settings.defaultOverlayAlpha.coerceIn(0f, 0.5f)
+                    ),
+                )
+                if (settingsHolder.settingsState.value.levelEnabled) {
+                    levelSensorManager.start()
+                }
+                _overlayEnabled.value = s.overlayEnabled
+                _overlayAlpha.value = s.defaultOverlayAlpha.coerceIn(0f, 0.5f)
             }
             if (settingsHolder.settingsState.value.levelEnabled) {
                 levelSensorManager.start()
@@ -124,12 +133,6 @@ class AfterCameraViewModel
 
         private val _events = MutableSharedFlow<AfterCameraEvent>()
         val events: SharedFlow<AfterCameraEvent> = _events.asSharedFlow()
-
-        val imageCapture: ImageCapture =
-            ImageCapture
-                .Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .build()
 
         private var initialIndexSet = false
 
@@ -207,7 +210,8 @@ class AfterCameraViewModel
                     try {
                         val path = java.net.URI(tempFileUri).path
                         if (path != null) java.io.File(path).delete()
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        Timber.d(e, "임시 파일 삭제 실패: $tempFileUri")
                     }
                     _isSaving.value = false
                 }
@@ -313,5 +317,6 @@ class AfterCameraViewModel
         override fun onCleared() {
             super.onCleared()
             levelSensorManager.stop()
+            captureOrientationManager.stop()
         }
     }

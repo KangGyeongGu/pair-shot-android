@@ -30,10 +30,17 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(localProperties["KEYSTORE_PATH"] as String)
-            storePassword = localProperties["KEYSTORE_PASSWORD"] as String
-            keyAlias = localProperties["KEY_ALIAS"] as String
-            keyPassword = localProperties["KEY_PASSWORD"] as String
+            storeFile =
+                file(
+                    System.getenv("KEYSTORE_PATH")
+                        ?: localProperties["KEYSTORE_PATH"] as String,
+                )
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+                ?: localProperties["KEYSTORE_PASSWORD"] as String
+            keyAlias = System.getenv("KEY_ALIAS")
+                ?: localProperties["KEY_ALIAS"] as String
+            keyPassword = System.getenv("KEY_PASSWORD")
+                ?: localProperties["KEY_PASSWORD"] as String
         }
     }
 
@@ -128,6 +135,9 @@ dependencies {
 
     // ProfileInstaller
     implementation(libs.profileinstaller)
+
+    // Timber
+    implementation(libs.timber)
 
     // JankStats
     implementation(libs.jankstats)

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 
 class PhotoPairRepositoryImpl
@@ -132,7 +133,8 @@ class PhotoPairRepositoryImpl
                                     existingUris.add(uri)
                                 }
                             }
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        Timber.d(e, "URI 존재 확인 실패: $uri")
                     }
                 }
                 existingUris
@@ -171,9 +173,14 @@ class PhotoPairRepositoryImpl
                         zoomLevel = zoomLevel,
                         lensId = lensId,
                     )
-                val pairId = photoPairDao.insert(entity)
-                projectDao.updateTimestamp(projectId, System.currentTimeMillis())
-                pairId
+                try {
+                    val pairId = photoPairDao.insert(entity)
+                    projectDao.updateTimestamp(projectId, System.currentTimeMillis())
+                    pairId
+                } catch (e: Exception) {
+                    mediaStoreManager.deleteFromGallery(savedUri)
+                    throw e
+                }
             }
 
         override suspend fun saveAfterPhoto(
@@ -190,13 +197,15 @@ class PhotoPairRepositoryImpl
             entity.afterPhotoUri?.let {
                 try {
                     mediaStoreManager.deleteFromGallery(Uri.parse(it))
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    Timber.w(e, "이전 After 사진 삭제 실패: $it")
                 }
             }
             entity.combinedPhotoUri?.let {
                 try {
                     mediaStoreManager.deleteFromGallery(Uri.parse(it))
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    Timber.w(e, "이전 합성 사진 삭제 실패: $it")
                 }
             }
 
@@ -211,16 +220,21 @@ class PhotoPairRepositoryImpl
                     displayName = fileName,
                 )
 
-            val now = System.currentTimeMillis()
-            photoPairDao.update(
-                entity.copy(
-                    afterPhotoUri = savedUri.toString(),
-                    afterTimestamp = now,
-                    combinedPhotoUri = null,
-                    status = PairStatus.PAIRED.name,
-                ),
-            )
-            projectDao.updateTimestamp(entity.projectId, now)
+            try {
+                val now = System.currentTimeMillis()
+                photoPairDao.update(
+                    entity.copy(
+                        afterPhotoUri = savedUri.toString(),
+                        afterTimestamp = now,
+                        combinedPhotoUri = null,
+                        status = PairStatus.PAIRED.name,
+                    ),
+                )
+                projectDao.updateTimestamp(entity.projectId, now)
+            } catch (e: Exception) {
+                mediaStoreManager.deleteFromGallery(savedUri)
+                throw e
+            }
         }
 
         override suspend fun combinePair(pairId: Long): String =
@@ -252,16 +266,20 @@ class PhotoPairRepositoryImpl
                         combined.recycle()
                     }
 
-                val uriString = savedUri.toString()
-                photoPairDao.update(
-                    entity.copy(
-                        combinedPhotoUri = uriString,
-                        status = PairStatus.COMBINED.name,
-                    ),
-                )
-                projectDao.updateTimestamp(entity.projectId, System.currentTimeMillis())
-
-                uriString
+                try {
+                    val uriString = savedUri.toString()
+                    photoPairDao.update(
+                        entity.copy(
+                            combinedPhotoUri = uriString,
+                            status = PairStatus.COMBINED.name,
+                        ),
+                    )
+                    projectDao.updateTimestamp(entity.projectId, System.currentTimeMillis())
+                    uriString
+                } catch (e: Exception) {
+                    mediaStoreManager.deleteFromGallery(savedUri)
+                    throw e
+                }
             }
 
         private fun extractSequenceNumber(beforePhotoUri: String): Int {

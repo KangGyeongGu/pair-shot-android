@@ -19,12 +19,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-
-private val ProgressBackground = Color(0xF01C1C1E)
-private val ProgressColor = Color(0xFF30D158)
-private val ProgressTrackColor = Color(0x33FFFFFF)
+import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 
 @Composable
 fun TopProgressPill(
@@ -39,9 +35,10 @@ fun TopProgressPill(
         label = "top_progress_pill",
     )
 
+    val extendedColors = LocalPairShotExtendedColors.current
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = ProgressBackground,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
         shadowElevation = 8.dp,
         modifier = modifier.padding(horizontal = 16.dp),
     ) {
@@ -56,13 +53,13 @@ fun TopProgressPill(
             ) {
                 Text(
                     text = label,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 if (progressText.isNotEmpty()) {
                     Text(
                         text = progressText,
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }
@@ -74,8 +71,8 @@ fun TopProgressPill(
                         .fillMaxWidth()
                         .height(3.dp)
                         .clip(RoundedCornerShape(999.dp)),
-                color = ProgressColor,
-                trackColor = ProgressTrackColor,
+                color = extendedColors.success,
+                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
             )
         }
     }

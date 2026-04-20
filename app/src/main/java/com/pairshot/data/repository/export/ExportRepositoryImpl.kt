@@ -69,9 +69,7 @@ class ExportRepositoryImpl
             withContext(Dispatchers.IO) {
                 val jpegQuality = appSettingsRepository.settingsFlow.first().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
-                val shareDir = File(shareImagePreparer.prepareTempDir("share").parent!!, "share")
-                shareDir.mkdirs()
-                shareDir.listFiles()?.forEach { it.delete() }
+                val shareDir = shareImagePreparer.prepareTempDir("share_zip")
                 val outputFile = File(shareDir, "PairShot_$projectName.zip")
                 if (watermarkConfig != null) {
                     val tempDir = shareImagePreparer.prepareTempDir("share_wm")
@@ -152,12 +150,10 @@ class ExportRepositoryImpl
             try {
                 galleryEntries.forEachIndexed { index, entry ->
                     if (watermarkConfig != null && !entry.isCombined && entry.sourceUri.isNotBlank()) {
-                        val bitmap = exifBitmapLoader.loadBitmapWithExifCorrection(Uri.parse(entry.sourceUri))
                         val watermarkedConfig = watermarkConfig.copy(enabled = true)
                         val tempFile = File(shareImagePreparer.prepareTempDir("gallery_single"), entry.displayName)
                         watermarkedBitmapWriter.applyWatermarkToFile(entry.sourceUri, tempFile, watermarkedConfig, jpegQuality)
                         mediaStoreManager.saveToGallery(Uri.fromFile(tempFile), projectName, entry.displayName)
-                        bitmap.recycle()
                     } else if (entry.isCombined && watermarkConfig != null && tempDir != null) {
                         val tempFile = File(tempDir, entry.displayName)
                         watermarkedBitmapWriter.combineWithWatermark(

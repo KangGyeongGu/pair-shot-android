@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
@@ -63,6 +64,7 @@ internal fun AfterCameraScreen(
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
     val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
@@ -117,6 +119,12 @@ internal fun AfterCameraScreen(
             surfaceRequest = null
             cameraControl = null
         }
+    }
+
+    // level 센서가 백그라운드에서 동작하지 않도록 lifecycle 관찰 등록
+    DisposableEffect(lifecycleOwner) {
+        viewModel.levelSensorManager.observeLifecycle(lifecycleOwner.lifecycle)
+        onDispose { /* observer 해제는 LevelSensorManager.stop()이 담당 */ }
     }
 
     var showBlackout by remember { mutableStateOf(false) }

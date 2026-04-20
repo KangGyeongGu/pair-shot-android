@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.pairshot.app.navigation.route.ProjectDetail
+import com.pairshot.core.domain.pair.BatchCombineResult
 import com.pairshot.core.domain.pair.BatchCombineUseCase
 import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
 import com.pairshot.core.domain.pair.PairStatus
@@ -192,12 +193,21 @@ class GalleryViewModel
                     return@launch
                 }
                 _combineProgress.value = CombineProgress(0, pairedIds.size)
-                val success =
+                val result: BatchCombineResult =
                     batchCombineUseCase(pairedIds) { current, total ->
                         _combineProgress.value = CombineProgress(current, total)
                     }
                 _combineProgress.value = null
-                _snackbarMessage.emit(SnackbarEvent("${success}개 합성완료", SnackbarVariant.SUCCESS))
+                val total = pairedIds.size
+                val success = result.successCount
+                val failed = result.failedIds.size
+                val snackbarEvent =
+                    if (failed == 0) {
+                        SnackbarEvent("${success}개 합성완료", SnackbarVariant.SUCCESS)
+                    } else {
+                        SnackbarEvent("$success/${total}개 합성 완료. ${failed}개 실패", SnackbarVariant.WARNING)
+                    }
+                _snackbarMessage.emit(snackbarEvent)
                 exitSelectionMode()
             }
         }
@@ -242,13 +252,22 @@ class GalleryViewModel
                     ids.filter { id ->
                         state.pairs.find { it.id == id }?.status == PairStatus.COMBINED
                     }
+                val total = combinedIds.size
+                var successCount = 0
                 combinedIds.forEach { id ->
                     try {
                         photoPairRepository.removeCombinedPhoto(id)
+                        successCount++
                     } catch (_: Exception) {
                     }
                 }
-                _snackbarMessage.emit(SnackbarEvent("${combinedIds.size}개 합성 삭제", SnackbarVariant.INFO))
+                val snackbarEvent =
+                    when {
+                        successCount == total -> SnackbarEvent("${successCount}개 합성 삭제", SnackbarVariant.SUCCESS)
+                        successCount > 0 -> SnackbarEvent("$successCount/${total}개 삭제됨. 일부 실패", SnackbarVariant.WARNING)
+                        else -> SnackbarEvent("삭제에 실패했습니다", SnackbarVariant.ERROR)
+                    }
+                _snackbarMessage.emit(snackbarEvent)
                 exitSelectionMode()
             }
         }
@@ -273,8 +292,17 @@ class GalleryViewModel
         fun deleteProject() {
             viewModelScope.launch {
                 projectRepository.getById(projectId)?.let { project ->
-                    deleteProjectUseCase(project)
-                    _projectDeletedEvent.emit(Unit)
+                    try {
+                        deleteProjectUseCase(project)
+                        _projectDeletedEvent.emit(Unit)
+                    } catch (e: IllegalStateException) {
+                        _snackbarMessage.emit(
+                            SnackbarEvent(
+                                "일부 사진을 삭제할 수 없어 프로젝트를 삭제하지 못했습니다",
+                                SnackbarVariant.ERROR,
+                            ),
+                        )
+                    }
                 }
             }
         }

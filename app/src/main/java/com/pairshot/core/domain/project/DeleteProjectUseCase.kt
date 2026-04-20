@@ -11,11 +11,13 @@ class DeleteProjectUseCase
     ) {
         suspend operator fun invoke(project: Project) {
             val pairs = photoPairRepository.getAllByProjectOnce(project.id)
-            pairs.forEach { pair ->
-                try {
-                    photoPairRepository.delete(pair)
-                } catch (_: Exception) {
+            val total = pairs.size
+            val failed =
+                pairs.count { pair ->
+                    runCatching { photoPairRepository.delete(pair) }.isFailure
                 }
+            if (failed > 0) {
+                throw IllegalStateException("$failed/${total}건의 사진 삭제에 실패하여 프로젝트를 삭제할 수 없습니다")
             }
             projectRepository.delete(project)
         }

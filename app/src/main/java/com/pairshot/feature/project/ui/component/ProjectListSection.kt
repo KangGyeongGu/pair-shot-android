@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -143,7 +144,7 @@ internal fun ProjectItem(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = null,
+                        contentDescription = "위치",
                         modifier = Modifier.size(12.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -167,7 +168,7 @@ internal fun ProjectItem(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.CameraAlt,
-                        contentDescription = null,
+                        contentDescription = "촬영 수",
                         modifier = Modifier.size(12.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -183,7 +184,7 @@ internal fun ProjectItem(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.JoinRight,
-                        contentDescription = null,
+                        contentDescription = "합성 수",
                         modifier = Modifier.size(12.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -231,7 +232,7 @@ internal fun ProjectGroupFilterRow(
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
-                modifier = Modifier.clickable { onGroupModeChange(mode) },
+                modifier = Modifier.minimumInteractiveComponentSize().clickable { onGroupModeChange(mode) },
             )
         }
     }

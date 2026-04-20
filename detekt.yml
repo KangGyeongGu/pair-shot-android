@@ -22,6 +22,11 @@ complexity:
     active: true
     functionThreshold: 6
 
+empty-blocks:
+  EmptyCatchBlock:
+    active: true
+    allowedExceptionNameRegex: '_^'
+
 potential-bugs:
   UnsafeCast:
     active: true

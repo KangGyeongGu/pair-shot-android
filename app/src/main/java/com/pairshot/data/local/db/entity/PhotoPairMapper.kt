@@ -13,7 +13,7 @@ fun PhotoPairEntity.toDomain() =
         combinedPhotoUri = combinedPhotoUri,
         beforeTimestamp = beforeTimestamp,
         afterTimestamp = afterTimestamp,
-        status = PairStatus.valueOf(status),
+        status = PairStatus.entries.firstOrNull { it.name == status } ?: PairStatus.BEFORE_ONLY,
         zoomLevel = zoomLevel,
         lensId = lensId,
     )

@@ -174,7 +174,7 @@ private fun CombinedStatusBadge(modifier: Modifier = Modifier) {
     ) {
         Icon(
             imageVector = Icons.Filled.JoinRight,
-            contentDescription = null,
+            contentDescription = "합성 완료",
             modifier = Modifier.padding(4.dp).size(20.dp),
         )
     }

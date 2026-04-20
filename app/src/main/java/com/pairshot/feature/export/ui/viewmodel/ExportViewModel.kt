@@ -150,14 +150,21 @@ class ExportViewModel
                     "프로젝트"
                 }
 
+            var errorCount = 0
             val pairs =
                 pairIds.mapNotNull { id ->
                     try {
                         photoPairRepository.getById(id)
                     } catch (_: Exception) {
+                        errorCount++
                         null
                     }
                 }
+            if (errorCount > 0) {
+                _snackbarMessage.emit(
+                    SnackbarEvent("일부 사진 정보를 불러올 수 없습니다", SnackbarVariant.WARNING),
+                )
+            }
 
             val beforeCount = pairs.count { it.beforePhotoUri.isNotBlank() }
             val afterCount = pairs.count { it.afterPhotoUri != null }
@@ -200,21 +207,26 @@ class ExportViewModel
             viewModelScope.launch { saveCurrentPreset() }
         }
 
-        private suspend fun ensureCombined() {
-            if (!_includeCombined.value) return
+        private suspend fun ensureCombined(): Boolean {
+            if (!_includeCombined.value) return true
             val uncombinedIds =
                 pairIds.mapNotNull { id ->
                     val pair = photoPairRepository.getById(id)
                     if (pair?.status == PairStatus.PAIRED) id else null
                 }
-            if (uncombinedIds.isEmpty()) return
-            uncombinedIds.forEach { id ->
-                try {
-                    photoPairRepository.combinePair(id)
-                } catch (_: Exception) {
+            if (uncombinedIds.isEmpty()) return true
+            val failedIds =
+                uncombinedIds.filter { id ->
+                    runCatching { photoPairRepository.combinePair(id) }.isFailure
                 }
+            if (failedIds.isNotEmpty()) {
+                _snackbarMessage.emit(
+                    SnackbarEvent("${failedIds.size}개 사진 합성에 실패했습니다", SnackbarVariant.ERROR),
+                )
+                return false
             }
             loadSelectedPairsInfo()
+            return true
         }
 
         private suspend fun resolveWatermarkConfig(): WatermarkConfig? =
@@ -226,7 +238,7 @@ class ExportViewModel
                 _isExporting.value = true
                 _exportProgress.value = 0f
                 try {
-                    ensureCombined()
+                    if (!ensureCombined()) return@launch
                     val wmConfig = resolveWatermarkConfig()
                     when (_exportFormat.value) {
                         ExportFormat.ZIP -> {
@@ -278,7 +290,7 @@ class ExportViewModel
                 _isExporting.value = true
                 _exportProgress.value = 0f
                 try {
-                    ensureCombined()
+                    if (!ensureCombined()) return@launch
                     val wmConfig = resolveWatermarkConfig()
                     when (_exportFormat.value) {
                         ExportFormat.ZIP -> {

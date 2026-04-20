@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,10 +31,10 @@ fun GalleryRoute(
 
     val deleteConfirmation by viewModel.deleteConfirmation.collectAsStateWithLifecycle()
     val snackbarController = remember { PairShotSnackbarController() }
-    var showMoreMenu by remember { mutableStateOf(false) }
-    var showRenameDialog by remember { mutableStateOf(false) }
-    var showProjectDeleteDialog by remember { mutableStateOf(false) }
-    var showCombineDialog by remember { mutableStateOf(false) }
+    var showMoreMenu by rememberSaveable { mutableStateOf(false) }
+    var showRenameDialog by rememberSaveable { mutableStateOf(false) }
+    var showProjectDeleteDialog by rememberSaveable { mutableStateOf(false) }
+    var showCombineDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessage.collect { event ->

@@ -1,5 +1,6 @@
 package com.pairshot.data.local.storage
 
+import android.app.RecoverableSecurityException
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,6 +10,20 @@ import android.provider.MediaStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+
+sealed class DeleteResult {
+    data object Success : DeleteResult()
+
+    data object NotFound : DeleteResult()
+
+    data class RecoverablePermission(
+        val exception: RecoverableSecurityException,
+    ) : DeleteResult()
+
+    data class Failed(
+        val exception: Exception,
+    ) : DeleteResult()
+}
 
 @Singleton
 class MediaStoreManager
@@ -34,8 +49,8 @@ class MediaStoreManager
                 ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PairShot/$projectName/")
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PairShot/$projectName/")
                         put(MediaStore.Images.Media.IS_PENDING, 1)
                     }
                 }
@@ -61,11 +76,16 @@ class MediaStoreManager
             return imageUri
         }
 
-        fun deleteFromGallery(contentUri: Uri): Boolean =
+        fun deleteFromGallery(contentUri: Uri): DeleteResult =
             try {
-                context.contentResolver.delete(contentUri, null, null) > 0
+                val rows = context.contentResolver.delete(contentUri, null, null)
+                if (rows > 0) DeleteResult.Success else DeleteResult.NotFound
             } catch (e: Exception) {
-                false
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
+                    DeleteResult.RecoverablePermission(e)
+                } else {
+                    DeleteResult.Failed(e)
+                }
             }
 
         fun saveBitmapToGallery(
@@ -87,8 +107,8 @@ class MediaStoreManager
                 ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                    put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PairShot/$projectName/")
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PairShot/$projectName/")
                         put(MediaStore.Images.Media.IS_PENDING, 1)
                     }
                 }

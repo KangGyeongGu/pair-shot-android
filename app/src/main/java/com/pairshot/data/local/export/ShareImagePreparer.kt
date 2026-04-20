@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,7 +38,11 @@ class ShareImagePreparer
             sourceUri: String,
             destFile: File,
         ) {
-            context.contentResolver.openInputStream(Uri.parse(sourceUri))?.use { input ->
+            val uri = Uri.parse(sourceUri)
+            (
+                context.contentResolver.openInputStream(uri)
+                    ?: throw IOException("원본 파일을 읽을 수 없습니다: $sourceUri")
+            ).use { input ->
                 destFile.outputStream().use { output -> input.copyTo(output) }
             }
         }

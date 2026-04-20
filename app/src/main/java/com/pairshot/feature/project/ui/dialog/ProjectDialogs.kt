@@ -1,8 +1,11 @@
 package com.pairshot.feature.project.ui.dialog
 
 import android.Manifest
-import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -44,11 +47,13 @@ internal fun CreateProjectDialog(
     onCreate: (String) -> Unit,
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     var name by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
     val isLocationLoading by viewModel.isLocationLoading.collectAsStateWithLifecycle()
     var showLocationRationale by remember { mutableStateOf(false) }
+    var showLocationPermanentlyDenied by remember { mutableStateOf(false) }
 
     val locationPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -59,6 +64,24 @@ internal fun CreateProjectDialog(
                     permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
             if (granted) {
                 viewModel.fetchCurrentLocation()
+            } else {
+                val shouldShowRationale =
+                    activity != null &&
+                        (
+                            ActivityCompat.shouldShowRequestPermissionRationale(
+                                activity,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                            ) ||
+                                ActivityCompat.shouldShowRequestPermissionRationale(
+                                    activity,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                )
+                        )
+                if (shouldShowRationale) {
+                    showLocationRationale = true
+                } else {
+                    showLocationPermanentlyDenied = true
+                }
             }
         }
 
@@ -72,7 +95,6 @@ internal fun CreateProjectDialog(
         if (hasPermission) {
             viewModel.fetchCurrentLocation()
         } else {
-            val activity = context as? Activity
             val needsRationale =
                 activity != null &&
                     (
@@ -130,6 +152,43 @@ internal fun CreateProjectDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showLocationRationale = false }) {
+                    Text("취소")
+                }
+            },
+        )
+    }
+
+    if (showLocationPermanentlyDenied) {
+        AlertDialog(
+            onDismissRequest = { showLocationPermanentlyDenied = false },
+            title = {
+                Text(
+                    text = "위치 권한이 필요합니다",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            text = {
+                Text(
+                    text = "위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLocationPermanentlyDenied = false
+                        val intent =
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.fromParts("package", context.packageName, null)
+                            }
+                        context.startActivity(intent)
+                    },
+                ) {
+                    Text("설정 열기", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLocationPermanentlyDenied = false }) {
                     Text("취소")
                 }
             },

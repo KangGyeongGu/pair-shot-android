@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -43,6 +45,7 @@ fun ShutterButton(
                 .scale(scale)
                 .alpha(if (enabled) 1f else 0.5f)
                 .border(width = 3.dp, color = Color.White, shape = CircleShape)
+                .semantics { contentDescription = "촬영" }
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,

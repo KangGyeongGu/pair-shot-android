@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,10 +22,10 @@ fun ProjectListRoute(
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val groupMode by viewModel.groupMode.collectAsStateWithLifecycle()
 
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var showDeleteSelectedDialog by remember { mutableStateOf(false) }
-    var showRenameDialog by remember { mutableStateOf(false) }
-    var showTopMenu by remember { mutableStateOf(false) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteSelectedDialog by rememberSaveable { mutableStateOf(false) }
+    var showRenameDialog by rememberSaveable { mutableStateOf(false) }
+    var showTopMenu by rememberSaveable { mutableStateOf(false) }
 
     ProjectListScreen(
         uiState = uiState,
