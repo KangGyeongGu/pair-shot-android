@@ -66,6 +66,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onWatermarkConfigChange: (WatermarkConfig) -> Unit,
     onWatermarkSettingsClick: () -> Unit,
+    onCombineSettingsClick: () -> Unit,
     onJpegQualityChange: (Int) -> Unit,
     onFileNamePrefixChange: (String) -> Unit,
     onOverlayEnabledChange: (Boolean) -> Unit,
@@ -303,6 +304,24 @@ fun SettingsScreen(
                         }
 
                         item(key = "gap_2") {
+                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                        }
+
+                        item(key = "label_combine") {
+                            SettingsSectionLabel(label = "합성")
+                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                        }
+
+                        item(key = "card_combine") {
+                            SettingsCard {
+                                SettingsItem(
+                                    label = "합성 설정",
+                                    onClick = onCombineSettingsClick,
+                                )
+                            }
+                        }
+
+                        item(key = "gap_combine") {
                             Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                         }
 

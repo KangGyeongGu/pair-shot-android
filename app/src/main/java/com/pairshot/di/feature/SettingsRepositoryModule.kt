@@ -1,8 +1,10 @@
 package com.pairshot.di.feature
 
+import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.StorageRepository
 import com.pairshot.core.domain.settings.WatermarkRepository
+import com.pairshot.data.repository.combine.CombineSettingsRepositoryImpl
 import com.pairshot.data.repository.settings.AppSettingsRepositoryImpl
 import com.pairshot.data.repository.settings.StorageRepositoryImpl
 import com.pairshot.data.repository.settings.WatermarkRepositoryImpl
@@ -22,4 +24,7 @@ abstract class SettingsRepositoryModule {
 
     @Binds
     abstract fun bindWatermarkRepository(impl: WatermarkRepositoryImpl): WatermarkRepository
+
+    @Binds
+    abstract fun bindCombineSettingsRepository(impl: CombineSettingsRepositoryImpl): CombineSettingsRepository
 }

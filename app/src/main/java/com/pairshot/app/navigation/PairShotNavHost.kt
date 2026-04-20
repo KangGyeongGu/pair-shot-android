@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.pairshot.app.navigation.route.AfterCamera
 import com.pairshot.app.navigation.route.Camera
+import com.pairshot.app.navigation.route.CombineSettings
 import com.pairshot.app.navigation.route.Compare
 import com.pairshot.app.navigation.route.Export
 import com.pairshot.app.navigation.route.License
@@ -32,6 +33,7 @@ import com.pairshot.feature.compare.ui.route.CompareRoute
 import com.pairshot.feature.export.ui.route.ExportRoute
 import com.pairshot.feature.pair.ui.route.GalleryRoute
 import com.pairshot.feature.project.ui.route.ProjectListRoute
+import com.pairshot.feature.settings.ui.route.CombineSettingsRoute
 import com.pairshot.feature.settings.ui.route.SettingsRoute
 import com.pairshot.feature.settings.ui.route.WatermarkSettingsRoute
 import com.pairshot.feature.settings.ui.screen.LicenseScreen
@@ -91,6 +93,8 @@ fun PairShotNavHost(
                 onNavigateToExport = { selectedIds ->
                     navController.navigate(Export(route.projectId, selectedIds.joinToString(",")))
                 },
+                onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
+                onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
             )
         }
         composable<Camera> { backStackEntry ->
@@ -126,6 +130,7 @@ fun PairShotNavHost(
             ExportRoute(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
+                onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
             )
         }
         composable<Settings> {
@@ -133,6 +138,7 @@ fun PairShotNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLicense = { navController.navigate(License) },
                 onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
+                onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
             )
         }
         composable<License> {
@@ -142,6 +148,11 @@ fun PairShotNavHost(
         }
         composable<WatermarkSettings> {
             WatermarkSettingsRoute(
+                onNavigateBack = { navController.popBackStack() },
+            )
+        }
+        composable<CombineSettings> {
+            CombineSettingsRoute(
                 onNavigateBack = { navController.popBackStack() },
             )
         }

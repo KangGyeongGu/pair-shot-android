@@ -39,4 +39,7 @@ data object Settings
 data object WatermarkSettings
 
 @Serializable
+data object CombineSettings
+
+@Serializable
 data object License

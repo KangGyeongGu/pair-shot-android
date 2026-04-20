@@ -18,6 +18,7 @@ fun SettingsRoute(
     onNavigateBack: () -> Unit,
     onNavigateToLicense: () -> Unit,
     onNavigateToWatermarkSettings: () -> Unit,
+    onNavigateToCombineSettings: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,6 +46,7 @@ fun SettingsRoute(
         onNavigateBack = onNavigateBack,
         onWatermarkConfigChange = viewModel::updateWatermarkConfig,
         onWatermarkSettingsClick = onNavigateToWatermarkSettings,
+        onCombineSettingsClick = onNavigateToCombineSettings,
         onJpegQualityChange = viewModel::updateJpegQuality,
         onFileNamePrefixChange = viewModel::updateFileNamePrefix,
         onOverlayEnabledChange = viewModel::updateOverlayEnabled,
