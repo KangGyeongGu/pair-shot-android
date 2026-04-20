@@ -23,7 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.domain.combine.CombineConfig
 import com.pairshot.core.domain.pair.PairStatus
+import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.TopProgressPill
@@ -31,7 +35,7 @@ import com.pairshot.feature.pair.ui.component.GalleryFilterRow
 import com.pairshot.feature.pair.ui.component.GallerySelectionBottomBar
 import com.pairshot.feature.pair.ui.component.GalleryTopBar
 import com.pairshot.feature.pair.ui.component.PairGridSection
-import com.pairshot.feature.pair.ui.dialog.CombinePairsDialog
+import com.pairshot.feature.pair.ui.dialog.CombinePreviewBottomSheet
 import com.pairshot.feature.pair.ui.dialog.DeletePairsDialog
 import com.pairshot.feature.pair.ui.dialog.DeleteProjectDialog
 import com.pairshot.feature.pair.ui.dialog.DeleteWithCombinedDialog
@@ -47,6 +51,10 @@ internal fun GalleryScreen(
     selectionMode: Boolean,
     selectedIds: Set<Long>,
     combineProgress: CombineProgress?,
+    combinePreviewPair: PhotoPair?,
+    combineConfig: CombineConfig,
+    watermarkConfig: WatermarkConfig,
+    watermarkRenderer: WatermarkRenderer,
     snackbarController: PairShotSnackbarController,
     deleteConfirmation: DeleteConfirmation?,
     showMoreMenu: Boolean,
@@ -77,7 +85,9 @@ internal fun GalleryScreen(
     onLongPressSelect: (Long) -> Unit,
     onShowCombineDialog: () -> Unit,
     onDismissCombineDialog: () -> Unit,
-    onCombineSelected: () -> Unit,
+    onCombineSelected: (applyWatermark: Boolean, combineConfigOverride: CombineConfig?) -> Unit,
+    onNavigateToCombineSettings: () -> Unit,
+    onNavigateToWatermarkSettings: () -> Unit,
     onRenameProject: (String) -> Unit,
     onDeleteProject: () -> Unit,
 ) {
@@ -291,13 +301,17 @@ internal fun GalleryScreen(
     }
 
     if (showCombineDialog) {
-        CombinePairsDialog(
+        CombinePreviewBottomSheet(
             selectedCount = selectedIds.size,
+            beforeUri = combinePreviewPair?.beforePhotoUri,
+            afterUri = combinePreviewPair?.afterPhotoUri,
+            combineConfig = combineConfig,
+            watermarkConfig = watermarkConfig,
+            watermarkRenderer = watermarkRenderer,
             onDismiss = onDismissCombineDialog,
-            onConfirm = {
-                onDismissCombineDialog()
-                onCombineSelected()
-            },
+            onCombineStart = { applyWatermark, configOverride -> onCombineSelected(applyWatermark, configOverride) },
+            onNavigateToCombineSettings = onNavigateToCombineSettings,
+            onNavigateToWatermarkSettings = onNavigateToWatermarkSettings,
         )
     }
 }

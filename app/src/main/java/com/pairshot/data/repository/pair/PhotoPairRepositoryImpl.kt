@@ -3,10 +3,14 @@ package com.pairshot.data.repository.pair
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
+import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
+import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.util.FileNameGenerator
 import com.pairshot.core.util.PairImageComposer
 import com.pairshot.data.local.db.dao.PhotoPairDao
@@ -34,6 +38,8 @@ class PhotoPairRepositoryImpl
         private val fileNameGenerator: FileNameGenerator,
         private val pairImageComposer: PairImageComposer,
         private val appSettingsRepository: AppSettingsRepository,
+        private val combineSettingsRepository: CombineSettingsRepository,
+        private val watermarkRenderer: WatermarkRenderer,
     ) : PhotoPairRepository {
         override fun getPairsByProject(projectId: Long): Flow<List<PhotoPair>> =
             photoPairDao.getPairsByProject(projectId).map { entities ->
@@ -237,7 +243,11 @@ class PhotoPairRepositoryImpl
             }
         }
 
-        override suspend fun combinePair(pairId: Long): String =
+        override suspend fun combinePair(
+            pairId: Long,
+            watermarkConfig: WatermarkConfig?,
+            combineConfigOverride: CombineConfig?,
+        ): String =
             withContext(Dispatchers.IO) {
                 val entity =
                     photoPairDao.getById(pairId)
@@ -253,7 +263,16 @@ class PhotoPairRepositoryImpl
                             ?: throw IllegalStateException("After photo missing for pair: $pairId"),
                     )
 
-                val combined = pairImageComposer.combineSideBySide(beforeUri, afterUri)
+                val combineConfig = combineConfigOverride ?: combineSettingsRepository.getConfig()
+                val combined = pairImageComposer.combineSideBySide(beforeUri, afterUri, combineConfig)
+                val withWatermark =
+                    if (watermarkConfig != null) {
+                        val result = watermarkRenderer.apply(combined, watermarkConfig.copy(enabled = true))
+                        if (result !== combined) combined.recycle()
+                        result
+                    } else {
+                        combined
+                    }
 
                 val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
                 val settings = appSettingsRepository.settingsFlow.first()
@@ -261,9 +280,9 @@ class PhotoPairRepositoryImpl
 
                 val savedUri =
                     try {
-                        mediaStoreManager.saveBitmapToGallery(combined, project.name, fileName, settings.jpegQuality)
+                        mediaStoreManager.saveBitmapToGallery(withWatermark, project.name, fileName, settings.jpegQuality)
                     } finally {
-                        combined.recycle()
+                        withWatermark.recycle()
                     }
 
                 try {

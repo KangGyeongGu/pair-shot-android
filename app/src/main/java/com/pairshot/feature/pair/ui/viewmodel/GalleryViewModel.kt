@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.pairshot.app.navigation.route.ProjectDetail
+import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.pair.BatchCombineResult
 import com.pairshot.core.domain.pair.BatchCombineUseCase
 import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
@@ -13,16 +15,22 @@ import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.project.DeleteProjectUseCase
 import com.pairshot.core.domain.project.ProjectRepository
+import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.domain.settings.WatermarkRepository
+import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -67,6 +75,9 @@ class GalleryViewModel
         private val batchCombineUseCase: BatchCombineUseCase,
         private val photoPairRepository: PhotoPairRepository,
         private val deleteProjectUseCase: DeleteProjectUseCase,
+        private val combineSettingsRepository: CombineSettingsRepository,
+        private val watermarkRepository: WatermarkRepository,
+        val watermarkRenderer: WatermarkRenderer,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle.toRoute<ProjectDetail>().projectId
@@ -94,6 +105,35 @@ class GalleryViewModel
 
         private val _deleteConfirmation = MutableStateFlow<DeleteConfirmation?>(null)
         val deleteConfirmation: StateFlow<DeleteConfirmation?> = _deleteConfirmation.asStateFlow()
+
+        val combinePreviewPair: StateFlow<PhotoPair?> =
+            combine(_selectedIds, _uiState) { selectedIds, state ->
+                if (state is GalleryUiState.Success && selectedIds.isNotEmpty()) {
+                    val firstId = selectedIds.first()
+                    state.pairs.find { it.id == firstId }
+                } else {
+                    null
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = null,
+            )
+
+        val combineConfig: StateFlow<CombineConfig> =
+            combineSettingsRepository.configFlow
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5_000),
+                    initialValue = CombineConfig(),
+                )
+
+        val watermarkConfig: StateFlow<WatermarkConfig> =
+            watermarkRepository.watermarkConfigFlow.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = WatermarkConfig(),
+            )
 
         init {
             loadPairs()
@@ -176,7 +216,10 @@ class GalleryViewModel
             _selectedIds.update { it + pairId }
         }
 
-        fun combineSelected() {
+        fun combineSelected(
+            applyWatermark: Boolean = false,
+            combineConfigOverride: CombineConfig? = null,
+        ) {
             viewModelScope.launch {
                 val ids = _selectedIds.value.toList()
                 val pairedIds =
@@ -192,9 +235,10 @@ class GalleryViewModel
                     _snackbarMessage.emit(SnackbarEvent("합성할 수 있는 페어가 없습니다", SnackbarVariant.WARNING))
                     return@launch
                 }
+                val watermark = if (applyWatermark) watermarkConfig.value else null
                 _combineProgress.value = CombineProgress(0, pairedIds.size)
                 val result: BatchCombineResult =
-                    batchCombineUseCase(pairedIds) { current, total ->
+                    batchCombineUseCase(pairedIds, watermark, combineConfigOverride) { current, total ->
                         _combineProgress.value = CombineProgress(current, total)
                     }
                 _combineProgress.value = null

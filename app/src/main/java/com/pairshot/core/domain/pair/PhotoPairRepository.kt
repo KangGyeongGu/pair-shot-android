@@ -1,5 +1,7 @@
 package com.pairshot.core.domain.pair
 
+import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.domain.settings.WatermarkConfig
 import kotlinx.coroutines.flow.Flow
 
 interface PhotoPairRepository {
@@ -33,7 +35,11 @@ interface PhotoPairRepository {
 
     suspend fun removeCombinedPhoto(pairId: Long)
 
-    suspend fun combinePair(pairId: Long): String
+    suspend fun combinePair(
+        pairId: Long,
+        watermarkConfig: WatermarkConfig? = null,
+        combineConfigOverride: CombineConfig? = null,
+    ): String
 
     suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPair>
 

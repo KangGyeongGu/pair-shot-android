@@ -9,6 +9,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.pair.ui.screen.GalleryScreen
 import com.pairshot.feature.pair.ui.viewmodel.GalleryViewModel
@@ -21,6 +23,8 @@ fun GalleryRoute(
     onNavigateToAfterCamera: (Long) -> Unit = {},
     onNavigateToCompare: (Long) -> Unit = {},
     onNavigateToExport: (Set<Long>) -> Unit = {},
+    onNavigateToCombineSettings: () -> Unit = {},
+    onNavigateToWatermarkSettings: () -> Unit = {},
     viewModel: GalleryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -28,6 +32,9 @@ fun GalleryRoute(
     val selectionMode by viewModel.selectionMode.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val combineProgress by viewModel.combineProgress.collectAsStateWithLifecycle()
+    val combinePreviewPair by viewModel.combinePreviewPair.collectAsStateWithLifecycle()
+    val combineConfig by viewModel.combineConfig.collectAsStateWithLifecycle()
+    val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
 
     val deleteConfirmation by viewModel.deleteConfirmation.collectAsStateWithLifecycle()
     val snackbarController = remember { PairShotSnackbarController() }
@@ -54,6 +61,10 @@ fun GalleryRoute(
         selectionMode = selectionMode,
         selectedIds = selectedIds,
         combineProgress = combineProgress,
+        combinePreviewPair = combinePreviewPair,
+        combineConfig = combineConfig,
+        watermarkConfig = watermarkConfig,
+        watermarkRenderer = viewModel.watermarkRenderer,
         snackbarController = snackbarController,
         deleteConfirmation = deleteConfirmation,
         showMoreMenu = showMoreMenu,
@@ -84,7 +95,11 @@ fun GalleryRoute(
         onLongPressSelect = { viewModel.longPressSelect(it) },
         onShowCombineDialog = { showCombineDialog = true },
         onDismissCombineDialog = { showCombineDialog = false },
-        onCombineSelected = { viewModel.combineSelected() },
+        onCombineSelected = { applyWatermark, combineConfigOverride ->
+            viewModel.combineSelected(applyWatermark, combineConfigOverride)
+        },
+        onNavigateToCombineSettings = onNavigateToCombineSettings,
+        onNavigateToWatermarkSettings = onNavigateToWatermarkSettings,
         onRenameProject = { viewModel.renameProject(it) },
         onDeleteProject = { viewModel.deleteProject() },
     )
