@@ -91,7 +91,7 @@ class AfterCameraViewModel
         private val _overlayEnabled = MutableStateFlow(true)
         val overlayEnabled: StateFlow<Boolean> = _overlayEnabled.asStateFlow()
 
-        private val _overlayAlpha = MutableStateFlow(0.3f)
+        private val _overlayAlpha = MutableStateFlow(0.5f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
         private val settingsHolder = CameraSettingsStateHolder()
@@ -124,7 +124,7 @@ class AfterCameraViewModel
                     levelSensorManager.start()
                 }
                 _overlayEnabled.value = s.overlayEnabled
-                _overlayAlpha.value = s.defaultOverlayAlpha.coerceIn(0f, 0.5f)
+                _overlayAlpha.value = s.defaultOverlayAlpha.coerceIn(0f, 1f)
             }
             if (settingsHolder.settingsState.value.levelEnabled) {
                 levelSensorManager.start()
@@ -239,7 +239,7 @@ class AfterCameraViewModel
         }
 
         fun updateOverlayAlpha(alpha: Float) {
-            _overlayAlpha.value = alpha.coerceIn(0f, 0.5f)
+            _overlayAlpha.value = alpha.coerceIn(0f, 1f)
         }
 
         fun toggleLensFacing() {

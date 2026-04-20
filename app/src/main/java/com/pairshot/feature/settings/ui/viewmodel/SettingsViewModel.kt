@@ -34,7 +34,7 @@ sealed interface SettingsUiState {
         val jpegQuality: Int = 85,
         val fileNamePrefix: String = "PAIRSHOT",
         val overlayEnabled: Boolean = true,
-        val overlayAlpha: Float = 0.3f,
+        val overlayAlpha: Float = 0.5f,
     ) : SettingsUiState
 
     data object Error : SettingsUiState
