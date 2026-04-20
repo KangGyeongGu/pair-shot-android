@@ -10,7 +10,6 @@ import com.pairshot.core.domain.pair.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.WatermarkConfig
-import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.util.FileNameGenerator
 import com.pairshot.core.util.PairImageComposer
 import com.pairshot.data.local.db.dao.PhotoPairDao
@@ -39,7 +38,6 @@ class PhotoPairRepositoryImpl
         private val pairImageComposer: PairImageComposer,
         private val appSettingsRepository: AppSettingsRepository,
         private val combineSettingsRepository: CombineSettingsRepository,
-        private val watermarkRenderer: WatermarkRenderer,
     ) : PhotoPairRepository {
         override fun getPairsByProject(projectId: Long): Flow<List<PhotoPair>> =
             photoPairDao.getPairsByProject(projectId).map { entities ->
@@ -264,14 +262,16 @@ class PhotoPairRepositoryImpl
                     )
 
                 val combineConfig = combineConfigOverride ?: combineSettingsRepository.getConfig()
-                val combined = pairImageComposer.combineSideBySide(beforeUri, afterUri, combineConfig)
                 val withWatermark =
                     if (watermarkConfig != null) {
-                        val result = watermarkRenderer.apply(combined, watermarkConfig.copy(enabled = true))
-                        if (result !== combined) combined.recycle()
-                        result
+                        pairImageComposer.combineSideBySideWithWatermark(
+                            beforeUri,
+                            afterUri,
+                            combineConfig,
+                            watermarkConfig,
+                        )
                     } else {
-                        combined
+                        pairImageComposer.combineSideBySide(beforeUri, afterUri, combineConfig)
                     }
 
                 val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)

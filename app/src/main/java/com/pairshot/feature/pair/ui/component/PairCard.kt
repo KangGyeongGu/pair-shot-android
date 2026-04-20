@@ -122,46 +122,6 @@ fun PairCard(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun CombinedCard(
-    pair: PhotoPair,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    selectionMode: Boolean = false,
-    isSelected: Boolean = false,
-    onLongClick: (() -> Unit)? = null,
-) {
-    val borderStroke =
-        if (selectionMode && isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
-
-    Card(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                ),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = borderStroke,
-    ) {
-        ProfiledAsyncImage(
-            data = pair.combinedPhotoUri,
-            profile = ImageProfile.THUMBNAIL,
-            contentDescription = "합성 사진",
-            contentScale = ContentScale.Crop,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(3f / 2f),
-        )
-    }
-}
-
 @Composable
 private fun CombinedStatusBadge(modifier: Modifier = Modifier) {
     Surface(

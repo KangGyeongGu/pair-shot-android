@@ -19,6 +19,7 @@ import androidx.navigation.toRoute
 import com.pairshot.app.navigation.route.AfterCamera
 import com.pairshot.app.navigation.route.Camera
 import com.pairshot.app.navigation.route.CombineSettings
+import com.pairshot.app.navigation.route.CombinedViewer
 import com.pairshot.app.navigation.route.Compare
 import com.pairshot.app.navigation.route.Export
 import com.pairshot.app.navigation.route.License
@@ -29,6 +30,7 @@ import com.pairshot.app.navigation.route.WatermarkSettings
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.feature.camera.ui.route.AfterCameraRoute
 import com.pairshot.feature.camera.ui.route.CameraRoute
+import com.pairshot.feature.compare.ui.route.CombinedViewerRoute
 import com.pairshot.feature.compare.ui.route.CompareRoute
 import com.pairshot.feature.export.ui.route.ExportRoute
 import com.pairshot.feature.pair.ui.route.GalleryRoute
@@ -90,6 +92,7 @@ fun PairShotNavHost(
                 onNavigateToCamera = { navController.navigate(Camera(route.projectId)) },
                 onNavigateToAfterCamera = { pairId -> navController.navigate(AfterCamera(route.projectId, pairId)) },
                 onNavigateToCompare = { pairId -> navController.navigate(Compare(pairId)) },
+                onNavigateToCombined = { pairId -> navController.navigate(CombinedViewer(pairId)) },
                 onNavigateToExport = { selectedIds ->
                     navController.navigate(Export(route.projectId, selectedIds.joinToString(",")))
                 },
@@ -109,6 +112,17 @@ fun PairShotNavHost(
             AfterCameraRoute(
                 projectId = route.projectId,
                 initialPairId = route.initialPairId,
+                onNavigateBack = { navController.popBackStack() },
+            )
+        }
+        dialog<CombinedViewer>(
+            dialogProperties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = true,
+                ),
+        ) {
+            CombinedViewerRoute(
                 onNavigateBack = { navController.popBackStack() },
             )
         }

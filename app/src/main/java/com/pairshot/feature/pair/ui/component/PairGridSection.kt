@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPair
-import com.pairshot.feature.pair.ui.component.CombinedCard
 import com.pairshot.feature.pair.ui.component.PairCard
 
 @Composable
@@ -30,6 +29,7 @@ internal fun PairGridSection(
     onLongPressSelect: (Long) -> Unit,
     onNavigateToAfterCamera: (Long) -> Unit,
     onNavigateToCompare: (Long) -> Unit,
+    onNavigateToCombined: (Long) -> Unit,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
 
@@ -59,49 +59,27 @@ internal fun PairGridSection(
             modifier = Modifier.fillMaxSize(),
         ) {
             items(items = pairs, key = { it.id }) { pair ->
-                if (showCombinedOnly) {
-                    CombinedCard(
-                        pair = pair,
-                        selectionMode = selectionMode,
-                        isSelected = pair.id in selectedIds,
-                        onClick = {
-                            if (selectionMode) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onToggleSelection(pair.id)
-                            } else {
-                                onNavigateToCompare(pair.id)
+                PairCard(
+                    pair = pair,
+                    selectionMode = selectionMode,
+                    isSelected = pair.id in selectedIds,
+                    onClick = {
+                        if (selectionMode) {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onToggleSelection(pair.id)
+                        } else {
+                            when {
+                                showCombinedOnly -> onNavigateToCombined(pair.id)
+                                pair.status == PairStatus.BEFORE_ONLY -> onNavigateToAfterCamera(pair.id)
+                                else -> onNavigateToCompare(pair.id)
                             }
-                        },
-                        onLongClick = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onLongPressSelect(pair.id)
-                        },
-                    )
-                } else {
-                    PairCard(
-                        pair = pair,
-                        selectionMode = selectionMode,
-                        isSelected = pair.id in selectedIds,
-                        onClick = {
-                            if (selectionMode) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                onToggleSelection(pair.id)
-                            } else {
-                                when (pair.status) {
-                                    PairStatus.BEFORE_ONLY -> onNavigateToAfterCamera(pair.id)
-
-                                    PairStatus.PAIRED,
-                                    PairStatus.COMBINED,
-                                    -> onNavigateToCompare(pair.id)
-                                }
-                            }
-                        },
-                        onLongClick = {
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onLongPressSelect(pair.id)
-                        },
-                    )
-                }
+                        }
+                    },
+                    onLongClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongPressSelect(pair.id)
+                    },
+                )
             }
         }
     }

@@ -65,6 +65,7 @@ internal fun GalleryScreen(
     onNavigateToCamera: () -> Unit,
     onNavigateToAfterCamera: (Long) -> Unit,
     onNavigateToCompare: (Long) -> Unit,
+    onNavigateToCombined: (Long) -> Unit,
     onNavigateToExport: (Set<Long>) -> Unit,
     onExitSelectionMode: () -> Unit,
     onSelectAll: () -> Unit,
@@ -208,6 +209,7 @@ internal fun GalleryScreen(
                             onLongPressSelect = onLongPressSelect,
                             onNavigateToAfterCamera = onNavigateToAfterCamera,
                             onNavigateToCompare = onNavigateToCompare,
+                            onNavigateToCombined = onNavigateToCombined,
                         )
                     }
                 }

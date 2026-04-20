@@ -42,4 +42,9 @@ data object WatermarkSettings
 data object CombineSettings
 
 @Serializable
+data class CombinedViewer(
+    val pairId: Long,
+)
+
+@Serializable
 data object License

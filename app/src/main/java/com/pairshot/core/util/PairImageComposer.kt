@@ -11,6 +11,8 @@ import com.pairshot.core.domain.combine.CombineLayout
 import com.pairshot.core.domain.combine.LabelAnchor
 import com.pairshot.core.domain.combine.LabelPosition
 import com.pairshot.core.domain.combine.LabelPositionMode
+import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.infra.image.WatermarkRenderer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,6 +23,7 @@ class PairImageComposer
     constructor(
         @ApplicationContext private val context: Context,
         private val exifBitmapLoader: ExifBitmapLoader,
+        private val watermarkRenderer: WatermarkRenderer,
     ) {
         fun combineSideBySide(
             beforeUri: Uri,
@@ -114,6 +117,98 @@ class PairImageComposer
 
             beforeBitmap.recycle()
             afterBitmap.recycle()
+
+            return combined
+        }
+
+        /**
+         * 워터마크를 각 사진에 개별 적용한 뒤 합성한다.
+         * 이 방식에서는 테두리가 워터마크보다 위에 렌더링된다.
+         */
+        suspend fun combineSideBySideWithWatermark(
+            beforeUri: Uri,
+            afterUri: Uri,
+            config: CombineConfig,
+            watermarkConfig: WatermarkConfig,
+        ): Bitmap {
+            val rawBefore = exifBitmapLoader.loadBitmapWithExifCorrection(beforeUri)
+            val rawAfter = exifBitmapLoader.loadBitmapWithExifCorrection(afterUri)
+
+            val enabledConfig = watermarkConfig.copy(enabled = true)
+            val wmBefore = watermarkRenderer.apply(rawBefore, enabledConfig)
+            val wmAfter = watermarkRenderer.apply(rawAfter, enabledConfig)
+
+            if (wmBefore !== rawBefore) rawBefore.recycle()
+            if (wmAfter !== rawAfter) rawAfter.recycle()
+
+            val density = context.resources.displayMetrics.density
+            val border = if (config.borderEnabled) (config.borderThicknessDp * density).toInt() else 0
+
+            val (width, height) =
+                when (config.layout) {
+                    CombineLayout.HORIZONTAL -> {
+                        val w = wmBefore.width + wmAfter.width + border * 3
+                        val h = maxOf(wmBefore.height, wmAfter.height) + border * 2
+                        w to h
+                    }
+
+                    CombineLayout.VERTICAL -> {
+                        val w = maxOf(wmBefore.width, wmAfter.width) + border * 2
+                        val h = wmBefore.height + wmAfter.height + border * 3
+                        w to h
+                    }
+                }
+
+            val combined = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(combined)
+
+            if (config.borderEnabled) {
+                canvas.drawColor(config.borderColorArgb)
+            }
+
+            val (beforeLeft, beforeTop, afterLeft, afterTop) =
+                when (config.layout) {
+                    CombineLayout.HORIZONTAL -> {
+                        listOf(border, border, border + wmBefore.width + border, border)
+                    }
+
+                    CombineLayout.VERTICAL -> {
+                        listOf(border, border, border, border + wmBefore.height + border)
+                    }
+                }
+
+            canvas.drawBitmap(wmBefore, beforeLeft.toFloat(), beforeTop.toFloat(), null)
+            canvas.drawBitmap(wmAfter, afterLeft.toFloat(), afterTop.toFloat(), null)
+
+            if (config.labelEnabled) {
+                val isFree = config.labelPositionMode == LabelPositionMode.FREE
+                val cornerPx = if (isFree) config.labelBgCornerDp * density else 0f
+                drawLabel(
+                    canvas = canvas,
+                    text = config.beforeLabel,
+                    imageLeft = beforeLeft,
+                    imageTop = beforeTop,
+                    imageWidth = wmBefore.width,
+                    imageHeight = wmBefore.height,
+                    config = config,
+                    anchor = if (isFree) config.beforeLabelAnchor else null,
+                    cornerPx = cornerPx,
+                )
+                drawLabel(
+                    canvas = canvas,
+                    text = config.afterLabel,
+                    imageLeft = afterLeft,
+                    imageTop = afterTop,
+                    imageWidth = wmAfter.width,
+                    imageHeight = wmAfter.height,
+                    config = config,
+                    anchor = if (isFree) config.afterLabelAnchor else null,
+                    cornerPx = cornerPx,
+                )
+            }
+
+            wmBefore.recycle()
+            wmAfter.recycle()
 
             return combined
         }
