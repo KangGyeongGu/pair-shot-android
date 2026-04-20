@@ -1,6 +1,7 @@
 package com.pairshot.data.repository.export
 
 import android.net.Uri
+import com.pairshot.core.domain.combine.CombineConfig
 import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.WatermarkConfig
@@ -40,6 +41,7 @@ class ExportRepositoryImpl
             includeAfter: Boolean,
             includeCombined: Boolean,
             watermarkConfig: WatermarkConfig?,
+            combineConfig: CombineConfig,
             onProgress: (current: Int, total: Int) -> Unit,
         ): Unit =
             withContext(Dispatchers.IO) {
@@ -48,7 +50,7 @@ class ExportRepositoryImpl
                 if (watermarkConfig != null) {
                     val tempDir = shareImagePreparer.prepareTempDir("export_wm")
                     val tasks = exportEntryFactory.buildWatermarkedZipEntries(pairs, includeBefore, includeAfter, includeCombined, tempDir)
-                    val entries = buildZipEntriesFromTasks(tasks, watermarkConfig, jpegQuality)
+                    val entries = buildZipEntriesFromTasks(tasks, watermarkConfig, jpegQuality, combineConfig)
                     zipManager.createZip(entries = entries, outputUri = Uri.parse(outputUri), onProgress = onProgress)
                     tempDir.deleteRecursively()
                 } else {
@@ -64,6 +66,7 @@ class ExportRepositoryImpl
             includeAfter: Boolean,
             includeCombined: Boolean,
             watermarkConfig: WatermarkConfig?,
+            combineConfig: CombineConfig,
             onProgress: (current: Int, total: Int) -> Unit,
         ): String =
             withContext(Dispatchers.IO) {
@@ -74,7 +77,7 @@ class ExportRepositoryImpl
                 if (watermarkConfig != null) {
                     val tempDir = shareImagePreparer.prepareTempDir("share_wm")
                     val tasks = exportEntryFactory.buildWatermarkedZipEntries(pairs, includeBefore, includeAfter, includeCombined, tempDir)
-                    val entries = buildZipEntriesFromTasks(tasks, watermarkConfig, jpegQuality)
+                    val entries = buildZipEntriesFromTasks(tasks, watermarkConfig, jpegQuality, combineConfig)
                     zipManager.createZipToFile(entries = entries, outputFile = outputFile, onProgress = onProgress)
                     tempDir.deleteRecursively()
                 } else {
@@ -90,6 +93,7 @@ class ExportRepositoryImpl
             includeAfter: Boolean,
             includeCombined: Boolean,
             watermarkConfig: WatermarkConfig?,
+            combineConfig: CombineConfig,
             onProgress: (current: Int, total: Int) -> Unit,
         ): List<String> =
             withContext(Dispatchers.IO) {
@@ -116,6 +120,7 @@ class ExportRepositoryImpl
                             destFile,
                             watermarkConfig,
                             jpegQuality,
+                            combineConfig,
                         )
                     } else {
                         shareImagePreparer.copyFromContentUri(entry.sourceUri, destFile)
@@ -132,6 +137,7 @@ class ExportRepositoryImpl
             includeAfter: Boolean,
             includeCombined: Boolean,
             watermarkConfig: WatermarkConfig?,
+            combineConfig: CombineConfig,
             onProgress: (current: Int, total: Int) -> Unit,
         ) = withContext(Dispatchers.IO) {
             val jpegQuality = appSettingsRepository.settingsFlow.first().jpegQuality
@@ -162,6 +168,7 @@ class ExportRepositoryImpl
                             tempFile,
                             watermarkConfig,
                             jpegQuality,
+                            combineConfig,
                         )
                         mediaStoreManager.saveToGallery(Uri.fromFile(tempFile), projectName, entry.displayName)
                     } else {
@@ -182,11 +189,19 @@ class ExportRepositoryImpl
             tasks: List<WatermarkedZipTask>,
             config: WatermarkConfig,
             jpegQuality: Int,
+            combineConfig: CombineConfig = CombineConfig(),
         ): List<ZipImageEntry> {
             val enabledConfig = config.copy(enabled = true)
             return tasks.map { task ->
                 if (task.isCombined) {
-                    watermarkedBitmapWriter.combineWithWatermark(task.sourceUri, task.afterUri!!, task.destFile, enabledConfig, jpegQuality)
+                    watermarkedBitmapWriter.combineWithWatermark(
+                        task.sourceUri,
+                        task.afterUri!!,
+                        task.destFile,
+                        enabledConfig,
+                        jpegQuality,
+                        combineConfig,
+                    )
                 } else {
                     watermarkedBitmapWriter.applyWatermarkToFile(task.sourceUri, task.destFile, enabledConfig, jpegQuality)
                 }

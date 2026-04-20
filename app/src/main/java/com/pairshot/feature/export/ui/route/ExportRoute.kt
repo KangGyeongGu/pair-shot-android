@@ -23,6 +23,7 @@ import com.pairshot.feature.export.ui.viewmodel.ExportViewModel
 fun ExportRoute(
     onNavigateBack: () -> Unit,
     onNavigateToWatermarkSettings: () -> Unit,
+    onNavigateToCombineSettings: () -> Unit,
     viewModel: ExportViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -33,6 +34,7 @@ fun ExportRoute(
     val isExporting by viewModel.isExporting.collectAsStateWithLifecycle()
     val exportProgress by viewModel.exportProgress.collectAsStateWithLifecycle()
     val applyWatermark by viewModel.applyWatermark.collectAsStateWithLifecycle()
+    val applyCombineConfig by viewModel.applyCombineConfig.collectAsStateWithLifecycle()
 
     val safLauncher =
         rememberLauncherForActivityResult(
@@ -92,6 +94,9 @@ fun ExportRoute(
                 applyWatermark = applyWatermark,
                 onApplyWatermarkChange = viewModel::setApplyWatermark,
                 onWatermarkSettingsClick = onNavigateToWatermarkSettings,
+                applyCombineConfig = applyCombineConfig,
+                onApplyCombineConfigChange = viewModel::setApplyCombineConfig,
+                onCombineSettingsClick = onNavigateToCombineSettings,
                 onSaveToDevice = onSaveToDevice,
                 onShare = viewModel::share,
                 onNavigateBack = onNavigateBack,
@@ -117,6 +122,9 @@ fun ExportRoute(
                 applyWatermark = applyWatermark,
                 onApplyWatermarkChange = viewModel::setApplyWatermark,
                 onWatermarkSettingsClick = onNavigateToWatermarkSettings,
+                applyCombineConfig = applyCombineConfig,
+                onApplyCombineConfigChange = viewModel::setApplyCombineConfig,
+                onCombineSettingsClick = onNavigateToCombineSettings,
                 onSaveToDevice = onSaveToDevice,
                 onShare = viewModel::share,
                 onNavigateBack = onNavigateBack,

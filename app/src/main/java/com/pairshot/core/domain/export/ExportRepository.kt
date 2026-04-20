@@ -1,5 +1,6 @@
 package com.pairshot.core.domain.export
 
+import com.pairshot.core.domain.combine.CombineConfig
 import com.pairshot.core.domain.settings.WatermarkConfig
 
 interface ExportRepository {
@@ -10,6 +11,7 @@ interface ExportRepository {
         includeAfter: Boolean,
         includeCombined: Boolean,
         watermarkConfig: WatermarkConfig? = null,
+        combineConfig: CombineConfig = CombineConfig(),
         onProgress: (current: Int, total: Int) -> Unit,
     )
 
@@ -20,6 +22,7 @@ interface ExportRepository {
         includeAfter: Boolean,
         includeCombined: Boolean,
         watermarkConfig: WatermarkConfig? = null,
+        combineConfig: CombineConfig = CombineConfig(),
         onProgress: (current: Int, total: Int) -> Unit,
     ): String
 
@@ -29,6 +32,7 @@ interface ExportRepository {
         includeAfter: Boolean,
         includeCombined: Boolean,
         watermarkConfig: WatermarkConfig? = null,
+        combineConfig: CombineConfig = CombineConfig(),
         onProgress: (current: Int, total: Int) -> Unit,
     ): List<String>
 
@@ -39,6 +43,7 @@ interface ExportRepository {
         includeAfter: Boolean,
         includeCombined: Boolean,
         watermarkConfig: WatermarkConfig? = null,
+        combineConfig: CombineConfig = CombineConfig(),
         onProgress: (current: Int, total: Int) -> Unit,
     )
 }

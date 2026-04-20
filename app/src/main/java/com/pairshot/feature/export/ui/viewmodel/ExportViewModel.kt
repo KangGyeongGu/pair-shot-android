@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.pairshot.app.navigation.route.Export
+import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.pair.PairStatus
 import com.pairshot.core.domain.pair.PhotoPairRepository
@@ -63,6 +65,7 @@ class ExportViewModel
         private val photoPairRepository: PhotoPairRepository,
         private val exportRepository: ExportRepository,
         private val watermarkRepository: WatermarkRepository,
+        private val combineSettingsRepository: CombineSettingsRepository,
         private val appSettingsRepository: AppSettingsRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
@@ -96,6 +99,9 @@ class ExportViewModel
 
         private val _applyWatermark = MutableStateFlow(false)
         val applyWatermark: StateFlow<Boolean> = _applyWatermark.asStateFlow()
+
+        private val _applyCombineConfig = MutableStateFlow(true)
+        val applyCombineConfig: StateFlow<Boolean> = _applyCombineConfig.asStateFlow()
 
         private val _exportAction = MutableSharedFlow<ExportAction>()
         val exportAction: SharedFlow<ExportAction> = _exportAction.asSharedFlow()
@@ -132,6 +138,10 @@ class ExportViewModel
                     includeCombined = _includeCombined.value,
                 ),
             )
+        }
+
+        fun setApplyCombineConfig(value: Boolean) {
+            _applyCombineConfig.update { value }
         }
 
         fun setApplyWatermark(value: Boolean) {
@@ -232,6 +242,9 @@ class ExportViewModel
         private suspend fun resolveWatermarkConfig(): WatermarkConfig? =
             if (_applyWatermark.value) watermarkRepository.getConfig() else null
 
+        private suspend fun resolveCombineConfig(): CombineConfig =
+            if (_applyCombineConfig.value) combineSettingsRepository.getConfig() else CombineConfig()
+
         fun saveToDevice(outputUri: String? = null) {
             viewModelScope.launch {
                 if (!validateSelection()) return@launch
@@ -240,6 +253,7 @@ class ExportViewModel
                 try {
                     if (!ensureCombined()) return@launch
                     val wmConfig = resolveWatermarkConfig()
+                    val combineConfig = resolveCombineConfig()
                     when (_exportFormat.value) {
                         ExportFormat.ZIP -> {
                             if (outputUri == null) return@launch
@@ -250,6 +264,7 @@ class ExportViewModel
                                 includeAfter = _includeAfter.value,
                                 includeCombined = _includeCombined.value,
                                 watermarkConfig = wmConfig,
+                                combineConfig = combineConfig,
                                 onProgress = { current, total ->
                                     _exportProgress.value =
                                         if (total > 0) current.toFloat() / total else 0f
@@ -267,6 +282,7 @@ class ExportViewModel
                                 includeAfter = _includeAfter.value,
                                 includeCombined = _includeCombined.value,
                                 watermarkConfig = wmConfig,
+                                combineConfig = combineConfig,
                                 onProgress = { current, total ->
                                     _exportProgress.value =
                                         if (total > 0) current.toFloat() / total else 0f
@@ -292,6 +308,7 @@ class ExportViewModel
                 try {
                     if (!ensureCombined()) return@launch
                     val wmConfig = resolveWatermarkConfig()
+                    val combineConfig = resolveCombineConfig()
                     when (_exportFormat.value) {
                         ExportFormat.ZIP -> {
                             val state = _uiState.value as? ExportUiState.Success ?: return@launch
@@ -303,6 +320,7 @@ class ExportViewModel
                                     includeAfter = _includeAfter.value,
                                     includeCombined = _includeCombined.value,
                                     watermarkConfig = wmConfig,
+                                    combineConfig = combineConfig,
                                     onProgress = { current, total ->
                                         _exportProgress.value =
                                             if (total > 0) current.toFloat() / total else 0f
@@ -319,6 +337,7 @@ class ExportViewModel
                                     includeAfter = _includeAfter.value,
                                     includeCombined = _includeCombined.value,
                                     watermarkConfig = wmConfig,
+                                    combineConfig = combineConfig,
                                     onProgress = { current, total ->
                                         _exportProgress.value =
                                             if (total > 0) current.toFloat() / total else 0f

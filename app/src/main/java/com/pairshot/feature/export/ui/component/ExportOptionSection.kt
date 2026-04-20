@@ -135,6 +135,56 @@ internal fun ExportWatermarkSection(
 }
 
 @Composable
+internal fun ExportCombineSection(
+    applyCombineConfig: Boolean,
+    onApplyCombineConfigChange: (Boolean) -> Unit,
+    onCombineSettingsClick: () -> Unit,
+) {
+    SettingsCard {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(PairShotSpacing.inputRow)
+                    .padding(start = PairShotSpacing.cardPadding, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "합성 옵션 적용",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(
+                checked = applyCombineConfig,
+                onCheckedChange = onApplyCombineConfigChange,
+                colors =
+                    SwitchDefaults.colors(
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                modifier = Modifier.scale(0.67f),
+            )
+            VerticalDivider(
+                modifier =
+                    Modifier
+                        .height(20.dp)
+                        .width(1.dp),
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+            IconButton(onClick = onCombineSettingsClick) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "합성 설정",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ExportFormatItem(
     label: String,
     selected: Boolean,

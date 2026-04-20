@@ -30,6 +30,7 @@ import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.TopProgressPill
 import com.pairshot.feature.export.ui.component.ExportActionSection
+import com.pairshot.feature.export.ui.component.ExportCombineSection
 import com.pairshot.feature.export.ui.component.ExportFormatSection
 import com.pairshot.feature.export.ui.component.ExportIncludeSection
 import com.pairshot.feature.export.ui.component.ExportWatermarkSection
@@ -55,6 +56,9 @@ fun ExportScreen(
     applyWatermark: Boolean = false,
     onApplyWatermarkChange: (Boolean) -> Unit = {},
     onWatermarkSettingsClick: () -> Unit = {},
+    applyCombineConfig: Boolean = false,
+    onApplyCombineConfigChange: (Boolean) -> Unit = {},
+    onCombineSettingsClick: () -> Unit = {},
     onSaveToDevice: () -> Unit,
     onShare: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -157,6 +161,17 @@ fun ExportScreen(
                         applyWatermark = applyWatermark,
                         onApplyWatermarkChange = onApplyWatermarkChange,
                         onWatermarkSettingsClick = onWatermarkSettingsClick,
+                    )
+                }
+
+                item(key = "combine_section") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                    SettingsSectionLabel(label = "합성 옵션")
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                    ExportCombineSection(
+                        applyCombineConfig = applyCombineConfig,
+                        onApplyCombineConfigChange = onApplyCombineConfigChange,
+                        onCombineSettingsClick = onCombineSettingsClick,
                     )
                 }
             }

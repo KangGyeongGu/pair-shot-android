@@ -239,7 +239,11 @@ class AfterCameraViewModel
         }
 
         fun updateOverlayAlpha(alpha: Float) {
-            _overlayAlpha.value = alpha.coerceIn(0f, 1f)
+            val coerced = alpha.coerceIn(0f, 1f)
+            _overlayAlpha.value = coerced
+            viewModelScope.launch {
+                appSettingsRepository.updateOverlayAlpha(coerced)
+            }
         }
 
         fun toggleLensFacing() {

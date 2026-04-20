@@ -136,6 +136,9 @@ dependencies {
     // ProfileInstaller
     implementation(libs.profileinstaller)
 
+    // ColorPicker
+    implementation(libs.colorpicker.compose)
+
     // Timber
     implementation(libs.timber)
 
