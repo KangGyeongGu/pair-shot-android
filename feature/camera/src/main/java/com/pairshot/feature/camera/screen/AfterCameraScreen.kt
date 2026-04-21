@@ -64,6 +64,8 @@ internal fun AfterCameraScreen(
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
+    val overlayBitmap by viewModel.overlayBitmap.collectAsStateWithLifecycle()
+    val overlayRotation by viewModel.overlayRotation.collectAsStateWithLifecycle()
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
     val roll by viewModel.roll.collectAsStateWithLifecycle()
@@ -184,9 +186,11 @@ internal fun AfterCameraScreen(
                     gridEnabled = settingsState.gridEnabled,
                     levelEnabled = settingsState.levelEnabled,
                     roll = roll,
-                    exposureRange = capabilities.exposureRange,
+                    exposureIndexMin = capabilities.exposureIndexMin,
+                    exposureIndexMax = capabilities.exposureIndexMax,
                     currentExposureIndex = settingsState.exposureIndex,
-                    exposureStep = capabilities.exposureStep,
+                    exposureStepNumerator = capabilities.exposureStepNumerator,
+                    exposureStepDenominator = capabilities.exposureStepDenominator,
                     height = previewSectionHeight,
                     onZoomRatioChanged = { newRatio -> viewModel.updateZoomRatio(newRatio) },
                     onPresetTapped = { preset -> viewModel.onPresetTapped(preset) },
@@ -199,7 +203,8 @@ internal fun AfterCameraScreen(
                     overlayContent = {
                         if (overlayEnabled) {
                             OverlayGuide(
-                                imageUri = currentPair?.beforePhotoUri,
+                                bitmap = overlayBitmap,
+                                rotation = overlayRotation,
                                 alpha = overlayAlpha,
                                 modifier = Modifier.fillMaxSize(),
                             )

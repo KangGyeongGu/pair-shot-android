@@ -1,7 +1,5 @@
 package com.pairshot.feature.camera.preview
 
-import android.util.Range
-import android.util.Rational
 import androidx.camera.compose.CameraXViewfinder
 import androidx.camera.core.SurfaceRequest
 import androidx.compose.foundation.background
@@ -37,9 +35,11 @@ internal fun CameraPreviewPane(
     gridEnabled: Boolean,
     levelEnabled: Boolean,
     roll: Float,
-    exposureRange: Range<Int>,
+    exposureIndexMin: Int,
+    exposureIndexMax: Int,
     currentExposureIndex: Int,
-    exposureStep: Rational,
+    exposureStepNumerator: Int,
+    exposureStepDenominator: Int,
     height: Dp,
     onZoomRatioChanged: (Float) -> Unit,
     onPresetTapped: (Float) -> Unit,
@@ -134,9 +134,11 @@ internal fun CameraPreviewPane(
                     onTapToFocus = onTapToFocus,
                     onExposureReset = onExposureReset,
                     onExposureAdjust = onExposureAdjust,
-                    exposureRange = exposureRange,
+                    exposureIndexMin = exposureIndexMin,
+                    exposureIndexMax = exposureIndexMax,
                     currentExposureIndex = currentExposureIndex,
-                    exposureStep = exposureStep,
+                    exposureStepNumerator = exposureStepNumerator,
+                    exposureStepDenominator = exposureStepDenominator,
                     modifier = Modifier.fillMaxSize(),
                 )
 

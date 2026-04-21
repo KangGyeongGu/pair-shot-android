@@ -35,7 +35,7 @@ class SensorSessionImpl
         private var smoothedRoll = 0f
         private val remappedMatrix = FloatArray(9)
 
-        private var isRunning = false
+        private var isRegistered = false
         private var wasActiveBeforeStop = false
 
         private var lifecycleObserver: LifecycleEventObserver? = null
@@ -92,6 +92,7 @@ class SensorSessionImpl
         override fun bind(owner: LifecycleOwner) {
             val lifecycle = owner.lifecycle
             if (observedLifecycle === lifecycle) {
+                registerSensorListener()
                 startOrientationListener()
                 return
             }
@@ -102,21 +103,16 @@ class SensorSessionImpl
                 LifecycleEventObserver { _: LifecycleOwner, event: Lifecycle.Event ->
                     when (event) {
                         Lifecycle.Event.ON_STOP -> {
-                            wasActiveBeforeStop = isRunning
-                            if (isRunning) {
+                            wasActiveBeforeStop = isRegistered
+                            if (isRegistered) {
                                 sensorManager.unregisterListener(sensorListener)
+                                isRegistered = false
                             }
                         }
 
                         Lifecycle.Event.ON_START -> {
                             if (wasActiveBeforeStop) {
-                                rotationSensor?.let {
-                                    sensorManager.registerListener(
-                                        sensorListener,
-                                        it,
-                                        SensorManager.SENSOR_DELAY_UI,
-                                    )
-                                }
+                                registerSensorListener()
                                 wasActiveBeforeStop = false
                             }
                         }
@@ -131,7 +127,16 @@ class SensorSessionImpl
             observedLifecycle = lifecycle
             lifecycle.addObserver(observer)
 
+            registerSensorListener()
             startOrientationListener()
+        }
+
+        private fun registerSensorListener() {
+            if (isRegistered) return
+            rotationSensor?.let {
+                sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
+                isRegistered = true
+            }
         }
 
         private fun startOrientationListener() {
@@ -140,21 +145,8 @@ class SensorSessionImpl
             }
         }
 
-        override fun setLevelEnabled(enabled: Boolean) {
-            if (enabled) {
-                isRunning = true
-                rotationSensor?.let {
-                    sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_UI)
-                }
-            } else {
-                isRunning = false
-                wasActiveBeforeStop = false
-                sensorManager.unregisterListener(sensorListener)
-            }
-        }
-
         override fun release() {
-            isRunning = false
+            isRegistered = false
             wasActiveBeforeStop = false
             sensorManager.unregisterListener(sensorListener)
             orientationListener.disable()

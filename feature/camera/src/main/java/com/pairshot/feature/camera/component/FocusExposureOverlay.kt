@@ -1,7 +1,5 @@
 package com.pairshot.feature.camera.component
 
-import android.util.Range
-import android.util.Rational
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -48,9 +46,11 @@ fun FocusExposureOverlay(
     onTapToFocus: (x: Float, y: Float, viewWidth: Int, viewHeight: Int) -> Unit,
     onExposureReset: () -> Unit,
     onExposureAdjust: (newIndex: Int) -> Unit,
-    exposureRange: Range<Int>,
+    exposureIndexMin: Int,
+    exposureIndexMax: Int,
     currentExposureIndex: Int,
-    exposureStep: Rational,
+    exposureStepNumerator: Int,
+    exposureStepDenominator: Int,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -67,7 +67,7 @@ fun FocusExposureOverlay(
 
     var autoHideJob by remember { mutableStateOf<Job?>(null) }
 
-    val exposureEnabled = exposureRange.lower < exposureRange.upper
+    val exposureEnabled = exposureIndexMin < exposureIndexMax
     val dragThresholdPx = with(density) { DRAG_DP_PER_EV_STEP.dp.toPx() }
     val focusRingSizePx = with(density) { FOCUS_RING_SIZE.toPx() }
     val focusRingStrokePx = with(density) { FOCUS_RING_STROKE.toPx() }
@@ -87,7 +87,7 @@ fun FocusExposureOverlay(
         modifier =
             modifier
                 .fillMaxSize()
-                .pointerInput(exposureRange, currentExposureIndex) {
+                .pointerInput(exposureIndexMin, exposureIndexMax, currentExposureIndex) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val tapPosition = down.position
@@ -137,7 +137,7 @@ fun FocusExposureOverlay(
                             scheduleAutoHide()
                         }
                     }
-                }.pointerInput(showEvBar, exposureRange) {
+                }.pointerInput(showEvBar, exposureIndexMin, exposureIndexMax) {
                     if (!showEvBar || !exposureEnabled) return@pointerInput
 
                     awaitEachGesture {
@@ -176,7 +176,7 @@ fun FocusExposureOverlay(
                             val evSteps = -(totalDragY / dragThresholdPx).roundToInt()
                             val newIndex =
                                 (dragStartEvIndex + evSteps)
-                                    .coerceIn(exposureRange.lower, exposureRange.upper)
+                                    .coerceIn(exposureIndexMin, exposureIndexMax)
                             if (newIndex != localEvIndex) {
                                 localEvIndex = newIndex
                                 onExposureAdjust(newIndex)
@@ -220,8 +220,8 @@ fun FocusExposureOverlay(
                         strokeWidth = barWidthPx,
                     )
 
-                    val evRangeSize = (exposureRange.upper - exposureRange.lower).coerceAtLeast(1)
-                    val evFraction = (localEvIndex - exposureRange.lower).toFloat() / evRangeSize
+                    val evRangeSize = (exposureIndexMax - exposureIndexMin).coerceAtLeast(1)
+                    val evFraction = (localEvIndex - exposureIndexMin).toFloat() / evRangeSize
                     val sunY = barBottom - (evFraction * barHeightPx)
 
                     drawCircle(
@@ -239,7 +239,7 @@ fun FocusExposureOverlay(
             }
 
             if (showEvBar && exposureEnabled && ringAlpha.value > 0.3f) {
-                val evValue = localEvIndex * exposureStep.toFloat()
+                val evValue = localEvIndex * (exposureStepNumerator.toFloat() / exposureStepDenominator.toFloat())
                 val evText =
                     when {
                         evValue > 0f -> "EV +%.1f".format(evValue)

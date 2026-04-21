@@ -1,7 +1,8 @@
 package com.pairshot.feature.camera.viewmodel
 
-import android.util.Range
-import android.util.Rational
+import android.graphics.Bitmap
+import android.graphics.Matrix
+import android.net.Uri
 import androidx.camera.core.SurfaceRequest
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.SavedStateHandle
@@ -13,15 +14,17 @@ import com.pairshot.core.domain.pair.GetUnpairedPhotosUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.infra.camera.CameraSession
 import com.pairshot.core.infra.sensor.SensorSession
+import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.rendering.ExifBitmapLoader
 import com.pairshot.core.rendering.OverlayTransformCalculator
 import com.pairshot.feature.camera.component.ZoomStateHolder
 import com.pairshot.feature.camera.component.ZoomUiState
-import com.pairshot.feature.camera.state.CameraCapabilities
 import com.pairshot.feature.camera.state.CameraSettingsState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -29,11 +32,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -64,6 +69,7 @@ class AfterCameraViewModel
         getUnpairedPhotosUseCase: GetUnpairedPhotosUseCase,
         private val saveAfterPhotoUseCase: SaveAfterPhotoUseCase,
         private val appSettingsRepository: AppSettingsRepository,
+        private val exifBitmapLoader: ExifBitmapLoader,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle["projectId"] ?: 0L
         private val initialPairId: Long? = savedStateHandle["initialPairId"]
@@ -95,22 +101,18 @@ class AfterCameraViewModel
         private val _overlayAlpha = MutableStateFlow(0.5f)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
+        private val _overlayBitmap = MutableStateFlow<Bitmap?>(null)
+        val overlayBitmap: StateFlow<Bitmap?> = _overlayBitmap.asStateFlow()
+
+        private val _overlayRotation = MutableStateFlow(0f)
+        val overlayRotation: StateFlow<Float> = _overlayRotation.asStateFlow()
+
         private val _settingsState = MutableStateFlow(CameraSettingsState())
         val settingsState: StateFlow<CameraSettingsState> = _settingsState.asStateFlow()
 
         val surfaceRequest: StateFlow<SurfaceRequest?> = cameraSession.surfaceRequest
 
-        val capabilities: StateFlow<CameraCapabilities> =
-            cameraSession.capabilities
-                .map { caps ->
-                    CameraCapabilities(
-                        hasFlash = caps.hasFlash,
-                        nightModeAvailable = caps.nightModeAvailable,
-                        hdrAvailable = caps.hdrAvailable,
-                        exposureRange = Range(caps.exposureIndexMin, caps.exposureIndexMax),
-                        exposureStep = Rational(caps.exposureStepNumerator, caps.exposureStepDenominator),
-                    )
-                }.stateIn(viewModelScope, SharingStarted.Eagerly, CameraCapabilities())
+        val capabilities: StateFlow<CameraCapabilities> = cameraSession.capabilities
 
         val roll: StateFlow<Float> = sensorSession.roll
 
@@ -136,7 +138,24 @@ class AfterCameraViewModel
                 cameraSession.setFlash(initial.flashMode)
                 cameraSession.setNightMode(initial.nightModeEnabled)
                 cameraSession.setHdrMode(initial.hdrEnabled)
-                sensorSession.setLevelEnabled(initial.levelEnabled)
+            }
+            viewModelScope.launch {
+                combine(
+                    unpairedPhotos,
+                    _currentIndex,
+                    _overlayEnabled,
+                    _overlayAlpha,
+                    _lensFacing,
+                ) { photos, index, enabled, alpha, lens ->
+                    OverlayInputs(
+                        pair = photos.getOrNull(index),
+                        enabled = enabled,
+                        alpha = alpha,
+                        lensFacing = lens,
+                    )
+                }.collect { inputs ->
+                    updateOverlayFor(inputs)
+                }
             }
             viewModelScope.launch {
                 cameraSession.capabilities.collect { caps ->
@@ -198,13 +217,6 @@ class AfterCameraViewModel
             cameraSession.setZoom(zoomHolder.zoomUiState.value.currentRatio)
         }
 
-        fun overlayRotation(): Float {
-            val pair = unpairedPhotos.value.getOrNull(_currentIndex.value) ?: return 0f
-            val exifDegrees = 0
-            val sensor = cameraSession.sensorRotationDegrees(_lensFacing.value)
-            return OverlayTransformCalculator.calculate(sensor, exifDegrees)
-        }
-
         fun onUnpairedPhotosUpdated(photos: List<PhotoPair>) {
             if (!initialIndexSet && photos.isNotEmpty() && initialPairId != null) {
                 val idx = photos.indexOfFirst { it.id == initialPairId }
@@ -260,12 +272,6 @@ class AfterCameraViewModel
                 } catch (e: Exception) {
                     _events.emit(AfterCameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
                 } finally {
-                    try {
-                        val path = java.net.URI(tempUri).path
-                        if (path != null) java.io.File(path).delete()
-                    } catch (e: Exception) {
-                        Timber.d(e, "임시 파일 삭제 실패: $tempUri")
-                    }
                     _isSaving.value = false
                 }
             }
@@ -317,7 +323,6 @@ class AfterCameraViewModel
         fun toggleLevel() {
             val next = !_settingsState.value.levelEnabled
             _settingsState.update { it.copy(levelEnabled = next) }
-            sensorSession.setLevelEnabled(next)
             persistSettings()
         }
 
@@ -388,7 +393,87 @@ class AfterCameraViewModel
 
         override fun onCleared() {
             super.onCleared()
+            recycleOverlayBitmap()
             cameraSession.release()
             sensorSession.release()
+        }
+
+        private data class OverlayInputs(
+            val pair: PhotoPair?,
+            val enabled: Boolean,
+            val alpha: Float,
+            val lensFacing: LensFacing,
+        )
+
+        private suspend fun updateOverlayFor(inputs: OverlayInputs) {
+            val pair = inputs.pair
+            if (pair == null || !inputs.enabled || inputs.alpha <= 0f) {
+                clearOverlay()
+                return
+            }
+            val result =
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        val uri = Uri.parse(pair.beforePhotoUri)
+                        val sampleSize = OVERLAY_IN_SAMPLE_SIZE
+                        val source = exifBitmapLoader.loadBitmapWithExifCorrection(uri, sampleSize)
+                        val exifDegrees = exifBitmapLoader.readExifDegrees(uri)
+                        val sensor = cameraSession.sensorRotationDegrees(inputs.lensFacing)
+                        val rotation = OverlayTransformCalculator.calculate(sensor, exifDegrees)
+                        if (rotation == 0f) {
+                            source to rotation
+                        } else {
+                            val matrix = Matrix().apply { postRotate(rotation) }
+                            val rotated =
+                                Bitmap.createBitmap(
+                                    source,
+                                    0,
+                                    0,
+                                    source.width,
+                                    source.height,
+                                    matrix,
+                                    true,
+                                )
+                            if (rotated !== source) source.recycle()
+                            rotated to rotation
+                        }
+                    }
+                }
+            result
+                .onSuccess { (bitmap, rotation) ->
+                    replaceOverlayBitmap(bitmap, rotation)
+                }.onFailure { error ->
+                    Timber.w(error, "Overlay 준비 실패: ${pair.beforePhotoUri}")
+                    clearOverlay()
+                }
+        }
+
+        private fun replaceOverlayBitmap(
+            bitmap: Bitmap,
+            rotation: Float,
+        ) {
+            val previous = _overlayBitmap.value
+            _overlayBitmap.value = bitmap
+            _overlayRotation.value = rotation
+            if (previous != null && previous !== bitmap && !previous.isRecycled) {
+                previous.recycle()
+            }
+        }
+
+        private fun clearOverlay() {
+            recycleOverlayBitmap()
+            _overlayRotation.value = 0f
+        }
+
+        private fun recycleOverlayBitmap() {
+            val previous = _overlayBitmap.value
+            _overlayBitmap.value = null
+            if (previous != null && !previous.isRecycled) {
+                previous.recycle()
+            }
+        }
+
+        companion object {
+            private const val OVERLAY_IN_SAMPLE_SIZE = 2
         }
     }

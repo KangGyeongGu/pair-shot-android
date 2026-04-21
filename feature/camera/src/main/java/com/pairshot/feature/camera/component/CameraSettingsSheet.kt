@@ -62,8 +62,8 @@ import com.pairshot.core.designsystem.PairShotGlassTokens
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
+import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
-import com.pairshot.feature.camera.state.CameraCapabilities
 import com.pairshot.feature.camera.state.CameraSettingsState
 import kotlin.math.roundToInt
 

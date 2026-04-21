@@ -9,7 +9,5 @@ interface SensorSession {
 
     fun bind(owner: LifecycleOwner)
 
-    fun setLevelEnabled(enabled: Boolean)
-
     fun release()
 }

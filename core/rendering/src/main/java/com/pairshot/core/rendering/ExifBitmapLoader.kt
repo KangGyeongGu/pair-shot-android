@@ -16,33 +16,44 @@ class ExifBitmapLoader
     constructor(
         @ApplicationContext private val context: Context,
     ) {
-        fun loadBitmapWithExifCorrection(uri: Uri): Bitmap {
+        fun loadBitmapWithExifCorrection(uri: Uri): Bitmap = loadBitmapWithExifCorrection(uri, inSampleSize = 1)
+
+        fun loadBitmapWithExifCorrection(
+            uri: Uri,
+            inSampleSize: Int,
+        ): Bitmap {
+            val options =
+                BitmapFactory.Options().apply {
+                    this.inSampleSize = inSampleSize.coerceAtLeast(1)
+                }
             val inputStream =
                 context.contentResolver.openInputStream(uri)
                     ?: throw IllegalStateException("Cannot open input stream for $uri")
 
-            val bitmap = BitmapFactory.decodeStream(inputStream)
-            inputStream.close()
+            val bitmap =
+                inputStream.use { stream ->
+                    BitmapFactory.decodeStream(stream, null, options)
+                } ?: throw IllegalStateException("Cannot decode bitmap for $uri")
 
-            val rotation = getExifRotation(uri)
+            val rotation = readExifDegrees(uri)
             if (rotation == 0) return bitmap
 
             val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
             val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-            if (rotated != bitmap) bitmap.recycle()
+            if (rotated !== bitmap) bitmap.recycle()
             return rotated
         }
 
-        private fun getExifRotation(uri: Uri): Int {
+        fun readExifDegrees(uri: Uri): Int {
             val inputStream = context.contentResolver.openInputStream(uri) ?: return 0
-            val exif = ExifInterface(inputStream)
-            inputStream.close()
-
-            return when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270
-                else -> 0
+            return inputStream.use { stream ->
+                val exif = ExifInterface(stream)
+                when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+                    ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                    ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                    ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                    else -> 0
+                }
             }
         }
     }

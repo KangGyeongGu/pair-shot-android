@@ -3,20 +3,20 @@ package com.pairshot.core.data.repository
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
-import com.pairshot.core.model.CombineConfig
-import com.pairshot.core.domain.combine.CombineSettingsRepository
-import com.pairshot.core.model.PairStatus
-import com.pairshot.core.model.PhotoPair
-import com.pairshot.core.domain.pair.PhotoPairRepository
-import com.pairshot.core.domain.settings.AppSettingsRepository
-import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.rendering.FileNameGenerator
-import com.pairshot.core.rendering.PairImageComposer
 import com.pairshot.core.database.dao.PhotoPairDao
 import com.pairshot.core.database.dao.ProjectDao
 import com.pairshot.core.database.entity.PhotoPairEntity
 import com.pairshot.core.database.entity.toDomain
 import com.pairshot.core.database.entity.toEntity
+import com.pairshot.core.domain.combine.CombineSettingsRepository
+import com.pairshot.core.domain.pair.PhotoPairRepository
+import com.pairshot.core.domain.settings.AppSettingsRepository
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.rendering.FileNameGenerator
+import com.pairshot.core.rendering.PairImageComposer
 import com.pairshot.core.storage.MediaStoreManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -151,15 +151,76 @@ class PhotoPairRepositoryImpl
             lensId: String?,
         ): Long =
             withContext(Dispatchers.IO) {
+                try {
+                    val project =
+                        projectDao.getById(projectId)
+                            ?: throw IllegalArgumentException("Project not found: $projectId")
+
+                    val currentCount = photoPairDao.countByProject(projectId).first()
+                    val sequenceNumber = currentCount + 1
+
+                    val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
+                    val fileName = fileNameGenerator.generateBeforeFileName(sequenceNumber, prefix)
+
+                    val savedUri =
+                        mediaStoreManager.saveToGallery(
+                            tempFileUri = Uri.parse(tempFileUri),
+                            projectName = project.name,
+                            displayName = fileName,
+                        )
+
+                    val entity =
+                        PhotoPairEntity(
+                            projectId = projectId,
+                            beforePhotoUri = savedUri.toString(),
+                            beforeTimestamp = System.currentTimeMillis(),
+                            status = PairStatus.BEFORE_ONLY.name,
+                            zoomLevel = zoomLevel,
+                            lensId = lensId,
+                        )
+                    try {
+                        val pairId = photoPairDao.insert(entity)
+                        projectDao.updateTimestamp(projectId, System.currentTimeMillis())
+                        pairId
+                    } catch (e: Exception) {
+                        mediaStoreManager.deleteFromGallery(savedUri)
+                        throw e
+                    }
+                } finally {
+                    deleteTempFile(tempFileUri)
+                }
+            }
+
+        override suspend fun saveAfterPhoto(
+            pairId: Long,
+            tempFileUri: String,
+        ) = withContext(Dispatchers.IO) {
+            try {
+                val entity =
+                    photoPairDao.getById(pairId)
+                        ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
                 val project =
-                    projectDao.getById(projectId)
-                        ?: throw IllegalArgumentException("Project not found: $projectId")
+                    projectDao.getById(entity.projectId)
+                        ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
 
-                val currentCount = photoPairDao.countByProject(projectId).first()
-                val sequenceNumber = currentCount + 1
+                entity.afterPhotoUri?.let {
+                    try {
+                        mediaStoreManager.deleteFromGallery(Uri.parse(it))
+                    } catch (e: Exception) {
+                        Timber.w(e, "이전 After 사진 삭제 실패: $it")
+                    }
+                }
+                entity.combinedPhotoUri?.let {
+                    try {
+                        mediaStoreManager.deleteFromGallery(Uri.parse(it))
+                    } catch (e: Exception) {
+                        Timber.w(e, "이전 합성 사진 삭제 실패: $it")
+                    }
+                }
 
+                val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
                 val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
-                val fileName = fileNameGenerator.generateBeforeFileName(sequenceNumber, prefix)
+                val fileName = fileNameGenerator.generateAfterFileName(sequenceNumber, prefix)
 
                 val savedUri =
                     mediaStoreManager.saveToGallery(
@@ -168,76 +229,23 @@ class PhotoPairRepositoryImpl
                         displayName = fileName,
                     )
 
-                val entity =
-                    PhotoPairEntity(
-                        projectId = projectId,
-                        beforePhotoUri = savedUri.toString(),
-                        beforeTimestamp = System.currentTimeMillis(),
-                        status = PairStatus.BEFORE_ONLY.name,
-                        zoomLevel = zoomLevel,
-                        lensId = lensId,
-                    )
                 try {
-                    val pairId = photoPairDao.insert(entity)
-                    projectDao.updateTimestamp(projectId, System.currentTimeMillis())
-                    pairId
+                    val now = System.currentTimeMillis()
+                    photoPairDao.update(
+                        entity.copy(
+                            afterPhotoUri = savedUri.toString(),
+                            afterTimestamp = now,
+                            combinedPhotoUri = null,
+                            status = PairStatus.PAIRED.name,
+                        ),
+                    )
+                    projectDao.updateTimestamp(entity.projectId, now)
                 } catch (e: Exception) {
                     mediaStoreManager.deleteFromGallery(savedUri)
                     throw e
                 }
-            }
-
-        override suspend fun saveAfterPhoto(
-            pairId: Long,
-            tempFileUri: String,
-        ) = withContext(Dispatchers.IO) {
-            val entity =
-                photoPairDao.getById(pairId)
-                    ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
-            val project =
-                projectDao.getById(entity.projectId)
-                    ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
-
-            entity.afterPhotoUri?.let {
-                try {
-                    mediaStoreManager.deleteFromGallery(Uri.parse(it))
-                } catch (e: Exception) {
-                    Timber.w(e, "이전 After 사진 삭제 실패: $it")
-                }
-            }
-            entity.combinedPhotoUri?.let {
-                try {
-                    mediaStoreManager.deleteFromGallery(Uri.parse(it))
-                } catch (e: Exception) {
-                    Timber.w(e, "이전 합성 사진 삭제 실패: $it")
-                }
-            }
-
-            val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
-            val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
-            val fileName = fileNameGenerator.generateAfterFileName(sequenceNumber, prefix)
-
-            val savedUri =
-                mediaStoreManager.saveToGallery(
-                    tempFileUri = Uri.parse(tempFileUri),
-                    projectName = project.name,
-                    displayName = fileName,
-                )
-
-            try {
-                val now = System.currentTimeMillis()
-                photoPairDao.update(
-                    entity.copy(
-                        afterPhotoUri = savedUri.toString(),
-                        afterTimestamp = now,
-                        combinedPhotoUri = null,
-                        status = PairStatus.PAIRED.name,
-                    ),
-                )
-                projectDao.updateTimestamp(entity.projectId, now)
-            } catch (e: Exception) {
-                mediaStoreManager.deleteFromGallery(savedUri)
-                throw e
+            } finally {
+                deleteTempFile(tempFileUri)
             }
         }
 
@@ -304,5 +312,20 @@ class PhotoPairRepositoryImpl
         private fun extractSequenceNumber(beforePhotoUri: String): Int {
             val match = Regex("BEFORE_(\\d+)_").find(beforePhotoUri)
             return match?.groupValues?.get(1)?.toIntOrNull() ?: 1
+        }
+
+        private fun deleteTempFile(tempFileUri: String) {
+            try {
+                val uri = Uri.parse(tempFileUri)
+                val path =
+                    when (uri.scheme) {
+                        "file" -> uri.path
+                        null -> tempFileUri
+                        else -> null
+                    }
+                if (path != null) java.io.File(path).delete()
+            } catch (e: Exception) {
+                Timber.d(e, "임시 파일 삭제 실패: $tempFileUri")
+            }
         }
     }

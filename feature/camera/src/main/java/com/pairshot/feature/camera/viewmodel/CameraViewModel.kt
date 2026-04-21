@@ -1,7 +1,5 @@
 package com.pairshot.feature.camera.viewmodel
 
-import android.util.Range
-import android.util.Rational
 import androidx.camera.core.SurfaceRequest
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
@@ -11,27 +9,23 @@ import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.infra.camera.CameraSession
 import com.pairshot.core.infra.sensor.SensorSession
+import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
 import com.pairshot.feature.camera.component.ZoomStateHolder
 import com.pairshot.feature.camera.component.ZoomUiState
-import com.pairshot.feature.camera.state.CameraCapabilities
 import com.pairshot.feature.camera.state.CameraSettingsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 sealed interface CameraEvent {
@@ -78,17 +72,7 @@ class CameraViewModel
 
         val surfaceRequest: StateFlow<SurfaceRequest?> = cameraSession.surfaceRequest
 
-        val capabilities: StateFlow<CameraCapabilities> =
-            cameraSession.capabilities
-                .map { caps ->
-                    CameraCapabilities(
-                        hasFlash = caps.hasFlash,
-                        nightModeAvailable = caps.nightModeAvailable,
-                        hdrAvailable = caps.hdrAvailable,
-                        exposureRange = Range(caps.exposureIndexMin, caps.exposureIndexMax),
-                        exposureStep = Rational(caps.exposureStepNumerator, caps.exposureStepDenominator),
-                    )
-                }.stateIn(viewModelScope, SharingStarted.Eagerly, CameraCapabilities())
+        val capabilities: StateFlow<CameraCapabilities> = cameraSession.capabilities
 
         val roll: StateFlow<Float> = sensorSession.roll
 
@@ -107,7 +91,6 @@ class CameraViewModel
                 cameraSession.setFlash(initial.flashMode)
                 cameraSession.setNightMode(initial.nightModeEnabled)
                 cameraSession.setHdrMode(initial.hdrEnabled)
-                sensorSession.setLevelEnabled(initial.levelEnabled)
             }
             viewModelScope.launch {
                 cameraSession.capabilities.collect { caps ->
@@ -189,12 +172,6 @@ class CameraViewModel
                 } catch (e: Exception) {
                     _events.emit(CameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
                 } finally {
-                    try {
-                        val path = java.net.URI(tempUri).path
-                        if (path != null) java.io.File(path).delete()
-                    } catch (e: Exception) {
-                        Timber.d(e, "임시 파일 삭제 실패: $tempUri")
-                    }
                     _isSaving.value = false
                 }
             }
@@ -237,7 +214,6 @@ class CameraViewModel
         fun toggleLevel() {
             val next = !_settingsState.value.levelEnabled
             _settingsState.update { it.copy(levelEnabled = next) }
-            sensorSession.setLevelEnabled(next)
             persistSettings()
         }
 

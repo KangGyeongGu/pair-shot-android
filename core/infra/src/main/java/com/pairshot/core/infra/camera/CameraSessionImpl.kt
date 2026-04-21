@@ -21,6 +21,7 @@ import androidx.camera.lifecycle.awaitInstance
 import androidx.concurrent.futures.await
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import com.pairshot.core.infra.sensor.SensorSession
 import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
@@ -30,6 +31,7 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -50,6 +53,7 @@ class CameraSessionImpl
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        private val sensorSession: SensorSession,
     ) : CameraSession {
         private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
         override val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
@@ -83,7 +87,7 @@ class CameraSessionImpl
 
         private var extensionsJob: Job? = null
         private var focusJob: Job? = null
-        private var bindingJob: Job? = null
+        private var orientationJob: Job? = null
 
         override suspend fun bind(owner: LifecycleOwner) {
             this.owner = owner
@@ -96,6 +100,17 @@ class CameraSessionImpl
                         .await()
                         .also { extensionsManager = it }
             rebindInternal()
+            startOrientationObserver()
+        }
+
+        private fun startOrientationObserver() {
+            if (orientationJob?.isActive == true) return
+            orientationJob =
+                scope.launch {
+                    sensorSession.deviceOrientation.collect { rotation ->
+                        imageCapture.targetRotation = rotation
+                    }
+                }
         }
 
         private fun scheduleRebind(debounceMs: Long) {
@@ -214,7 +229,11 @@ class CameraSessionImpl
                             ContextCompat.getMainExecutor(context),
                             object : ImageCapture.OnImageSavedCallback {
                                 override fun onError(exception: ImageCaptureException) {
-                                    runCatching { tempFile.delete() }
+                                    scope.launch(NonCancellable) {
+                                        withContext(Dispatchers.IO) {
+                                            runCatching { tempFile.delete() }
+                                        }
+                                    }
                                     cont.resumeWithException(exception)
                                 }
 
@@ -226,7 +245,11 @@ class CameraSessionImpl
                             },
                         )
                         cont.invokeOnCancellation {
-                            runCatching { tempFile.delete() }
+                            scope.launch(NonCancellable) {
+                                withContext(Dispatchers.IO) {
+                                    runCatching { tempFile.delete() }
+                                }
+                            }
                         }
                     }
                 savedUri
@@ -335,7 +358,7 @@ class CameraSessionImpl
         override fun release() {
             extensionsJob?.cancel()
             focusJob?.cancel()
-            bindingJob?.cancel()
+            orientationJob?.cancel()
             provider?.unbindAll()
             shutterSoundPlayer.release()
             camera = null
