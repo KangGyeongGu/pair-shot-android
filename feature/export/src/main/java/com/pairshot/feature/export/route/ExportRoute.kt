@@ -11,7 +11,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.feature.export.route.ExportShareEffect
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.export.screen.ExportLoadingScreen
 import com.pairshot.feature.export.screen.ExportScreen
@@ -52,8 +51,6 @@ fun ExportRoute(
             snackbarController.show(event)
         }
     }
-
-    ExportShareEffect(exportAction = viewModel.exportAction)
 
     val onSaveToDevice = {
         when (exportFormat) {

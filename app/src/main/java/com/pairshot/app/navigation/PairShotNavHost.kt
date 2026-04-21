@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.navigation.AfterCamera
 import com.pairshot.core.navigation.Camera
 import com.pairshot.core.navigation.CombineSettings
@@ -27,7 +28,6 @@ import com.pairshot.core.navigation.ProjectDetail
 import com.pairshot.core.navigation.ProjectList
 import com.pairshot.core.navigation.Settings
 import com.pairshot.core.navigation.WatermarkSettings
-import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.feature.camera.route.AfterCameraRoute
 import com.pairshot.feature.camera.route.CameraRoute
 import com.pairshot.feature.compare.route.CombinedViewerRoute
@@ -141,10 +141,17 @@ fun PairShotNavHost(
             )
         }
         composable<Export> {
+            val exportViewModel: com.pairshot.feature.export.viewmodel.ExportViewModel =
+                androidx.hilt.navigation.compose
+                    .hiltViewModel()
+            com.pairshot.app.navigation.effect.ExportShareEffect(
+                exportAction = exportViewModel.exportAction,
+            )
             ExportRoute(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
                 onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
+                viewModel = exportViewModel,
             )
         }
         composable<Settings> {

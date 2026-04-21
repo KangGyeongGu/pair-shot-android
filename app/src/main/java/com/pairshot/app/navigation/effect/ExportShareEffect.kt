@@ -1,4 +1,4 @@
-package com.pairshot.feature.export.route
+package com.pairshot.app.navigation.effect
 
 import android.content.ClipData
 import android.content.Intent

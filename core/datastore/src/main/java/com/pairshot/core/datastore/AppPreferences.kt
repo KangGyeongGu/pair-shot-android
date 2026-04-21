@@ -183,4 +183,18 @@ class AppPreferences
                 prefs[Keys.EXPORT_INCLUDE_COMBINED] = value
             }
         }
+
+        suspend fun saveExportPreset(
+            format: String,
+            includeBefore: Boolean,
+            includeAfter: Boolean,
+            includeCombined: Boolean,
+        ) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.EXPORT_FORMAT] = format
+                prefs[Keys.EXPORT_INCLUDE_BEFORE] = includeBefore
+                prefs[Keys.EXPORT_INCLUDE_AFTER] = includeAfter
+                prefs[Keys.EXPORT_INCLUDE_COMBINED] = includeCombined
+            }
+        }
     }

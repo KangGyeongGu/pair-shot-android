@@ -36,7 +36,34 @@ interface ProjectDao {
         ORDER BY p.updatedAt DESC
         """,
     )
-    fun getAll(): Flow<List<ProjectWithCountsEntity>>
+    fun getAllByUpdated(): Flow<List<ProjectWithCountsEntity>>
+
+    @Query(
+        """
+        SELECT
+            p.*,
+            (
+                SELECT COUNT(*)
+                FROM photo_pairs pp
+                WHERE pp.projectId = p.id
+            ) AS pairCount,
+            (
+                SELECT COUNT(*)
+                FROM photo_pairs pp
+                WHERE pp.projectId = p.id
+                AND pp.status IN ('PAIRED', 'COMBINED')
+            ) AS completedCount,
+            (
+                SELECT COUNT(*)
+                FROM photo_pairs pp
+                WHERE pp.projectId = p.id
+                AND pp.status = 'COMBINED'
+            ) AS combinedCount
+        FROM projects p
+        ORDER BY p.createdAt DESC
+        """,
+    )
+    fun getAllByCreated(): Flow<List<ProjectWithCountsEntity>>
 
     @Query("SELECT * FROM projects WHERE id = :id")
     suspend fun getById(id: Long): ProjectEntity?

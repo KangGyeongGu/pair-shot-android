@@ -1,11 +1,11 @@
 package com.pairshot.core.domain.project
 
 import com.pairshot.core.model.Project
-
+import com.pairshot.core.model.ProjectSortOrder
 import kotlinx.coroutines.flow.Flow
 
 interface ProjectRepository {
-    fun getAll(): Flow<List<Project>>
+    fun getAll(sortOrder: ProjectSortOrder = ProjectSortOrder.UPDATED_DESC): Flow<List<Project>>
 
     suspend fun getById(id: Long): Project?
 

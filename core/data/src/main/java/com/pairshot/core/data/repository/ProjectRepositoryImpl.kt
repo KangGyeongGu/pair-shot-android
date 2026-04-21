@@ -1,10 +1,11 @@
 package com.pairshot.core.data.repository
 
-import com.pairshot.core.model.Project
-import com.pairshot.core.domain.project.ProjectRepository
 import com.pairshot.core.database.dao.ProjectDao
 import com.pairshot.core.database.entity.toDomain
 import com.pairshot.core.database.entity.toEntity
+import com.pairshot.core.domain.project.ProjectRepository
+import com.pairshot.core.model.Project
+import com.pairshot.core.model.ProjectSortOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,7 +17,14 @@ class ProjectRepositoryImpl
     constructor(
         private val projectDao: ProjectDao,
     ) : ProjectRepository {
-        override fun getAll(): Flow<List<Project>> = projectDao.getAll().map { entities -> entities.map { it.toDomain() } }
+        override fun getAll(sortOrder: ProjectSortOrder): Flow<List<Project>> {
+            val source =
+                when (sortOrder) {
+                    ProjectSortOrder.UPDATED_DESC -> projectDao.getAllByUpdated()
+                    ProjectSortOrder.CREATED_DESC -> projectDao.getAllByCreated()
+                }
+            return source.map { entities -> entities.map { it.toDomain() } }
+        }
 
         override suspend fun getById(id: Long): Project? =
             withContext(Dispatchers.IO) {

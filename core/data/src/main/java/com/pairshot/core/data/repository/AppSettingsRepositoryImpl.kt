@@ -1,9 +1,9 @@
 package com.pairshot.core.data.repository
 
-import com.pairshot.core.model.AppSettings
-import com.pairshot.core.domain.settings.AppSettingsRepository
-import com.pairshot.core.model.ExportPreset
 import com.pairshot.core.datastore.AppPreferences
+import com.pairshot.core.domain.settings.AppSettingsRepository
+import com.pairshot.core.model.AppSettings
+import com.pairshot.core.model.ExportPreset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -77,18 +77,27 @@ class AppSettingsRepositoryImpl
 
         override suspend fun updateCameraHdr(enabled: Boolean) = appPreferences.setCameraHdr(enabled)
 
-        override suspend fun getLastExportPreset(): ExportPreset {
-            val format = appPreferences.exportFormat.first()
-            val before = appPreferences.exportIncludeBefore.first()
-            val after = appPreferences.exportIncludeAfter.first()
-            val combined = appPreferences.exportIncludeCombined.first()
-            return ExportPreset(format = format, includeBefore = before, includeAfter = after, includeCombined = combined)
-        }
+        override suspend fun getLastExportPreset(): ExportPreset =
+            combine(
+                appPreferences.exportFormat,
+                appPreferences.exportIncludeBefore,
+                appPreferences.exportIncludeAfter,
+                appPreferences.exportIncludeCombined,
+            ) { format, before, after, combined ->
+                ExportPreset(
+                    format = format,
+                    includeBefore = before,
+                    includeAfter = after,
+                    includeCombined = combined,
+                )
+            }.first()
 
         override suspend fun saveLastExportPreset(preset: ExportPreset) {
-            appPreferences.setExportFormat(preset.format)
-            appPreferences.setExportIncludeBefore(preset.includeBefore)
-            appPreferences.setExportIncludeAfter(preset.includeAfter)
-            appPreferences.setExportIncludeCombined(preset.includeCombined)
+            appPreferences.saveExportPreset(
+                format = preset.format,
+                includeBefore = preset.includeBefore,
+                includeAfter = preset.includeAfter,
+                includeCombined = preset.includeCombined,
+            )
         }
     }
