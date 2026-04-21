@@ -1,8 +1,8 @@
 package com.pairshot.data.local.export
 
 import android.net.Uri
-import com.pairshot.data.local.db.entity.PhotoPairEntity
-import com.pairshot.data.local.storage.ZipImageEntry
+import com.pairshot.core.database.entity.PhotoPairEntity
+import com.pairshot.core.storage.ZipImageEntry
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -92,8 +92,8 @@ class ExportEntryFactory
                     if (includeCombined &&
                         pair.beforePhotoUri.isNotBlank() &&
                         pair.beforePhotoUri.toContentUriOrNull() != null &&
-                        pair.afterPhotoUri?.isNotBlank() == true &&
-                        pair.afterPhotoUri.toContentUriOrNull() != null
+                        !pair.afterPhotoUri.isNullOrBlank() &&
+                        pair.afterPhotoUri!!.toContentUriOrNull() != null
                     ) {
                         val file = File(tempDir, "PAIR_%03d.jpg".format(seq))
                         add(
@@ -134,8 +134,8 @@ class ExportEntryFactory
                     if (includeCombined && withWatermark) {
                         if (pair.beforePhotoUri.isNotBlank() &&
                             pair.beforePhotoUri.toContentUriOrNull() != null &&
-                            pair.afterPhotoUri?.isNotBlank() == true &&
-                            pair.afterPhotoUri.toContentUriOrNull() != null
+                            !pair.afterPhotoUri.isNullOrBlank() &&
+                            pair.afterPhotoUri!!.toContentUriOrNull() != null
                         ) {
                             add(
                                 ShareEntry(
@@ -182,8 +182,8 @@ class ExportEntryFactory
                     if (includeCombined && withWatermark) {
                         if (pair.beforePhotoUri.isNotBlank() &&
                             pair.beforePhotoUri.toContentUriOrNull() != null &&
-                            pair.afterPhotoUri?.isNotBlank() == true &&
-                            pair.afterPhotoUri.toContentUriOrNull() != null
+                            !pair.afterPhotoUri.isNullOrBlank() &&
+                            pair.afterPhotoUri!!.toContentUriOrNull() != null
                         ) {
                             add(
                                 GalleryEntry(

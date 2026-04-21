@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
-import com.pairshot.data.local.datastore.WatermarkPreferences
+import com.pairshot.core.datastore.WatermarkPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

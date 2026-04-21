@@ -2,9 +2,9 @@ package com.pairshot.data.repository.project
 
 import com.pairshot.core.model.Project
 import com.pairshot.core.domain.project.ProjectRepository
-import com.pairshot.data.local.db.dao.ProjectDao
-import com.pairshot.data.local.db.entity.toDomain
-import com.pairshot.data.local.db.entity.toEntity
+import com.pairshot.core.database.dao.ProjectDao
+import com.pairshot.core.database.entity.toDomain
+import com.pairshot.core.database.entity.toEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

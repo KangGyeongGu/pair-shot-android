@@ -1,12 +1,12 @@
-package com.pairshot.data.local.db.dao
+package com.pairshot.core.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.pairshot.data.local.db.entity.ProjectEntity
-import com.pairshot.data.local.db.entity.ProjectWithCountsEntity
+import com.pairshot.core.database.entity.ProjectEntity
+import com.pairshot.core.database.entity.ProjectWithCountsEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

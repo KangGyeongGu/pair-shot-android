@@ -1,4 +1,4 @@
-package com.pairshot.data.local.db.converter
+package com.pairshot.core.database
 
 import androidx.room.TypeConverter
 import com.pairshot.core.model.PairStatus

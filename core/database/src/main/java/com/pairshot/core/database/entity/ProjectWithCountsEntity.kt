@@ -1,4 +1,4 @@
-package com.pairshot.data.local.db.entity
+package com.pairshot.core.database.entity
 
 import com.pairshot.core.model.Project
 

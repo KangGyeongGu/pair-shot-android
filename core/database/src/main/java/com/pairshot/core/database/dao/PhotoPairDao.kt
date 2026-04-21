@@ -1,11 +1,11 @@
-package com.pairshot.data.local.db.dao
+package com.pairshot.core.database.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import com.pairshot.data.local.db.entity.PhotoPairEntity
+import com.pairshot.core.database.entity.PhotoPairEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

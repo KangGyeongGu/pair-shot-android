@@ -1,4 +1,4 @@
-package com.pairshot.data.local.storage
+package com.pairshot.core.storage
 
 import android.content.Context
 import android.net.Uri

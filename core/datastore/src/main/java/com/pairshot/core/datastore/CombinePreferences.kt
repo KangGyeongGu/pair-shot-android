@@ -1,4 +1,4 @@
-package com.pairshot.data.local.datastore
+package com.pairshot.core.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore

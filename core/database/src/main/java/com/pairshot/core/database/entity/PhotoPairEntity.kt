@@ -1,4 +1,4 @@
-package com.pairshot.data.local.db.entity
+package com.pairshot.core.database.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey

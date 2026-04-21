@@ -1,4 +1,4 @@
-package com.pairshot.data.local.storage
+package com.pairshot.core.storage
 
 import android.app.RecoverableSecurityException
 import android.content.ContentValues

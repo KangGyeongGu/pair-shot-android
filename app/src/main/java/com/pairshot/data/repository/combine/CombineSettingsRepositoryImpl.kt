@@ -2,7 +2,7 @@ package com.pairshot.data.repository.combine
 
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
-import com.pairshot.data.local.datastore.CombinePreferences
+import com.pairshot.core.datastore.CombinePreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject

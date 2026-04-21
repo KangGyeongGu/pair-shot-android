@@ -2,9 +2,9 @@ package com.pairshot.di.core
 
 import android.content.Context
 import androidx.room.Room
-import com.pairshot.data.local.db.PairShotDatabase
-import com.pairshot.data.local.db.dao.PhotoPairDao
-import com.pairshot.data.local.db.dao.ProjectDao
+import com.pairshot.core.database.PairShotDatabase
+import com.pairshot.core.database.dao.PhotoPairDao
+import com.pairshot.core.database.dao.ProjectDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
