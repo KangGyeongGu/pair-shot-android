@@ -89,6 +89,8 @@ dependencies {
     implementation(project(":core:datastore"))
     implementation(project(":core:storage"))
     implementation(project(":core:data"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:designsystem"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)

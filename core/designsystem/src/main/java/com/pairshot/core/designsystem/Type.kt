@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.pairshot.R
+import com.pairshot.core.designsystem.R
 
 val PretendardFamily =
     FontFamily(
