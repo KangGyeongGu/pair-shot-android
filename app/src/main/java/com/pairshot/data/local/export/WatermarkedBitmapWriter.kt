@@ -4,10 +4,10 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.net.Uri
-import com.pairshot.core.domain.combine.CombineConfig
-import com.pairshot.core.domain.combine.CombineLayout
-import com.pairshot.core.domain.combine.LabelPosition
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.CombineLayout
+import com.pairshot.core.model.LabelPosition
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.util.ExifBitmapLoader
 import java.io.File

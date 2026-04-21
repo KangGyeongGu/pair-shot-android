@@ -1,7 +1,7 @@
 package com.pairshot.data.local.db.converter
 
 import androidx.room.TypeConverter
-import com.pairshot.core.domain.pair.PairStatus
+import com.pairshot.core.model.PairStatus
 
 class Converters {
     @TypeConverter

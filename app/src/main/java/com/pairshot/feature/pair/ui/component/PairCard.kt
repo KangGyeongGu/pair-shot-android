@@ -28,8 +28,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.pair.PairStatus
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
 

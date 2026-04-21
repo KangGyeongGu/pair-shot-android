@@ -15,8 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.pair.PairStatus
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.feature.pair.ui.component.PairCard
 
 @Composable

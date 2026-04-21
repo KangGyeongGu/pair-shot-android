@@ -3,6 +3,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.configure
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 class KotlinLibraryConventionPlugin : Plugin<Project> {
@@ -20,6 +21,9 @@ class KotlinLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<KotlinJvmProjectExtension> {
                 jvmToolchain {
                     languageVersion.set(JavaLanguageVersion.of(21))
+                }
+                compilerOptions {
+                    jvmTarget.set(JvmTarget.JVM_17)
                 }
             }
         }

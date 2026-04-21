@@ -6,7 +6,7 @@ import com.pairshot.BuildConfig
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.ClearCacheUseCase
 import com.pairshot.core.domain.settings.GetStorageInfoUseCase
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.ui.component.SnackbarEvent

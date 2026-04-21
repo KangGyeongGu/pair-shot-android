@@ -1,6 +1,6 @@
 package com.pairshot.data.local.db.entity
 
-import com.pairshot.core.domain.project.Project
+import com.pairshot.core.model.Project
 
 data class ProjectWithCountsEntity(
     val id: Long,

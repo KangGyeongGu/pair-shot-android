@@ -1,6 +1,6 @@
 package com.pairshot.data.repository.project
 
-import com.pairshot.core.domain.project.Project
+import com.pairshot.core.model.Project
 import com.pairshot.core.domain.project.ProjectRepository
 import com.pairshot.data.local.db.dao.ProjectDao
 import com.pairshot.data.local.db.entity.toDomain

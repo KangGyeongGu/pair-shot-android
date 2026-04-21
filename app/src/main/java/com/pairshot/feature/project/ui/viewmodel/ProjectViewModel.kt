@@ -3,7 +3,7 @@ package com.pairshot.feature.project.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.core.domain.project.DeleteProjectUseCase
-import com.pairshot.core.domain.project.Project
+import com.pairshot.core.model.Project
 import com.pairshot.core.domain.project.ProjectRepository
 import com.pairshot.core.infra.location.LocationProvider
 import com.pairshot.core.infra.location.LocationResult

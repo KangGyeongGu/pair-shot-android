@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.compare.ui.component.CompareHeader

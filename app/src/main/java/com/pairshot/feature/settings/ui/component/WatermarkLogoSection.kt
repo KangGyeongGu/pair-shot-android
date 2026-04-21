@@ -23,8 +23,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.settings.LogoPosition
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.LogoPosition
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsItem

@@ -1,10 +1,10 @@
 package com.pairshot.data.repository.export
 
 import android.net.Uri
-import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.util.ExifBitmapLoader
 import com.pairshot.data.local.db.dao.PhotoPairDao
 import com.pairshot.data.local.export.ExportEntryFactory

@@ -11,8 +11,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.core.domain.combine.CombineConfig
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.pair.ui.screen.GalleryScreen
 import com.pairshot.feature.pair.ui.viewmodel.GalleryViewModel

@@ -23,10 +23,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.combine.CombineConfig
-import com.pairshot.core.domain.pair.PairStatus
-import com.pairshot.core.domain.pair.PhotoPair
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.infra.image.WatermarkRenderer
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController

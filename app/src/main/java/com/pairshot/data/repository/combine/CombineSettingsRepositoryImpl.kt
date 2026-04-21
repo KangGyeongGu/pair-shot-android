@@ -1,6 +1,6 @@
 package com.pairshot.data.repository.combine
 
-import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.data.local.datastore.CombinePreferences
 import kotlinx.coroutines.flow.Flow

@@ -11,7 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.pairshot.core.domain.capture.SaveAfterPhotoUseCase
 import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
 import com.pairshot.core.domain.pair.GetUnpairedPhotosUseCase
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.feature.camera.ui.component.ZoomStateHolder
 import com.pairshot.feature.camera.ui.component.ZoomUiState

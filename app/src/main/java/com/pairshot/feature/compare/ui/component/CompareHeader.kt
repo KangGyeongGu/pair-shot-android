@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.pair.PairStatus
+import com.pairshot.core.model.PairStatus
 import com.pairshot.core.ui.component.PairShotTopMenu
 import com.pairshot.core.ui.component.PairShotTopMenuDivider
 import com.pairshot.core.ui.component.PairShotTopMenuItem

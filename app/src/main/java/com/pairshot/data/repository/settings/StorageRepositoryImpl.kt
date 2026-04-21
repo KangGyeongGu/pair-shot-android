@@ -3,7 +3,7 @@ package com.pairshot.data.repository.settings
 import android.content.Context
 import android.provider.MediaStore
 import coil3.imageLoader
-import com.pairshot.core.domain.settings.StorageInfo
+import com.pairshot.core.model.StorageInfo
 import com.pairshot.core.domain.settings.StorageRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

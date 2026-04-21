@@ -26,7 +26,6 @@ rootProject.name = "PairShot"
 
 include(":app")
 
-// :core modules
 include(":core:model")
 include(":core:domain")
 include(":core:navigation")
@@ -39,7 +38,6 @@ include(":core:storage")
 include(":core:datastore")
 include(":core:data")
 
-// :feature modules
 include(":feature:camera")
 include(":feature:gallery")
 include(":feature:compare")

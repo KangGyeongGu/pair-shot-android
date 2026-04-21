@@ -3,13 +3,13 @@ package com.pairshot.data.repository.pair
 import android.content.Context
 import android.net.Uri
 import android.provider.MediaStore
-import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
-import com.pairshot.core.domain.pair.PairStatus
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.util.FileNameGenerator
 import com.pairshot.core.util.PairImageComposer
 import com.pairshot.data.local.db.dao.PhotoPairDao

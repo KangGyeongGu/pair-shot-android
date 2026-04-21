@@ -4,10 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.pairshot.app.navigation.route.Compare
+import com.pairshot.core.navigation.Compare
 import com.pairshot.core.domain.pair.CombineImagesUseCase
-import com.pairshot.core.domain.pair.PairStatus
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant

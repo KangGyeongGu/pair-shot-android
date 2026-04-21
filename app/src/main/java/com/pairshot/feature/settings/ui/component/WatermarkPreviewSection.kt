@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import com.pairshot.R
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.infra.image.WatermarkRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

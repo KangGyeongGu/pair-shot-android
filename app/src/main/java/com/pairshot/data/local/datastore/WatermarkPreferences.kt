@@ -9,9 +9,9 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.pairshot.core.domain.settings.LogoPosition
-import com.pairshot.core.domain.settings.WatermarkConfig
-import com.pairshot.core.domain.settings.WatermarkType
+import com.pairshot.core.model.LogoPosition
+import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.model.WatermarkType
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

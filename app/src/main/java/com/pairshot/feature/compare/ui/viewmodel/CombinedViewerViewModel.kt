@@ -4,9 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.pairshot.app.navigation.route.CombinedViewer
-import com.pairshot.core.domain.pair.PairStatus
-import com.pairshot.core.domain.pair.PhotoPair
+import com.pairshot.core.navigation.CombinedViewer
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

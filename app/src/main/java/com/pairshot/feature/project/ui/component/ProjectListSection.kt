@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
-import com.pairshot.core.domain.project.Project
+import com.pairshot.core.model.Project
 import com.pairshot.feature.project.ui.viewmodel.ProjectGroupMode
 import java.time.Instant
 import java.time.LocalDate

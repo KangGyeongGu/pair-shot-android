@@ -2,9 +2,9 @@ package com.pairshot.feature.settings.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.core.domain.combine.CombineConfig
+import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.infra.image.WatermarkRenderer
 import dagger.hilt.android.lifecycle.HiltViewModel

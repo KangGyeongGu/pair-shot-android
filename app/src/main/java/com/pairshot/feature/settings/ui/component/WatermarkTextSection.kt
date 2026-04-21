@@ -38,8 +38,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.domain.settings.WatermarkConfig
-import com.pairshot.core.domain.settings.WatermarkType
+import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.model.WatermarkType
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSliderItem

@@ -2,7 +2,7 @@ package com.pairshot.data.repository.settings
 
 import android.content.Context
 import android.net.Uri
-import com.pairshot.core.domain.settings.WatermarkConfig
+import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.data.local.datastore.WatermarkPreferences
 import dagger.hilt.android.qualifiers.ApplicationContext

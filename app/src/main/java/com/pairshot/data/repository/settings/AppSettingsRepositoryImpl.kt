@@ -1,8 +1,8 @@
 package com.pairshot.data.repository.settings
 
-import com.pairshot.core.domain.settings.AppSettings
+import com.pairshot.core.model.AppSettings
 import com.pairshot.core.domain.settings.AppSettingsRepository
-import com.pairshot.core.domain.settings.ExportPreset
+import com.pairshot.core.model.ExportPreset
 import com.pairshot.data.local.datastore.AppPreferences
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine

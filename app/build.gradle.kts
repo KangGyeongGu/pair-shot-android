@@ -80,7 +80,10 @@ tasks.withType<Test> {
 }
 
 dependencies {
-    // Compose
+    implementation(project(":core:model"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:navigation"))
+
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.ui)

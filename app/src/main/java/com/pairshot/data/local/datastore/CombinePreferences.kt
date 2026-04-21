@@ -9,11 +9,11 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.pairshot.core.domain.combine.CombineConfig
-import com.pairshot.core.domain.combine.CombineLayout
-import com.pairshot.core.domain.combine.LabelAnchor
-import com.pairshot.core.domain.combine.LabelPosition
-import com.pairshot.core.domain.combine.LabelPositionMode
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.CombineLayout
+import com.pairshot.core.model.LabelAnchor
+import com.pairshot.core.model.LabelPosition
+import com.pairshot.core.model.LabelPositionMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
