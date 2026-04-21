@@ -72,4 +72,24 @@ class DomainPurityTest {
             .dependOnClassesThat()
             .haveFullyQualifiedName("android.content.Context")
             .because("Domain must not depend on Android Context")
+
+    @ArchTest
+    val `D-06 domain should not use Bitmap`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("..domain..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("android.graphics.Bitmap")
+            .because("Domain must be pure Kotlin — Bitmap belongs in Data/Core layer")
+
+    @ArchTest
+    val `D-07 domain should not use File`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("..domain..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("java.io.File")
+            .because("Domain must be pure Kotlin — file operations belong in Data layer")
 }
