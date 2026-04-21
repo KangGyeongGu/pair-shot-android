@@ -164,6 +164,7 @@ internal fun AfterCameraScreen(
                 }
 
                 is AfterCameraEvent.AllCompleted -> {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     snackbarController.show(
                         SnackbarEvent("모든 Pair 촬영이 완료되었습니다.", SnackbarVariant.SUCCESS),
                     )

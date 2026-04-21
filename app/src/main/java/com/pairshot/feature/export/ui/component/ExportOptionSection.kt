@@ -21,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.SettingsCard
@@ -90,6 +92,7 @@ internal fun ExportWatermarkSection(
     onApplyWatermarkChange: (Boolean) -> Unit,
     onWatermarkSettingsClick: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     SettingsCard {
         Row(
             modifier =
@@ -107,7 +110,10 @@ internal fun ExportWatermarkSection(
             )
             Switch(
                 checked = applyWatermark,
-                onCheckedChange = onApplyWatermarkChange,
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onApplyWatermarkChange(it)
+                },
                 colors =
                     SwitchDefaults.colors(
                         uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -140,6 +146,7 @@ internal fun ExportCombineSection(
     onApplyCombineConfigChange: (Boolean) -> Unit,
     onCombineSettingsClick: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     SettingsCard {
         Row(
             modifier =
@@ -157,7 +164,10 @@ internal fun ExportCombineSection(
             )
             Switch(
                 checked = applyCombineConfig,
-                onCheckedChange = onApplyCombineConfigChange,
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onApplyCombineConfigChange(it)
+                },
                 colors =
                     SwitchDefaults.colors(
                         uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,

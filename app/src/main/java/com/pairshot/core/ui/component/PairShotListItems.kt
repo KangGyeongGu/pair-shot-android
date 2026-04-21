@@ -28,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
@@ -105,6 +107,7 @@ fun SettingsSwitchItem(
     onClick: (() -> Unit)? = null,
     enabled: Boolean = true,
 ) {
+    val haptic = LocalHapticFeedback.current
     Row(
         modifier =
             Modifier
@@ -123,7 +126,10 @@ fun SettingsSwitchItem(
         )
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = {
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                onCheckedChange(it)
+            },
             enabled = enabled,
             colors =
                 SwitchDefaults.colors(
@@ -149,6 +155,7 @@ fun SettingsSliderItem(
     steps: Int = 0,
     // 드래그 중 실시간 업데이트가 필요한 경우(미리보기 등)에만 사용. null이면 onValueChangeFinished에만 호출
     onLiveUpdate: ((Float) -> Unit)? = null,
+    footer: (@Composable () -> Unit)? = null,
 ) {
     var sliderValue by remember { mutableStateOf(value) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -210,6 +217,7 @@ fun SettingsSliderItem(
                 )
             },
         )
+        footer?.invoke()
     }
 }
 

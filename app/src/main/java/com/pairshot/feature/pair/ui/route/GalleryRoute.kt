@@ -7,6 +7,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.domain.combine.CombineConfig
@@ -39,6 +41,7 @@ fun GalleryRoute(
 
     val deleteConfirmation by viewModel.deleteConfirmation.collectAsStateWithLifecycle()
     val snackbarController = remember { PairShotSnackbarController() }
+    val hapticFeedback = LocalHapticFeedback.current
     var showMoreMenu by rememberSaveable { mutableStateOf(false) }
     var showRenameDialog by rememberSaveable { mutableStateOf(false) }
     var showProjectDeleteDialog by rememberSaveable { mutableStateOf(false) }
@@ -46,6 +49,7 @@ fun GalleryRoute(
 
     LaunchedEffect(Unit) {
         viewModel.snackbarMessage.collect { event ->
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
             snackbarController.show(event)
         }
     }
