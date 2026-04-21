@@ -69,7 +69,7 @@ fun GalleryRoute(
         combinePreviewPair = combinePreviewPair,
         combineConfig = combineConfig,
         watermarkConfig = watermarkConfig,
-        watermarkRenderer = viewModel.watermarkRenderer,
+        pairImageComposer = viewModel.pairImageComposer,
         snackbarController = snackbarController,
         deleteConfirmation = deleteConfirmation,
         showMoreMenu = showMoreMenu,

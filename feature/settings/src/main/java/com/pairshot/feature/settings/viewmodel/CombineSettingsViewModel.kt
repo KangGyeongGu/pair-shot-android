@@ -2,11 +2,12 @@ package com.pairshot.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
-import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
-import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.rendering.PairImageComposer
+import com.pairshot.core.rendering.PreviewSampleProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,8 @@ class CombineSettingsViewModel
     constructor(
         private val combineSettingsRepository: CombineSettingsRepository,
         private val watermarkRepository: WatermarkRepository,
-        val watermarkRenderer: WatermarkRenderer,
+        val pairImageComposer: PairImageComposer,
+        val previewSampleProvider: PreviewSampleProvider,
     ) : ViewModel() {
         val combineConfig: StateFlow<CombineConfig> =
             combineSettingsRepository.configFlow.stateIn(

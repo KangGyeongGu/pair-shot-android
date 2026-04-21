@@ -1,7 +1,6 @@
 package com.pairshot.feature.settings.component
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -20,9 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import com.pairshot.feature.settings.R
 import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,29 +29,27 @@ import kotlinx.coroutines.withContext
 internal fun WatermarkPreviewSection(
     config: WatermarkConfig,
     watermarkRenderer: WatermarkRenderer,
+    previewSampleProvider: PreviewSampleProvider,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val sourceBitmap =
-        remember {
-            BitmapFactory.decodeResource(context.resources, R.drawable.watermark_preview_sample)
-        }
-
     val previewConfig =
         remember(config) {
             config.copy(enabled = true)
         }
 
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var aspectRatio by remember { mutableStateOf(1f) }
 
     LaunchedEffect(previewConfig) {
+        val sample = previewSampleProvider.get()
+        aspectRatio = sample.width.toFloat() / sample.height.toFloat().coerceAtLeast(1f)
         val result =
             withContext(Dispatchers.Default) {
                 val scaled =
                     Bitmap.createScaledBitmap(
-                        sourceBitmap,
-                        (sourceBitmap.width * 0.5f).toInt().coerceAtLeast(200),
-                        (sourceBitmap.height * 0.5f).toInt().coerceAtLeast(200),
+                        sample,
+                        (sample.width * 0.5f).toInt().coerceAtLeast(200),
+                        (sample.height * 0.5f).toInt().coerceAtLeast(200),
                         true,
                     )
                 val applied = watermarkRenderer.apply(scaled, previewConfig)
@@ -61,7 +57,7 @@ internal fun WatermarkPreviewSection(
                 applied
             }
         previewBitmap?.let { old ->
-            if (old !== result) old.recycle()
+            if (old !== result && !old.isRecycled) old.recycle()
         }
         previewBitmap = result
     }
@@ -83,14 +79,14 @@ internal fun WatermarkPreviewSection(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .aspectRatio(sourceBitmap.width.toFloat() / sourceBitmap.height.toFloat()),
+                        .aspectRatio(aspectRatio),
             )
         } else {
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .aspectRatio(sourceBitmap.width.toFloat() / sourceBitmap.height.toFloat()),
+                        .aspectRatio(aspectRatio),
             )
         }
     }

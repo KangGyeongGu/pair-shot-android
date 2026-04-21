@@ -1,11 +1,6 @@
 package com.pairshot.feature.settings.screen
 
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
-import android.graphics.Typeface
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -61,8 +56,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.selected
@@ -73,23 +66,22 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.pairshot.feature.settings.R
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.CombineLayout
 import com.pairshot.core.model.LabelAnchor
 import com.pairshot.core.model.LabelPosition
 import com.pairshot.core.model.LabelPositionMode
+import com.pairshot.core.model.RenderProfile
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.rendering.PairImageComposer
+import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.SettingsSliderItem
 import com.pairshot.core.ui.component.SettingsSwitchItem
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,7 +89,8 @@ import kotlin.math.roundToInt
 fun CombineSettingsScreen(
     combineConfig: CombineConfig,
     watermarkConfig: WatermarkConfig,
-    watermarkRenderer: WatermarkRenderer,
+    pairImageComposer: PairImageComposer,
+    previewSampleProvider: PreviewSampleProvider,
     onCombineConfigChange: (CombineConfig) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
@@ -110,13 +103,7 @@ fun CombineSettingsScreen(
             initialColor = combineConfig.borderColorArgb,
             onDismiss = { borderColorPickerVisible = false },
             onConfirm = { color ->
-                val updated =
-                    if (combineConfig.labelBgMatchesBorder) {
-                        combineConfig.copy(borderColorArgb = color, labelBgColorArgb = color)
-                    } else {
-                        combineConfig.copy(borderColorArgb = color)
-                    }
-                onCombineConfigChange(updated)
+                onCombineConfigChange(combineConfig.copy(borderColorArgb = color))
                 borderColorPickerVisible = false
             },
         )
@@ -262,7 +249,6 @@ fun CombineSettingsScreen(
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
-            // Card 1: 레이블 텍스트
             item(key = "card_label_text") {
                 SettingsCard {
                     SettingsSwitchItem(
@@ -319,7 +305,6 @@ fun CombineSettingsScreen(
                 }
             }
 
-            // Card 2: 레이블 위치
             item(key = "card_label_position") {
                 AnimatedVisibility(
                     visible = combineConfig.labelEnabled,
@@ -366,7 +351,6 @@ fun CombineSettingsScreen(
                 }
             }
 
-            // Card 3: 레이블 배경
             item(key = "card_label_bg") {
                 AnimatedVisibility(
                     visible = combineConfig.labelEnabled,
@@ -444,7 +428,8 @@ fun CombineSettingsScreen(
                 CombinePreviewSection(
                     config = combineConfig,
                     watermarkConfig = watermarkConfig,
-                    watermarkRenderer = watermarkRenderer,
+                    pairImageComposer = pairImageComposer,
+                    previewSampleProvider = previewSampleProvider,
                 )
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
             }
@@ -837,7 +822,6 @@ private fun ColorItem(
     }
 }
 
-// null = 흰색, -1f = 검정, Float(0..360) = 색조(hue) — 순서: 흰검빨주노초파남보
 private val HUE_PRESETS: List<Float?> = listOf(null, -1f, 0f, 30f, 60f, 120f, 210f, 240f, 270f)
 
 private fun nearestPresetIdx(hsv: FloatArray): Int {
@@ -878,7 +862,6 @@ private fun ColorPickerContent(
     val sliderRange = if (isGrayscale) 0f..1f else 0.15f..1f
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        // 프리셋 스와치 — 곡률 있는 정사각형, 간격 배치
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(5.dp),
@@ -926,7 +909,6 @@ private fun ColorPickerContent(
             }
         }
 
-        // 밝기 슬라이더 — 그라데이션 track, 작은 원형 thumb
         androidx.compose.material3.Slider(
             value = brightness,
             onValueChange = onBrightnessChange,
@@ -954,7 +936,6 @@ private fun ColorPickerContent(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        // 현재 선택된 색상 표시
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -1043,7 +1024,6 @@ private fun LabelBgColorPickerDialog(
     val isGrayscale = selectedHue == null || selectedHue == -1f
     val currentPickedColor =
         if (isGrayscale) Color.hsv(0f, 0f, brightness) else Color.hsv(selectedHue!!, 1f, brightness)
-    val effectiveColor = if (matchesBorder) Color(borderColorArgb) else currentPickedColor
 
     PairShotDialog(
         onDismissRequest = onDismiss,
@@ -1114,7 +1094,7 @@ private fun LabelBgColorPickerDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(effectiveColor.toArgb(), matchesBorder) }) {
+            TextButton(onClick = { onConfirm(currentPickedColor.toArgb(), matchesBorder) }) {
                 Text("확인")
             }
         },
@@ -1130,26 +1110,26 @@ private fun LabelBgColorPickerDialog(
 internal fun CombinePreviewSection(
     config: CombineConfig,
     watermarkConfig: WatermarkConfig,
-    watermarkRenderer: WatermarkRenderer,
+    pairImageComposer: PairImageComposer,
+    previewSampleProvider: PreviewSampleProvider,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val density = LocalDensity.current.density
-    val sourceBitmap =
-        remember {
-            BitmapFactory.decodeResource(context.resources, R.drawable.watermark_preview_sample)
-        }
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(config, watermarkConfig) {
+        val sample = previewSampleProvider.get()
         val result =
-            withContext(Dispatchers.Default) {
-                val wmBefore = watermarkRenderer.apply(sourceBitmap, watermarkConfig)
-                val wmAfter = watermarkRenderer.apply(sourceBitmap, watermarkConfig)
-                buildCombinePreviewBitmap(wmBefore, wmAfter, config, density)
-            }
+            runCatching {
+                pairImageComposer.composeFromBitmaps(
+                    before = sample,
+                    after = sample,
+                    combineConfig = config,
+                    watermarkConfig = watermarkConfig,
+                    profile = RenderProfile.PREVIEW,
+                )
+            }.getOrNull()
         previewBitmap?.let { old ->
-            if (old !== result) old.recycle()
+            if (old !== result && !old.isRecycled) old.recycle()
         }
         previewBitmap = result
     }
@@ -1181,214 +1161,5 @@ internal fun CombinePreviewSection(
                     .fillMaxWidth()
                     .aspectRatio(aspectRatio),
         )
-    }
-}
-
-// 4000px 카메라 사진을 inSampleSize=4로 로드한 크기에 맞춰 고정 기준폭 설정
-private const val PREVIEW_TARGET_WIDTH = 1000
-private const val TYPICAL_CAMERA_WIDTH = 4000f
-
-private fun buildCombinePreviewBitmap(
-    before: Bitmap,
-    after: Bitmap,
-    config: CombineConfig,
-    density: Float,
-): Bitmap {
-    // 샘플 이미지를 PREVIEW_TARGET_WIDTH로 업스케일해 실제 카메라 사진 inSampleSize=4 크기와 동일하게 맞춤
-    val beforeScale = PREVIEW_TARGET_WIDTH.toFloat() / before.width.coerceAtLeast(1)
-    val afterScale = PREVIEW_TARGET_WIDTH.toFloat() / after.width.coerceAtLeast(1)
-    val scaledBefore =
-        Bitmap.createScaledBitmap(
-            before,
-            PREVIEW_TARGET_WIDTH,
-            (before.height * beforeScale).toInt().coerceAtLeast(1),
-            true,
-        )
-    val scaledAfter =
-        Bitmap.createScaledBitmap(
-            after,
-            PREVIEW_TARGET_WIDTH,
-            (after.height * afterScale).toInt().coerceAtLeast(1),
-            true,
-        )
-
-    // 테두리 비율: PREVIEW_TARGET_WIDTH / TYPICAL_CAMERA_WIDTH = 1000/4000 = 0.25
-    val borderScale = PREVIEW_TARGET_WIDTH / TYPICAL_CAMERA_WIDTH
-    val border = if (config.borderEnabled) (config.borderThicknessDp * density * borderScale).toInt() else 0
-
-    val (width, height) =
-        when (config.layout) {
-            CombineLayout.HORIZONTAL -> {
-                (scaledBefore.width + scaledAfter.width + border * 3) to
-                    (maxOf(scaledBefore.height, scaledAfter.height) + border * 2)
-            }
-
-            CombineLayout.VERTICAL -> {
-                (maxOf(scaledBefore.width, scaledAfter.width) + border * 2) to
-                    (scaledBefore.height + scaledAfter.height + border * 3)
-            }
-        }
-
-    val combined = Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
-    val canvas = android.graphics.Canvas(combined)
-
-    if (config.borderEnabled) {
-        canvas.drawColor(config.borderColorArgb)
-    } else {
-        canvas.drawColor(android.graphics.Color.BLACK)
-    }
-
-    val (bLeft, bTop, aLeft, aTop) =
-        when (config.layout) {
-            CombineLayout.HORIZONTAL -> {
-                listOf(border, border, border + scaledBefore.width + border, border)
-            }
-
-            CombineLayout.VERTICAL -> {
-                listOf(border, border, border, border + scaledBefore.height + border)
-            }
-        }
-
-    canvas.drawBitmap(scaledBefore, bLeft.toFloat(), bTop.toFloat(), null)
-    canvas.drawBitmap(scaledAfter, aLeft.toFloat(), aTop.toFloat(), null)
-
-    if (config.labelEnabled) {
-        val isFree = config.labelPositionMode == LabelPositionMode.FREE
-        val cornerPx = if (isFree) config.labelBgCornerDp * density * borderScale else 0f
-        drawLabel(
-            canvas,
-            scaledBefore,
-            bLeft,
-            bTop,
-            config.beforeLabel,
-            config,
-            if (isFree) config.beforeLabelAnchor else null,
-            cornerPx,
-        )
-        drawLabel(
-            canvas,
-            scaledAfter,
-            aLeft,
-            aTop,
-            config.afterLabel,
-            config,
-            if (isFree) config.afterLabelAnchor else null,
-            cornerPx,
-        )
-    }
-
-    scaledBefore.recycle()
-    scaledAfter.recycle()
-    return combined
-}
-
-private fun drawLabel(
-    canvas: android.graphics.Canvas,
-    image: Bitmap,
-    imgLeft: Int,
-    imgTop: Int,
-    text: String,
-    config: CombineConfig,
-    anchor: LabelAnchor? = null,
-    cornerPx: Float = 0f,
-) {
-    val fontSize = (image.height * config.labelSizeRatio).coerceAtLeast(10f)
-    val labelHeight = (fontSize * 1.8f).toInt()
-
-    val bgAlpha = (config.labelBgAlpha * 255).toInt().coerceIn(0, 255)
-    val bgRed = android.graphics.Color.red(config.labelBgColorArgb)
-    val bgGreen = android.graphics.Color.green(config.labelBgColorArgb)
-    val bgBlue = android.graphics.Color.blue(config.labelBgColorArgb)
-    val bgColor = android.graphics.Color.argb(bgAlpha, bgRed, bgGreen, bgBlue)
-
-    val bgPaint =
-        Paint().apply {
-            color = bgColor
-            style = Paint.Style.FILL
-        }
-    val textPaint =
-        Paint().apply {
-            color = config.labelTextColorArgb
-            textSize = fontSize
-            typeface = Typeface.DEFAULT_BOLD
-            isAntiAlias = true
-            textAlign = Paint.Align.CENTER
-        }
-
-    if (anchor == null) {
-        // 전체 너비 모드
-        val labelTop =
-            when (config.labelPosition) {
-                LabelPosition.TOP -> imgTop
-                LabelPosition.BOTTOM -> imgTop + image.height - labelHeight
-            }
-        if (config.labelBgEnabled) {
-            canvas.drawRect(
-                RectF(
-                    imgLeft.toFloat(),
-                    labelTop.toFloat(),
-                    (imgLeft + image.width).toFloat(),
-                    (labelTop + labelHeight).toFloat(),
-                ),
-                bgPaint,
-            )
-        }
-        val textX = imgLeft + image.width / 2f
-        val textY = labelTop + labelHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(text, textX, textY, textPaint)
-    } else {
-        // 자유 위치 모드
-        val textBounds = Rect()
-        textPaint.getTextBounds(text, 0, text.length, textBounds)
-        val hPad = (fontSize * 0.75f).toInt()
-        val labelWidth = (textBounds.width() + hPad * 2).coerceAtLeast(labelHeight)
-        val margin = (fontSize * 0.4f).toInt()
-
-        val labelLeft =
-            when (anchor) {
-                LabelAnchor.TOP_LEFT, LabelAnchor.MIDDLE_LEFT, LabelAnchor.BOTTOM_LEFT -> {
-                    imgLeft + margin
-                }
-
-                LabelAnchor.TOP_CENTER, LabelAnchor.MIDDLE_CENTER, LabelAnchor.BOTTOM_CENTER -> {
-                    imgLeft + (image.width - labelWidth) / 2
-                }
-
-                LabelAnchor.TOP_RIGHT, LabelAnchor.MIDDLE_RIGHT, LabelAnchor.BOTTOM_RIGHT -> {
-                    imgLeft + image.width - labelWidth - margin
-                }
-            }
-        val labelTop =
-            when (anchor) {
-                LabelAnchor.TOP_LEFT, LabelAnchor.TOP_CENTER, LabelAnchor.TOP_RIGHT -> {
-                    imgTop + margin
-                }
-
-                LabelAnchor.MIDDLE_LEFT, LabelAnchor.MIDDLE_CENTER, LabelAnchor.MIDDLE_RIGHT -> {
-                    imgTop + (image.height - labelHeight) / 2
-                }
-
-                LabelAnchor.BOTTOM_LEFT, LabelAnchor.BOTTOM_CENTER, LabelAnchor.BOTTOM_RIGHT -> {
-                    imgTop + image.height - labelHeight - margin
-                }
-            }
-
-        val rf =
-            RectF(
-                labelLeft.toFloat(),
-                labelTop.toFloat(),
-                (labelLeft + labelWidth).toFloat(),
-                (labelTop + labelHeight).toFloat(),
-            )
-        if (config.labelBgEnabled) {
-            if (cornerPx > 0f) {
-                canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
-            } else {
-                canvas.drawRect(rf, bgPaint)
-            }
-        }
-        val textX = labelLeft + labelWidth / 2f
-        val textY = labelTop + labelHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(text, textX, textY, textPaint)
     }
 }

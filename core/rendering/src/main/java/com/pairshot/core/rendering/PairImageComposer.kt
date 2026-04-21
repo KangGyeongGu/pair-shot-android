@@ -11,9 +11,14 @@ import com.pairshot.core.model.CombineLayout
 import com.pairshot.core.model.LabelAnchor
 import com.pairshot.core.model.LabelPosition
 import com.pairshot.core.model.LabelPositionMode
+import com.pairshot.core.model.RenderProfile
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.model.effectiveLabelBgColor
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,127 +30,102 @@ class PairImageComposer
         private val exifBitmapLoader: ExifBitmapLoader,
         private val watermarkRenderer: WatermarkRenderer,
     ) {
-        fun combineSideBySide(
+        suspend fun compose(
+            beforeUri: Uri,
+            afterUri: Uri,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig = WatermarkConfig(),
+            profile: RenderProfile = RenderProfile.FULL,
+        ): Bitmap =
+            withContext(Dispatchers.Default) {
+                val before = withContext(Dispatchers.IO) { exifBitmapLoader.loadBitmapWithExifCorrection(beforeUri) }
+                val after = withContext(Dispatchers.IO) { exifBitmapLoader.loadBitmapWithExifCorrection(afterUri) }
+                try {
+                    composeInternal(before, after, combineConfig, watermarkConfig, profile)
+                } finally {
+                    if (!before.isRecycled) before.recycle()
+                    if (!after.isRecycled) after.recycle()
+                }
+            }
+
+        suspend fun composeFromBitmaps(
+            before: Bitmap,
+            after: Bitmap,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig = WatermarkConfig(),
+            profile: RenderProfile = RenderProfile.FULL,
+        ): Bitmap =
+            withContext(Dispatchers.Default) {
+                composeInternal(before, after, combineConfig, watermarkConfig, profile, recycleInputs = false)
+            }
+
+        suspend fun composeToFile(
+            beforeUri: Uri,
+            afterUri: Uri,
+            destFile: File,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig,
+            jpegQuality: Int,
+            profile: RenderProfile = RenderProfile.FULL,
+        ) {
+            val combined = compose(beforeUri, afterUri, combineConfig, watermarkConfig, profile)
+            try {
+                withContext(Dispatchers.IO) {
+                    FileOutputStream(destFile).use { out ->
+                        combined.compress(Bitmap.CompressFormat.JPEG, jpegQuality, out)
+                    }
+                }
+            } finally {
+                combined.recycle()
+            }
+        }
+
+        suspend fun combineSideBySide(
             beforeUri: Uri,
             afterUri: Uri,
         ): Bitmap = combineSideBySide(beforeUri, afterUri, CombineConfig())
 
-        fun combineSideBySide(
+        suspend fun combineSideBySide(
             beforeUri: Uri,
             afterUri: Uri,
             config: CombineConfig,
-        ): Bitmap {
-            val beforeBitmap = exifBitmapLoader.loadBitmapWithExifCorrection(beforeUri)
-            val afterBitmap = exifBitmapLoader.loadBitmapWithExifCorrection(afterUri)
+        ): Bitmap = compose(beforeUri, afterUri, config, WatermarkConfig(), RenderProfile.FULL)
 
-            val density = context.resources.displayMetrics.density
-            val border = if (config.borderEnabled) (config.borderThicknessDp * density).toInt() else 0
-
-            val (width, height) =
-                when (config.layout) {
-                    CombineLayout.HORIZONTAL -> {
-                        val w = beforeBitmap.width + afterBitmap.width + border * 3
-                        val h = maxOf(beforeBitmap.height, afterBitmap.height) + border * 2
-                        w to h
-                    }
-
-                    CombineLayout.VERTICAL -> {
-                        val w = maxOf(beforeBitmap.width, afterBitmap.width) + border * 2
-                        val h = beforeBitmap.height + afterBitmap.height + border * 3
-                        w to h
-                    }
-                }
-
-            val combined = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(combined)
-
-            // 1. 테두리 배경 채우기
-            if (config.borderEnabled) {
-                canvas.drawColor(config.borderColorArgb)
-            }
-
-            // 2. 비트맵 배치
-            val (beforeLeft, beforeTop, afterLeft, afterTop) =
-                when (config.layout) {
-                    CombineLayout.HORIZONTAL -> {
-                        val bL = border
-                        val bT = border
-                        val aL = border + beforeBitmap.width + border
-                        val aT = border
-                        listOf(bL, bT, aL, aT)
-                    }
-
-                    CombineLayout.VERTICAL -> {
-                        val bL = border
-                        val bT = border
-                        val aL = border
-                        val aT = border + beforeBitmap.height + border
-                        listOf(bL, bT, aL, aT)
-                    }
-                }
-
-            canvas.drawBitmap(beforeBitmap, beforeLeft.toFloat(), beforeTop.toFloat(), null)
-            canvas.drawBitmap(afterBitmap, afterLeft.toFloat(), afterTop.toFloat(), null)
-
-            // 3. 레이블 오버레이
-            if (config.labelEnabled) {
-                val isFree = config.labelPositionMode == LabelPositionMode.FREE
-                val cornerPx = if (isFree) config.labelBgCornerDp * density else 0f
-                drawLabel(
-                    canvas = canvas,
-                    text = config.beforeLabel,
-                    imageLeft = beforeLeft,
-                    imageTop = beforeTop,
-                    imageWidth = beforeBitmap.width,
-                    imageHeight = beforeBitmap.height,
-                    config = config,
-                    anchor = if (isFree) config.beforeLabelAnchor else null,
-                    cornerPx = cornerPx,
-                )
-                drawLabel(
-                    canvas = canvas,
-                    text = config.afterLabel,
-                    imageLeft = afterLeft,
-                    imageTop = afterTop,
-                    imageWidth = afterBitmap.width,
-                    imageHeight = afterBitmap.height,
-                    config = config,
-                    anchor = if (isFree) config.afterLabelAnchor else null,
-                    cornerPx = cornerPx,
-                )
-            }
-
-            beforeBitmap.recycle()
-            afterBitmap.recycle()
-
-            return combined
-        }
-
-        /**
-         * 워터마크를 각 사진에 개별 적용한 뒤 합성한다.
-         * 이 방식에서는 테두리가 워터마크보다 위에 렌더링된다.
-         */
         suspend fun combineSideBySideWithWatermark(
             beforeUri: Uri,
             afterUri: Uri,
             config: CombineConfig,
             watermarkConfig: WatermarkConfig,
+        ): Bitmap = compose(beforeUri, afterUri, config, watermarkConfig.copy(enabled = true), RenderProfile.FULL)
+
+        private suspend fun composeInternal(
+            before: Bitmap,
+            after: Bitmap,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig,
+            profile: RenderProfile,
+            recycleInputs: Boolean = true,
         ): Bitmap {
-            val rawBefore = exifBitmapLoader.loadBitmapWithExifCorrection(beforeUri)
-            val rawAfter = exifBitmapLoader.loadBitmapWithExifCorrection(afterUri)
+            val wmBefore =
+                if (watermarkConfig.enabled) watermarkRenderer.apply(before, watermarkConfig) else before
+            val wmAfter =
+                if (watermarkConfig.enabled) watermarkRenderer.apply(after, watermarkConfig) else after
 
-            val enabledConfig = watermarkConfig.copy(enabled = true)
-            val wmBefore = watermarkRenderer.apply(rawBefore, enabledConfig)
-            val wmAfter = watermarkRenderer.apply(rawAfter, enabledConfig)
-
-            if (wmBefore !== rawBefore) rawBefore.recycle()
-            if (wmAfter !== rawAfter) rawAfter.recycle()
+            if (recycleInputs) {
+                if (wmBefore !== before && !before.isRecycled) before.recycle()
+                if (wmAfter !== after && !after.isRecycled) after.recycle()
+            }
 
             val density = context.resources.displayMetrics.density
-            val border = if (config.borderEnabled) (config.borderThicknessDp * density).toInt() else 0
+            val border =
+                if (combineConfig.borderEnabled) {
+                    (combineConfig.borderThicknessDp * density * profile.borderScale).toInt()
+                } else {
+                    0
+                }
 
             val (width, height) =
-                when (config.layout) {
+                when (combineConfig.layout) {
                     CombineLayout.HORIZONTAL -> {
                         val w = wmBefore.width + wmAfter.width + border * 3
                         val h = maxOf(wmBefore.height, wmAfter.height) + border * 2
@@ -159,15 +139,18 @@ class PairImageComposer
                     }
                 }
 
-            val combined = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val combined =
+                Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
             val canvas = Canvas(combined)
 
-            if (config.borderEnabled) {
-                canvas.drawColor(config.borderColorArgb)
+            if (combineConfig.borderEnabled) {
+                canvas.drawColor(combineConfig.borderColorArgb)
+            } else {
+                canvas.drawColor(android.graphics.Color.BLACK)
             }
 
             val (beforeLeft, beforeTop, afterLeft, afterTop) =
-                when (config.layout) {
+                when (combineConfig.layout) {
                     CombineLayout.HORIZONTAL -> {
                         listOf(border, border, border + wmBefore.width + border, border)
                     }
@@ -180,35 +163,41 @@ class PairImageComposer
             canvas.drawBitmap(wmBefore, beforeLeft.toFloat(), beforeTop.toFloat(), null)
             canvas.drawBitmap(wmAfter, afterLeft.toFloat(), afterTop.toFloat(), null)
 
-            if (config.labelEnabled) {
-                val isFree = config.labelPositionMode == LabelPositionMode.FREE
-                val cornerPx = if (isFree) config.labelBgCornerDp * density else 0f
+            if (combineConfig.labelEnabled) {
+                val isFree = combineConfig.labelPositionMode == LabelPositionMode.FREE
+                val cornerPx =
+                    if (isFree) combineConfig.labelBgCornerDp * density * profile.borderScale else 0f
                 drawLabel(
                     canvas = canvas,
-                    text = config.beforeLabel,
+                    text = combineConfig.beforeLabel,
                     imageLeft = beforeLeft,
                     imageTop = beforeTop,
                     imageWidth = wmBefore.width,
                     imageHeight = wmBefore.height,
-                    config = config,
-                    anchor = if (isFree) config.beforeLabelAnchor else null,
+                    config = combineConfig,
+                    anchor = if (isFree) combineConfig.beforeLabelAnchor else null,
                     cornerPx = cornerPx,
                 )
                 drawLabel(
                     canvas = canvas,
-                    text = config.afterLabel,
+                    text = combineConfig.afterLabel,
                     imageLeft = afterLeft,
                     imageTop = afterTop,
                     imageWidth = wmAfter.width,
                     imageHeight = wmAfter.height,
-                    config = config,
-                    anchor = if (isFree) config.afterLabelAnchor else null,
+                    config = combineConfig,
+                    anchor = if (isFree) combineConfig.afterLabelAnchor else null,
                     cornerPx = cornerPx,
                 )
             }
 
-            wmBefore.recycle()
-            wmAfter.recycle()
+            if (recycleInputs) {
+                if (!wmBefore.isRecycled) wmBefore.recycle()
+                if (!wmAfter.isRecycled) wmAfter.recycle()
+            } else {
+                if (wmBefore !== before && !wmBefore.isRecycled) wmBefore.recycle()
+                if (wmAfter !== after && !wmAfter.isRecycled) wmAfter.recycle()
+            }
 
             return combined
         }
@@ -224,13 +213,13 @@ class PairImageComposer
             anchor: LabelAnchor? = null,
             cornerPx: Float = 0f,
         ) {
-            val fontSize = imageHeight * config.labelSizeRatio
+            val fontSize = (imageHeight * config.labelSizeRatio).coerceAtLeast(10f)
             val rectHeight = (fontSize * 1.6f).toInt()
             val bgAlpha = (config.labelBgAlpha * 255).toInt().coerceIn(0, 255)
 
             val bgPaint =
                 Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = config.labelBgColorArgb
+                    color = config.effectiveLabelBgColor()
                     alpha = bgAlpha
                     style = Paint.Style.FILL
                 }
@@ -243,7 +232,6 @@ class PairImageComposer
                 }
 
             if (anchor == null) {
-                // 전체 너비 모드
                 val rectTop =
                     when (config.labelPosition) {
                         LabelPosition.TOP -> imageTop
@@ -262,7 +250,6 @@ class PairImageComposer
                 val textY = rectTop + rectHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
                 canvas.drawText(text, textX, textY, textPaint)
             } else {
-                // 자유 위치 모드
                 val textBounds = Rect()
                 textPaint.getTextBounds(text, 0, text.length, textBounds)
                 val hPad = (fontSize * 0.75f).toInt()

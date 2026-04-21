@@ -30,5 +30,6 @@ fun WatermarkSettingsRoute(
         onSelectLogo = { logoPickerLauncher.launch(arrayOf("image/*")) },
         onNavigateBack = onNavigateBack,
         watermarkRenderer = viewModel.watermarkRenderer,
+        previewSampleProvider = viewModel.previewSampleProvider,
     )
 }

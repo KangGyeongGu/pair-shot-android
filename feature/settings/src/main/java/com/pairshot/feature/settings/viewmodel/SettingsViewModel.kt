@@ -8,6 +8,7 @@ import com.pairshot.core.domain.settings.ClearCacheUseCase
 import com.pairshot.core.domain.settings.GetStorageInfoUseCase
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
@@ -48,6 +49,7 @@ class SettingsViewModel
         private val clearCacheUseCase: ClearCacheUseCase,
         private val watermarkRepository: WatermarkRepository,
         val watermarkRenderer: WatermarkRenderer,
+        val previewSampleProvider: PreviewSampleProvider,
         private val appSettingsRepository: AppSettingsRepository,
         private val appInfo: AppInfo,
     ) : ViewModel() {

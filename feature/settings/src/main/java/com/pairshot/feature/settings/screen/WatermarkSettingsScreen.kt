@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.WatermarkType
+import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
@@ -39,6 +40,7 @@ fun WatermarkSettingsScreen(
     onSelectLogo: () -> Unit,
     onNavigateBack: () -> Unit,
     watermarkRenderer: WatermarkRenderer,
+    previewSampleProvider: PreviewSampleProvider,
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -136,6 +138,7 @@ fun WatermarkSettingsScreen(
                 WatermarkPreviewSection(
                     config = watermarkConfig,
                     watermarkRenderer = watermarkRenderer,
+                    previewSampleProvider = previewSampleProvider,
                 )
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
             }

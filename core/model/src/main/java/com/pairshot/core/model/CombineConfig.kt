@@ -20,3 +20,5 @@ data class CombineConfig(
     val labelBgAlpha: Float = 0.45f,
     val labelBgMatchesBorder: Boolean = true,
 )
+
+fun CombineConfig.effectiveLabelBgColor(): Int = if (labelBgMatchesBorder && borderEnabled) borderColorArgb else labelBgColorArgb

@@ -4,20 +4,20 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.pairshot.core.navigation.ProjectDetail
-import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.pair.BatchCombineResult
 import com.pairshot.core.domain.pair.BatchCombineUseCase
 import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
-import com.pairshot.core.model.PairStatus
-import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.project.DeleteProjectUseCase
 import com.pairshot.core.domain.project.ProjectRepository
-import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
-import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.PairStatus
+import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.navigation.ProjectDetail
+import com.pairshot.core.rendering.PairImageComposer
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -77,7 +77,7 @@ class GalleryViewModel
         private val deleteProjectUseCase: DeleteProjectUseCase,
         private val combineSettingsRepository: CombineSettingsRepository,
         private val watermarkRepository: WatermarkRepository,
-        val watermarkRenderer: WatermarkRenderer,
+        val pairImageComposer: PairImageComposer,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val projectId: Long = savedStateHandle.toRoute<ProjectDetail>().projectId

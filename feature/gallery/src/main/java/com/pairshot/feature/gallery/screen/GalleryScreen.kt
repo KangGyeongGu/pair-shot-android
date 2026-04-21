@@ -27,7 +27,7 @@ import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.PairStatus
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.rendering.PairImageComposer
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.TopProgressPill
@@ -54,7 +54,7 @@ internal fun GalleryScreen(
     combinePreviewPair: PhotoPair?,
     combineConfig: CombineConfig,
     watermarkConfig: WatermarkConfig,
-    watermarkRenderer: WatermarkRenderer,
+    pairImageComposer: PairImageComposer,
     snackbarController: PairShotSnackbarController,
     deleteConfirmation: DeleteConfirmation?,
     showMoreMenu: Boolean,
@@ -309,7 +309,7 @@ internal fun GalleryScreen(
             afterUri = combinePreviewPair?.afterPhotoUri,
             combineConfig = combineConfig,
             watermarkConfig = watermarkConfig,
-            watermarkRenderer = watermarkRenderer,
+            pairImageComposer = pairImageComposer,
             onDismiss = onDismissCombineDialog,
             onCombineStart = { applyWatermark, configOverride -> onCombineSelected(applyWatermark, configOverride) },
             onNavigateToCombineSettings = onNavigateToCombineSettings,
