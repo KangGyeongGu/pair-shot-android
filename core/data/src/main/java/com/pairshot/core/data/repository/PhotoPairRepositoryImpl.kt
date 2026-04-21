@@ -17,6 +17,8 @@ import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.rendering.FileNameGenerator
 import com.pairshot.core.rendering.PairImageComposer
+import com.pairshot.core.storage.DeleteException
+import com.pairshot.core.storage.DeleteResult
 import com.pairshot.core.storage.MediaStoreManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -67,9 +69,9 @@ class PhotoPairRepositoryImpl
 
         override suspend fun delete(pair: PhotoPair) =
             withContext(Dispatchers.IO) {
-                mediaStoreManager.deleteFromGallery(Uri.parse(pair.beforePhotoUri))
-                pair.afterPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
-                pair.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                deleteGalleryUriOrThrow(pair.beforePhotoUri)
+                pair.afterPhotoUri?.let { deleteGalleryUriOrThrow(it) }
+                pair.combinedPhotoUri?.let { deleteGalleryUriOrThrow(it) }
                 photoPairDao.delete(pair.toEntity())
                 projectDao.updateTimestamp(pair.projectId, System.currentTimeMillis())
             }
@@ -79,8 +81,8 @@ class PhotoPairRepositoryImpl
                 val entity =
                     photoPairDao.getById(pairId)
                         ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
-                entity.afterPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
-                entity.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                entity.afterPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "이전 After 사진 삭제 실패") }
+                entity.combinedPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "이전 합성 사진 삭제 실패") }
                 photoPairDao.update(
                     entity.copy(
                         afterPhotoUri = null,
@@ -97,7 +99,7 @@ class PhotoPairRepositoryImpl
                 val entity =
                     photoPairDao.getById(pairId)
                         ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
-                entity.combinedPhotoUri?.let { mediaStoreManager.deleteFromGallery(Uri.parse(it)) }
+                entity.combinedPhotoUri?.let { deleteGalleryUriOrThrow(it) }
                 photoPairDao.update(
                     entity.copy(
                         combinedPhotoUri = null,
@@ -156,8 +158,7 @@ class PhotoPairRepositoryImpl
                         projectDao.getById(projectId)
                             ?: throw IllegalArgumentException("Project not found: $projectId")
 
-                    val currentCount = photoPairDao.countByProject(projectId).first()
-                    val sequenceNumber = currentCount + 1
+                    val sequenceNumber = (photoPairDao.getMaxId() ?: 0L).plus(1L).toInt()
 
                     val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
                     val fileName = fileNameGenerator.generateBeforeFileName(sequenceNumber, prefix)
@@ -183,7 +184,7 @@ class PhotoPairRepositoryImpl
                         projectDao.updateTimestamp(projectId, System.currentTimeMillis())
                         pairId
                     } catch (e: Exception) {
-                        mediaStoreManager.deleteFromGallery(savedUri)
+                        deleteGalleryUriLogOnFailure(savedUri.toString(), "BEFORE rollback 실패")
                         throw e
                     }
                 } finally {
@@ -203,20 +204,8 @@ class PhotoPairRepositoryImpl
                     projectDao.getById(entity.projectId)
                         ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
 
-                entity.afterPhotoUri?.let {
-                    try {
-                        mediaStoreManager.deleteFromGallery(Uri.parse(it))
-                    } catch (e: Exception) {
-                        Timber.w(e, "이전 After 사진 삭제 실패: $it")
-                    }
-                }
-                entity.combinedPhotoUri?.let {
-                    try {
-                        mediaStoreManager.deleteFromGallery(Uri.parse(it))
-                    } catch (e: Exception) {
-                        Timber.w(e, "이전 합성 사진 삭제 실패: $it")
-                    }
-                }
+                entity.afterPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "이전 After 사진 삭제 실패") }
+                entity.combinedPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "이전 합성 사진 삭제 실패") }
 
                 val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
                 val prefix = appSettingsRepository.settingsFlow.first().fileNamePrefix
@@ -241,7 +230,7 @@ class PhotoPairRepositoryImpl
                     )
                     projectDao.updateTimestamp(entity.projectId, now)
                 } catch (e: Exception) {
-                    mediaStoreManager.deleteFromGallery(savedUri)
+                    deleteGalleryUriLogOnFailure(savedUri.toString(), "AFTER rollback 실패")
                     throw e
                 }
             } finally {
@@ -258,6 +247,10 @@ class PhotoPairRepositoryImpl
                 val entity =
                     photoPairDao.getById(pairId)
                         ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
+                val pairDomain = entity.toDomain()
+                check(pairDomain.status == PairStatus.PAIRED || pairDomain.status == PairStatus.COMBINED) {
+                    "combinePair requires PAIRED or COMBINED status, got ${pairDomain.status}"
+                }
                 val project =
                     projectDao.getById(entity.projectId)
                         ?: throw IllegalArgumentException("Project not found: ${entity.projectId}")
@@ -268,6 +261,8 @@ class PhotoPairRepositoryImpl
                         entity.afterPhotoUri
                             ?: throw IllegalStateException("After photo missing for pair: $pairId"),
                     )
+
+                entity.combinedPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "기존 합성 사진 삭제 실패") }
 
                 val combineConfig = combineConfigOverride ?: combineSettingsRepository.getConfig()
                 val withWatermark =
@@ -304,10 +299,49 @@ class PhotoPairRepositoryImpl
                     projectDao.updateTimestamp(entity.projectId, System.currentTimeMillis())
                     uriString
                 } catch (e: Exception) {
-                    mediaStoreManager.deleteFromGallery(savedUri)
+                    deleteGalleryUriLogOnFailure(savedUri.toString(), "COMBINED rollback 실패")
                     throw e
                 }
             }
+
+        private fun deleteGalleryUriOrThrow(uriString: String) {
+            val result = mediaStoreManager.deleteFromGallery(Uri.parse(uriString))
+            when (result) {
+                is DeleteResult.Success, DeleteResult.NotFound -> {
+                    Unit
+                }
+
+                is DeleteResult.Failed -> {
+                    Timber.w(result.exception, "MediaStore 삭제 실패: $uriString")
+                    throw DeleteException(result)
+                }
+
+                is DeleteResult.RecoverablePermission -> {
+                    Timber.w(result.exception, "MediaStore 삭제 권한 필요: $uriString")
+                    throw DeleteException(result)
+                }
+            }
+        }
+
+        private fun deleteGalleryUriLogOnFailure(
+            uriString: String,
+            failureLogMessage: String,
+        ) {
+            val result = mediaStoreManager.deleteFromGallery(Uri.parse(uriString))
+            when (result) {
+                is DeleteResult.Success, DeleteResult.NotFound -> {
+                    Unit
+                }
+
+                is DeleteResult.Failed -> {
+                    Timber.w(result.exception, "$failureLogMessage: $uriString")
+                }
+
+                is DeleteResult.RecoverablePermission -> {
+                    Timber.w(result.exception, "$failureLogMessage (권한 필요): $uriString")
+                }
+            }
+        }
 
         private fun extractSequenceNumber(beforePhotoUri: String): Int {
             val match = Regex("BEFORE_(\\d+)_").find(beforePhotoUri)

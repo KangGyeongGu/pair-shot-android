@@ -22,6 +22,7 @@ object DatabaseModule {
     ): PairShotDatabase =
         Room
             .databaseBuilder(context, PairShotDatabase::class.java, "pairshot.db")
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
 
     @Provides

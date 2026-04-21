@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -59,21 +60,26 @@ class MediaStoreManager
                 resolver.insert(imageCollection, imageDetails)
                     ?: throw IllegalStateException("MediaStore insert failed")
 
-            resolver.openInputStream(tempFileUri)?.use { input ->
-                resolver.openOutputStream(imageUri)?.use { output ->
-                    input.copyTo(output)
-                } ?: throw IllegalStateException("Failed to open output stream")
-            } ?: throw IllegalStateException("Failed to open input stream")
+            try {
+                resolver.openInputStream(tempFileUri)?.use { input ->
+                    resolver.openOutputStream(imageUri)?.use { output ->
+                        input.copyTo(output)
+                    } ?: throw IllegalStateException("Failed to open output stream")
+                } ?: throw IllegalStateException("Failed to open input stream")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val updateValues =
-                    ContentValues().apply {
-                        put(MediaStore.Images.Media.IS_PENDING, 0)
-                    }
-                resolver.update(imageUri, updateValues, null, null)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val updateValues =
+                        ContentValues().apply {
+                            put(MediaStore.Images.Media.IS_PENDING, 0)
+                        }
+                    resolver.update(imageUri, updateValues, null, null)
+                }
+
+                return imageUri
+            } catch (e: Exception) {
+                rollbackInsertedUri(imageUri)
+                throw e
             }
-
-            return imageUri
         }
 
         fun deleteFromGallery(contentUri: Uri): DeleteResult =
@@ -117,18 +123,31 @@ class MediaStoreManager
                 resolver.insert(imageCollection, imageDetails)
                     ?: throw IllegalStateException("MediaStore insert failed")
 
-            resolver.openOutputStream(imageUri)?.use { output ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
-            } ?: throw IllegalStateException("Failed to open output stream")
+            try {
+                resolver.openOutputStream(imageUri)?.use { output ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
+                } ?: throw IllegalStateException("Failed to open output stream")
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                val updateValues =
-                    ContentValues().apply {
-                        put(MediaStore.Images.Media.IS_PENDING, 0)
-                    }
-                resolver.update(imageUri, updateValues, null, null)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val updateValues =
+                        ContentValues().apply {
+                            put(MediaStore.Images.Media.IS_PENDING, 0)
+                        }
+                    resolver.update(imageUri, updateValues, null, null)
+                }
+
+                return imageUri
+            } catch (e: Exception) {
+                rollbackInsertedUri(imageUri)
+                throw e
             }
+        }
 
-            return imageUri
+        private fun rollbackInsertedUri(uri: Uri) {
+            try {
+                context.contentResolver.delete(uri, null, null)
+            } catch (rollbackError: Exception) {
+                Timber.w(rollbackError, "MediaStore rollback failed for $uri")
+            }
         }
     }
