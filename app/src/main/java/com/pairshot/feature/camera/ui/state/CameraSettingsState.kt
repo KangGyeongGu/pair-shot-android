@@ -2,6 +2,7 @@ package com.pairshot.feature.camera.ui.state
 
 import android.util.Range
 import android.util.Rational
+import com.pairshot.core.model.FlashMode
 
 data class CameraCapabilities(
     val hasFlash: Boolean = false,
@@ -20,5 +21,3 @@ data class CameraSettingsState(
     val exposureIndex: Int = 0,
     val showPanel: Boolean = false,
 )
-
-enum class FlashMode { OFF, AUTO, ON, TORCH }

@@ -1,10 +1,5 @@
 package com.pairshot.feature.camera.ui.chrome
 
-import android.media.AudioManager
-import android.media.MediaPlayer
-import android.net.Uri
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,30 +17,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import com.pairshot.feature.camera.ui.component.ShutterButton
-import java.io.File
 
 @Composable
 internal fun CameraBottomBar(
-    imageCapture: ImageCapture,
     isSaving: Boolean,
     shutterEnabled: Boolean,
-    shutterPlayer: MediaPlayer?,
-    audioManager: AudioManager,
-    tempFilePrefix: String,
     height: Dp,
     onToggleLens: () -> Unit,
     onToggleSettings: () -> Unit,
-    onShowBlackout: () -> Unit,
-    onImageSaved: (String) -> Unit,
-    onCaptureError: (String) -> Unit,
+    onShutterClick: () -> Unit,
 ) {
-    val context = LocalContext.current
-
     Box(
         modifier =
             Modifier
@@ -78,41 +62,7 @@ internal fun CameraBottomBar(
         }
 
         ShutterButton(
-            onClick = {
-                shutterPlayer?.let { player ->
-                    val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-                    val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                    val ratio = if (max > 0) current.toFloat() / max else 0f
-                    val vol = ratio * 0.10f
-                    player.setVolume(vol, vol)
-                    if (player.isPlaying) player.seekTo(0) else player.start()
-                }
-                onShowBlackout()
-
-                val tempDir = File(context.cacheDir, "temp").also { it.mkdirs() }
-                val tempFile = File(tempDir, "${tempFilePrefix}${System.currentTimeMillis()}.jpg")
-                val outputFileOptions =
-                    ImageCapture.OutputFileOptions
-                        .Builder(tempFile)
-                        .build()
-                imageCapture.takePicture(
-                    outputFileOptions,
-                    ContextCompat.getMainExecutor(context),
-                    object : ImageCapture.OnImageSavedCallback {
-                        override fun onError(exception: ImageCaptureException) {
-                            tempFile.delete()
-                            onCaptureError(exception.message ?: "촬영 실패")
-                        }
-
-                        override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                            val savedUri =
-                                outputFileResults.savedUri
-                                    ?: Uri.fromFile(tempFile)
-                            onImageSaved(savedUri.toString())
-                        }
-                    },
-                )
-            },
+            onClick = onShutterClick,
             enabled = !isSaving && shutterEnabled,
             modifier = Modifier.align(Alignment.Center),
         )

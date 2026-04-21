@@ -3,9 +3,6 @@ package com.pairshot.feature.camera.ui.preview
 import android.util.Range
 import android.util.Rational
 import androidx.camera.compose.CameraXViewfinder
-import androidx.camera.core.CameraControl
-import androidx.camera.core.FocusMeteringAction
-import androidx.camera.core.SurfaceOrientedMeteringPointFactory
 import androidx.camera.core.SurfaceRequest
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -31,12 +28,10 @@ import com.pairshot.feature.camera.ui.component.CameraOverlayLayer
 import com.pairshot.feature.camera.ui.component.FocusExposureOverlay
 import com.pairshot.feature.camera.ui.component.ZoomControls
 import com.pairshot.feature.camera.ui.component.ZoomUiState
-import java.util.concurrent.TimeUnit
 
 @Composable
 internal fun CameraPreviewPane(
     surfaceRequest: SurfaceRequest?,
-    cameraControl: CameraControl?,
     zoomUiState: ZoomUiState,
     blackoutAlpha: Float,
     gridEnabled: Boolean,
@@ -51,6 +46,7 @@ internal fun CameraPreviewPane(
     onDragEnd: () -> Unit,
     onExposureReset: () -> Unit,
     onExposureAdjust: (Int) -> Unit,
+    onTapToFocus: (x: Float, y: Float, viewWidth: Int, viewHeight: Int) -> Unit,
     overlayContent: (@Composable () -> Unit)? = null,
 ) {
     val latestZoomRatio = rememberUpdatedState(zoomUiState.currentRatio)
@@ -60,13 +56,11 @@ internal fun CameraPreviewPane(
             Modifier
                 .fillMaxWidth()
                 .height(height)
-                .pointerInput(cameraControl, zoomUiState.minRatio, zoomUiState.maxRatio) {
+                .pointerInput(zoomUiState.minRatio, zoomUiState.maxRatio) {
                     detectTransformGestures { _, _, zoom, _ ->
-                        val control = cameraControl ?: return@detectTransformGestures
                         val newRatio =
                             (latestZoomRatio.value * zoom)
                                 .coerceIn(zoomUiState.minRatio, zoomUiState.maxRatio)
-                        control.setZoomRatio(newRatio)
                         onZoomRatioChanged(newRatio)
                     }
                 },
@@ -137,21 +131,7 @@ internal fun CameraPreviewPane(
                 )
 
                 FocusExposureOverlay(
-                    onTapToFocus = { x, y, viewWidth, viewHeight ->
-                        val control = cameraControl ?: return@FocusExposureOverlay
-                        val factory =
-                            SurfaceOrientedMeteringPointFactory(
-                                viewWidth.toFloat(),
-                                viewHeight.toFloat(),
-                            )
-                        val point = factory.createPoint(x, y)
-                        val action =
-                            FocusMeteringAction
-                                .Builder(point)
-                                .setAutoCancelDuration(3, TimeUnit.SECONDS)
-                                .build()
-                        control.startFocusAndMetering(action)
-                    },
+                    onTapToFocus = onTapToFocus,
                     onExposureReset = onExposureReset,
                     onExposureAdjust = onExposureAdjust,
                     exposureRange = exposureRange,
@@ -162,14 +142,8 @@ internal fun CameraPreviewPane(
 
                 ZoomControls(
                     zoomUiState = zoomUiState,
-                    onZoomRatioChanged = { newRatio ->
-                        cameraControl?.setZoomRatio(newRatio)
-                        onZoomRatioChanged(newRatio)
-                    },
-                    onPresetTapped = { preset ->
-                        onPresetTapped(preset)
-                        cameraControl?.setZoomRatio(zoomUiState.currentRatio)
-                    },
+                    onZoomRatioChanged = onZoomRatioChanged,
+                    onPresetTapped = onPresetTapped,
                     onDragEnd = onDragEnd,
                     modifier =
                         Modifier

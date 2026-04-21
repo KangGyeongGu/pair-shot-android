@@ -1,10 +1,5 @@
 package com.pairshot.feature.camera.ui.screen
 
-import android.media.AudioManager
-import android.media.MediaPlayer
-import androidx.camera.core.CameraControl
-import androidx.camera.extensions.ExtensionsManager
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -22,7 +17,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
@@ -47,7 +40,6 @@ import com.pairshot.feature.camera.ui.chrome.CameraBottomBar
 import com.pairshot.feature.camera.ui.component.BeforePreviewStrip
 import com.pairshot.feature.camera.ui.component.CameraSettingsSheet
 import com.pairshot.feature.camera.ui.component.OverlayGuide
-import com.pairshot.feature.camera.ui.coordinator.CameraSessionCoordinator
 import com.pairshot.feature.camera.ui.preview.CameraPreviewPane
 import com.pairshot.feature.camera.ui.viewmodel.AfterCameraEvent
 import com.pairshot.feature.camera.ui.viewmodel.AfterCameraViewModel
@@ -62,69 +54,31 @@ internal fun AfterCameraScreen(
     viewModel: AfterCameraViewModel,
     onNavigateBack: () -> Unit,
 ) {
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
     val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
-    val lensFacing by viewModel.lensFacing.collectAsStateWithLifecycle()
     val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
-    val roll by viewModel.levelSensorManager.roll.collectAsStateWithLifecycle()
+    val roll by viewModel.roll.collectAsStateWithLifecycle()
+    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
 
     val currentPair = unpairedPhotos.getOrNull(currentIndex)
     val totalCount = unpairedPhotos.size
     val completedCount = (totalPairCount - totalCount).coerceAtLeast(0)
     val beforePreviewUris = unpairedPhotos.map { it.beforePhotoUri }
 
-    var surfaceRequest by remember { mutableStateOf<androidx.camera.core.SurfaceRequest?>(null) }
-    var cameraControl by remember { mutableStateOf<CameraControl?>(null) }
-    val cameraProviderState = remember { mutableStateOf<ProcessCameraProvider?>(null) }
-    val extensionsManagerState = remember { mutableStateOf<ExtensionsManager?>(null) }
-
     val snackbarController = remember { PairShotSnackbarController() }
     val thumbnailListState = rememberLazyListState()
 
-    val audioManager =
-        remember {
-            context.getSystemService(android.content.Context.AUDIO_SERVICE) as AudioManager
-        }
-    val shutterPlayer =
-        remember {
-            val candidates =
-                listOf(
-                    "/system/media/audio/ui/camera_click.ogg",
-                    "/system/media/audio/ui/camera_shutter.ogg",
-                    "/system/media/audio/ui/CameraClick.ogg",
-                )
-            val path = candidates.firstOrNull { java.io.File(it).exists() }
-            path?.let {
-                MediaPlayer().apply {
-                    setDataSource(it)
-                    prepare()
-                }
-            }
-        }
-    DisposableEffect(Unit) {
-        onDispose {
-            shutterPlayer?.release()
-            cameraProviderState.value?.unbindAll()
-            cameraProviderState.value = null
-            surfaceRequest = null
-            cameraControl = null
-        }
-    }
-
-    // level 센서가 백그라운드에서 동작하지 않도록 lifecycle 관찰 등록
-    DisposableEffect(lifecycleOwner) {
-        viewModel.levelSensorManager.observeLifecycle(lifecycleOwner.lifecycle)
-        onDispose { /* observer 해제는 LevelSensorManager.stop()이 담당 */ }
+    LaunchedEffect(lifecycleOwner) {
+        viewModel.bind(lifecycleOwner)
     }
 
     var showBlackout by remember { mutableStateOf(false) }
@@ -152,8 +106,6 @@ internal fun AfterCameraScreen(
     LaunchedEffect(currentIndex, unpairedPhotos) {
         val pair = unpairedPhotos.getOrNull(currentIndex) ?: return@LaunchedEffect
         viewModel.restoreZoomForPair(pair.zoomLevel)
-        val restored = viewModel.zoomUiState.value.currentRatio
-        cameraControl?.setZoomRatio(restored)
     }
 
     LaunchedEffect(Unit) {
@@ -186,29 +138,6 @@ internal fun AfterCameraScreen(
             }
         }
     }
-
-    CameraSessionCoordinator(
-        lensFacing = lensFacing,
-        nightModeEnabled = settingsState.nightModeEnabled,
-        hdrEnabled = settingsState.hdrEnabled,
-        flashMode = settingsState.flashMode,
-        exposureIndex = settingsState.exposureIndex,
-        imageCapture = viewModel.imageCapture,
-        cameraProviderState = cameraProviderState,
-        extensionsManagerState = extensionsManagerState,
-        getExtensionCameraSelector = { extManager -> viewModel.getExtensionCameraSelector(extManager) },
-        applyFlashMode = { ic -> viewModel.applyFlashMode(ic) },
-        cameraControlProvider = { cameraControl },
-        onSurfaceRequest = { surfaceRequest = it },
-        onCameraReady = { cameraControl = it },
-        onZoomStateReady = { min, max -> viewModel.initFromZoomState(min, max) },
-        onCapabilitiesReady = { info, extManager -> viewModel.updateCapabilities(info, extManager) },
-        onInitialZoom = { control ->
-            val zoom = unpairedPhotos.getOrNull(currentIndex)?.zoomLevel ?: 1f
-            viewModel.restoreZoomForPair(zoom)
-            control.setZoomRatio(viewModel.zoomUiState.value.currentRatio)
-        },
-    )
 
     val density = LocalDensity.current
     BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.Black)) {
@@ -250,7 +179,6 @@ internal fun AfterCameraScreen(
 
                 CameraPreviewPane(
                     surfaceRequest = surfaceRequest,
-                    cameraControl = cameraControl,
                     zoomUiState = zoomUiState,
                     blackoutAlpha = blackoutAlpha,
                     gridEnabled = settingsState.gridEnabled,
@@ -260,22 +188,13 @@ internal fun AfterCameraScreen(
                     currentExposureIndex = settingsState.exposureIndex,
                     exposureStep = capabilities.exposureStep,
                     height = previewSectionHeight,
-                    onZoomRatioChanged = { newRatio ->
-                        cameraControl?.setZoomRatio(newRatio)
-                        viewModel.updateZoomRatio(newRatio)
-                    },
-                    onPresetTapped = { preset ->
-                        viewModel.onPresetTapped(preset)
-                        cameraControl?.setZoomRatio(viewModel.zoomUiState.value.currentRatio)
-                    },
+                    onZoomRatioChanged = { newRatio -> viewModel.updateZoomRatio(newRatio) },
+                    onPresetTapped = { preset -> viewModel.onPresetTapped(preset) },
                     onDragEnd = { viewModel.applyCustomRatio() },
-                    onExposureReset = {
-                        viewModel.setExposureIndex(0)
-                        cameraControl?.setExposureCompensationIndex(0)
-                    },
-                    onExposureAdjust = { index ->
-                        viewModel.setExposureIndex(index)
-                        cameraControl?.setExposureCompensationIndex(index)
+                    onExposureReset = { viewModel.setExposureIndex(0) },
+                    onExposureAdjust = { index -> viewModel.setExposureIndex(index) },
+                    onTapToFocus = { x, y, w, h ->
+                        viewModel.onFocusRequested(x, y, w.toFloat(), h.toFloat())
                     },
                     overlayContent = {
                         if (overlayEnabled) {
@@ -299,18 +218,15 @@ internal fun AfterCameraScreen(
                 )
 
                 CameraBottomBar(
-                    imageCapture = viewModel.imageCapture,
                     isSaving = isSaving,
                     shutterEnabled = currentPair != null,
-                    shutterPlayer = shutterPlayer,
-                    audioManager = audioManager,
-                    tempFilePrefix = "after_",
                     height = shutterSectionHeight,
                     onToggleLens = { viewModel.toggleLensFacing() },
                     onToggleSettings = { viewModel.toggleSettingsPanel() },
-                    onShowBlackout = { showBlackout = true },
-                    onImageSaved = { uri -> viewModel.onAfterCaptured(uri) },
-                    onCaptureError = { msg -> viewModel.emitCaptureError(msg) },
+                    onShutterClick = {
+                        showBlackout = true
+                        viewModel.onAfterCaptured()
+                    },
                 )
 
                 Spacer(modifier = Modifier.height(bottomSpacerHeight))

@@ -57,7 +57,6 @@ class LocationProvider
 
         @SuppressWarnings("MissingPermission")
         private suspend fun getLastLocation(): Location? {
-            // 1순위: 캐시된 마지막 위치 (즉시 반환)
             val cached =
                 suspendCancellableCoroutine<Location?> { cont ->
                     fusedClient.lastLocation
@@ -66,7 +65,6 @@ class LocationProvider
                 }
             if (cached != null) return cached
 
-            // 2순위: 새 위치 요청 (최대 8초 대기)
             return withTimeoutOrNull(8_000L) {
                 suspendCancellableCoroutine { cont ->
                     val cancellationToken = CancellationTokenSource()
