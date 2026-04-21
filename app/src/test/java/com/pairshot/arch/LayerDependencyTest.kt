@@ -19,58 +19,55 @@ import com.tngtech.archunit.library.Architectures.layeredArchitecture
 )
 class LayerDependencyTest {
     @ArchTest
-    val `L-01 UI should not directly access Data`: ArchRule =
+    val `L-01 Feature should not directly access Data layer Impl`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("com.pairshot.data..")
-            .because("UI layer must access Data only through Domain layer")
+            .resideInAPackage("com.pairshot.core.data.repository..")
+            .because("Feature must access Data only through Domain layer interfaces")
 
     @ArchTest
-    val `L-02 Data should not access UI`: ArchRule =
+    val `L-02 Data should not access Feature`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..data..")
+            .resideInAPackage("com.pairshot.core.data..")
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("..ui..")
-            .because("Data layer must not depend on UI layer")
+            .resideInAPackage("com.pairshot.feature..")
+            .because("Data layer must not depend on Feature layer")
 
     @ArchTest
     val `L-03 Domain should not access Data`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..domain..")
+            .resideInAPackage("com.pairshot.core.domain..")
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("com.pairshot.data..")
+            .resideInAPackage("com.pairshot.core.data..")
             .because("Domain layer must not depend on Data layer")
 
     @ArchTest
     val `L-04 layered architecture`: ArchRule =
         layeredArchitecture()
             .consideringOnlyDependenciesInLayers()
-            .layer("Feature-UI")
-            .definedBy("com.pairshot.feature..ui..")
+            .layer("Feature")
+            .definedBy("com.pairshot.feature..")
             .layer("Data")
-            .definedBy("com.pairshot.data..")
-            .layer("DI")
-            .definedBy("com.pairshot.di..")
-            .layer("Core")
-            .definedBy("com.pairshot.core..")
+            .definedBy("com.pairshot.core.data..")
+            .layer("Domain")
+            .definedBy("com.pairshot.core.domain..")
+            .layer("Infra")
+            .definedBy("com.pairshot.core.infra..")
             .layer("AppShell")
-            .definedBy("com.pairshot.app..")
-            .whereLayer("Feature-UI")
+            .definedBy("com.pairshot.app..", "com.pairshot.di..")
+            .whereLayer("Feature")
             .mayOnlyBeAccessedByLayers("AppShell")
             .whereLayer("Data")
-            .mayOnlyBeAccessedByLayers("DI", "Core")
-            .whereLayer("Core")
-            .mayOnlyBeAccessedByLayers(
-                "Feature-UI",
-                "Data",
-                "DI",
-                "AppShell",
-            )
+            .mayOnlyBeAccessedByLayers("AppShell")
+            .whereLayer("Domain")
+            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "AppShell")
+            .whereLayer("Infra")
+            .mayOnlyBeAccessedByLayers("Feature", "Data", "AppShell")
 }

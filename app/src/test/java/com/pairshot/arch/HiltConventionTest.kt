@@ -37,26 +37,26 @@ class HiltConventionTest {
             .and()
             .areTopLevelClasses()
             .should()
-            .resideInAPackage("com.pairshot.di..")
-            .because("All Hilt @Module classes must be in di/ package")
+            .resideInAnyPackage("com.pairshot.di..", "..core..di..", "..feature..di..")
+            .because("All Hilt @Module classes must be in di/ package (app or module-scoped)")
 
     @ArchTest
-    val `H-03 ViewModel should not depend on data layer`: ArchRule =
+    val `H-03 ViewModel should not depend on core data layer`: ArchRule =
         noClasses()
             .that()
             .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("com.pairshot.data..")
+            .resideInAPackage("com.pairshot.core.data..")
             .because("ViewModel must access data through Domain layer only")
 
     @ArchTest
-    val `H-04 UI should not access Room directly`: ArchRule =
+    val `H-04 Feature should not access Room directly`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
             .resideInAPackage("androidx.room..")
-            .because("UI must not access Room database directly")
+            .because("Feature must not access Room database directly")
 }

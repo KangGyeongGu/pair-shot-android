@@ -1,4 +1,4 @@
-package com.pairshot.di.feature
+package com.pairshot.core.data.di
 
 import com.pairshot.core.domain.project.ProjectRepository
 import com.pairshot.core.data.repository.ProjectRepositoryImpl

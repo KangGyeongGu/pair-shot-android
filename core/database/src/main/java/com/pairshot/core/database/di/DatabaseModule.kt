@@ -1,4 +1,4 @@
-package com.pairshot.di.core
+package com.pairshot.core.database.di
 
 import android.content.Context
 import androidx.room.Room

@@ -28,14 +28,32 @@ class ViewModelBoundaryTest {
             .because("ViewModel must not own Context — delegate to UseCase or Data layer")
 
     @ArchTest
-    val `V-02 ViewModel should not use CameraX`: ArchRule =
+    val `V-02 ViewModel should not own concrete CameraX types`: ArchRule =
         noClasses()
             .that()
             .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
             .should()
             .dependOnClassesThat()
-            .resideInAPackage("androidx.camera..")
-            .because("ViewModel must not own CameraX objects — delegate to UI Coordinator")
+            .haveFullyQualifiedName("androidx.camera.core.ImageCapture")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("androidx.camera.core.Preview")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("androidx.camera.core.CameraInfo")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("androidx.camera.core.CameraControl")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("androidx.camera.lifecycle.ProcessCameraProvider")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("androidx.camera.extensions.ExtensionsManager")
+            .because(
+                "ViewModel must only hold CameraSession interface (Pragmatic B-4). " +
+                    "SurfaceRequest via StateFlow is allowed. Concrete CameraX types are forbidden.",
+            )
 
     @ArchTest
     val `V-03 ViewModel should not use hardware sensors`: ArchRule =
