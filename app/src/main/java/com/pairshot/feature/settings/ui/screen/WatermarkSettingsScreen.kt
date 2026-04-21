@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.WatermarkType
-import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSectionLabel

@@ -27,7 +27,7 @@ import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.PairStatus
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.TopProgressPill

@@ -10,8 +10,8 @@ import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.util.FileNameGenerator
-import com.pairshot.core.util.PairImageComposer
+import com.pairshot.core.rendering.FileNameGenerator
+import com.pairshot.core.rendering.PairImageComposer
 import com.pairshot.data.local.db.dao.PhotoPairDao
 import com.pairshot.data.local.db.dao.ProjectDao
 import com.pairshot.data.local.db.entity.PhotoPairEntity

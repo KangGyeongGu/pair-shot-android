@@ -83,6 +83,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
     implementation(project(":core:navigation"))
+    implementation(project(":core:rendering"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)

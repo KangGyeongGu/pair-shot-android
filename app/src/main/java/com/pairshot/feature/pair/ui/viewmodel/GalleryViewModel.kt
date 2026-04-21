@@ -17,7 +17,7 @@ import com.pairshot.core.domain.project.DeleteProjectUseCase
 import com.pairshot.core.domain.project.ProjectRepository
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
-import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import dagger.hilt.android.lifecycle.HiltViewModel

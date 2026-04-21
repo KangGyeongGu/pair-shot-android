@@ -62,7 +62,7 @@ import com.pairshot.core.model.LabelAnchor
 import com.pairshot.core.model.LabelPosition
 import com.pairshot.core.model.LabelPositionMode
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.PairShotBottomSheet
 import com.pairshot.core.ui.component.PairShotDialog
 import kotlinx.coroutines.Dispatchers

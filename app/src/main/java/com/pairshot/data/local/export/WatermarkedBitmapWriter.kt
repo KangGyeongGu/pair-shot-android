@@ -8,8 +8,8 @@ import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.CombineLayout
 import com.pairshot.core.model.LabelPosition
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.infra.image.WatermarkRenderer
-import com.pairshot.core.util.ExifBitmapLoader
+import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.rendering.ExifBitmapLoader
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject

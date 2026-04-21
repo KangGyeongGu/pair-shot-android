@@ -6,7 +6,7 @@ import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.domain.settings.WatermarkRepository
-import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.rendering.WatermarkRenderer
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

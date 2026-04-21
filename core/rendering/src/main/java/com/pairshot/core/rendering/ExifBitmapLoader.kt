@@ -1,4 +1,4 @@
-package com.pairshot.core.util
+package com.pairshot.core.rendering
 
 import android.content.Context
 import android.graphics.Bitmap

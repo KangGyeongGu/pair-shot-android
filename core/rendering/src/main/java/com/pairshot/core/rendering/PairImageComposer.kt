@@ -1,4 +1,4 @@
-package com.pairshot.core.util
+package com.pairshot.core.rendering
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,7 +12,7 @@ import com.pairshot.core.model.LabelAnchor
 import com.pairshot.core.model.LabelPosition
 import com.pairshot.core.model.LabelPositionMode
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.infra.image.WatermarkRenderer
+import com.pairshot.core.rendering.WatermarkRenderer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
