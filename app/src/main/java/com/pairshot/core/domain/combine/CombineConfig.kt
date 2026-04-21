@@ -12,6 +12,7 @@ data class CombineConfig(
     val labelPosition: LabelPosition = LabelPosition.BOTTOM,
     val beforeLabelAnchor: LabelAnchor = LabelAnchor.BOTTOM_LEFT,
     val afterLabelAnchor: LabelAnchor = LabelAnchor.BOTTOM_LEFT,
+    val labelBgEnabled: Boolean = true,
     val labelBgCornerDp: Int = 0,
     val labelSizeRatio: Float = 0.04f,
     val labelTextColorArgb: Int = 0xFFFFFFFF.toInt(),

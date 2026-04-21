@@ -249,13 +249,15 @@ class PairImageComposer
                         LabelPosition.TOP -> imageTop
                         LabelPosition.BOTTOM -> imageTop + imageHeight - rectHeight
                     }
-                canvas.drawRect(
-                    imageLeft.toFloat(),
-                    rectTop.toFloat(),
-                    (imageLeft + imageWidth).toFloat(),
-                    (rectTop + rectHeight).toFloat(),
-                    bgPaint,
-                )
+                if (config.labelBgEnabled) {
+                    canvas.drawRect(
+                        imageLeft.toFloat(),
+                        rectTop.toFloat(),
+                        (imageLeft + imageWidth).toFloat(),
+                        (rectTop + rectHeight).toFloat(),
+                        bgPaint,
+                    )
+                }
                 val textX = imageLeft + imageWidth / 2f
                 val textY = rectTop + rectHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
                 canvas.drawText(text, textX, textY, textPaint)
@@ -296,24 +298,19 @@ class PairImageComposer
                         }
                     }
 
-                if (cornerPx > 0f) {
-                    canvas.drawRoundRect(
-                        rectLeft.toFloat(),
-                        rectTop.toFloat(),
-                        (rectLeft + rectWidth).toFloat(),
-                        (rectTop + rectHeight).toFloat(),
-                        cornerPx,
-                        cornerPx,
-                        bgPaint,
-                    )
-                } else {
-                    canvas.drawRect(
-                        rectLeft.toFloat(),
-                        rectTop.toFloat(),
-                        (rectLeft + rectWidth).toFloat(),
-                        (rectTop + rectHeight).toFloat(),
-                        bgPaint,
-                    )
+                if (config.labelBgEnabled) {
+                    val rf =
+                        android.graphics.RectF(
+                            rectLeft.toFloat(),
+                            rectTop.toFloat(),
+                            (rectLeft + rectWidth).toFloat(),
+                            (rectTop + rectHeight).toFloat(),
+                        )
+                    if (cornerPx > 0f) {
+                        canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
+                    } else {
+                        canvas.drawRect(rf, bgPaint)
+                    }
                 }
                 val textX = rectLeft + rectWidth / 2f
                 val textY = rectTop + rectHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f

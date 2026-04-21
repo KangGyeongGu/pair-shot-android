@@ -43,6 +43,7 @@ class CombinePreferences
             val LABEL_TEXT_COLOR_ARGB = intPreferencesKey("combine_label_text_color_argb")
             val LABEL_BG_COLOR_ARGB = intPreferencesKey("combine_label_bg_color_argb")
             val LABEL_BG_ALPHA = floatPreferencesKey("combine_label_bg_alpha")
+            val LABEL_BG_ENABLED = booleanPreferencesKey("label_bg_enabled")
             val LABEL_BG_MATCHES_BORDER = booleanPreferencesKey("label_bg_matches_border")
             val LABEL_POSITION_MODE = stringPreferencesKey("label_position_mode")
             val BEFORE_LABEL_ANCHOR = stringPreferencesKey("before_label_anchor")
@@ -71,6 +72,7 @@ class CombinePreferences
                     labelTextColorArgb = prefs[Keys.LABEL_TEXT_COLOR_ARGB] ?: 0xFFFFFFFF.toInt(),
                     labelBgColorArgb = prefs[Keys.LABEL_BG_COLOR_ARGB] ?: 0xFF000000.toInt(),
                     labelBgAlpha = prefs[Keys.LABEL_BG_ALPHA] ?: 0.45f,
+                    labelBgEnabled = prefs[Keys.LABEL_BG_ENABLED] ?: true,
                     labelBgMatchesBorder = prefs[Keys.LABEL_BG_MATCHES_BORDER] ?: true,
                     labelPositionMode =
                         prefs[Keys.LABEL_POSITION_MODE]?.let { name ->
@@ -102,6 +104,7 @@ class CombinePreferences
                 prefs[Keys.LABEL_TEXT_COLOR_ARGB] = config.labelTextColorArgb
                 prefs[Keys.LABEL_BG_COLOR_ARGB] = config.labelBgColorArgb
                 prefs[Keys.LABEL_BG_ALPHA] = config.labelBgAlpha
+                prefs[Keys.LABEL_BG_ENABLED] = config.labelBgEnabled
                 prefs[Keys.LABEL_BG_MATCHES_BORDER] = config.labelBgMatchesBorder
                 prefs[Keys.LABEL_POSITION_MODE] = config.labelPositionMode.name
                 prefs[Keys.BEFORE_LABEL_ANCHOR] = config.beforeLabelAnchor.name
