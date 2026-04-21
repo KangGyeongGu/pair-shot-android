@@ -5,14 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun OverlayGuide(
     bitmap: Bitmap?,
-    rotation: Float,
     alpha: Float,
     modifier: Modifier = Modifier,
 ) {
@@ -21,9 +19,6 @@ fun OverlayGuide(
         bitmap = bitmap.asImageBitmap(),
         contentDescription = null,
         contentScale = ContentScale.Fit,
-        modifier =
-            modifier
-                .rotate(rotation)
-                .alpha(alpha),
+        modifier = modifier.alpha(alpha),
     )
 }

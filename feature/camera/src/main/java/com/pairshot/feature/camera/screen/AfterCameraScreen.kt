@@ -65,7 +65,6 @@ internal fun AfterCameraScreen(
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
     val overlayBitmap by viewModel.overlayBitmap.collectAsStateWithLifecycle()
-    val overlayRotation by viewModel.overlayRotation.collectAsStateWithLifecycle()
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
     val roll by viewModel.roll.collectAsStateWithLifecycle()
@@ -204,7 +203,6 @@ internal fun AfterCameraScreen(
                         if (overlayEnabled) {
                             OverlayGuide(
                                 bitmap = overlayBitmap,
-                                rotation = overlayRotation,
                                 alpha = overlayAlpha,
                                 modifier = Modifier.fillMaxSize(),
                             )
