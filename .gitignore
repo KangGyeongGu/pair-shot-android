@@ -6,13 +6,17 @@
 .DS_Store
 /build
 /app/build
+/app/release
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+.kotlin/
 
 # Claude Code & 프로젝트 문서 (로컬 전용)
 .claude/
+archive/
+final-docs/
 .agents
 uiux.md
 CLAUDE.md
@@ -23,3 +27,4 @@ research.md
 /AGENTS.md
 guidance/
 final-test.md
+final-architecture.md
