@@ -124,4 +124,55 @@ class ViewModelBoundaryTest {
             .dependOnClassesThat()
             .haveFullyQualifiedName("androidx.activity.result.ActivityResultLauncher")
             .because("ViewModel must not own ActivityResultLauncher — belongs to UI layer")
+
+    @ArchTest
+    val `V-10 ViewModel should not use android util Range`: ArchRule =
+        noClasses()
+            .that()
+            .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("android.util.Range")
+            .because("ViewModel must use pure Kotlin types (IntRange, Int pairs) — not Android platform Range")
+
+    @ArchTest
+    val `V-11 ViewModel should not use android util Rational`: ArchRule =
+        noClasses()
+            .that()
+            .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("android.util.Rational")
+            .because("ViewModel must use pure Int numerator/denominator — not Android platform Rational")
+
+    @ArchTest
+    val `V-12 ViewModel should not use android graphics Bitmap directly`: ArchRule =
+        noClasses()
+            .that()
+            .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
+            .and()
+            .haveSimpleNameNotContaining("AfterCameraViewModel")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("android.graphics.Bitmap")
+            .because(
+                "ViewModel should not hold Bitmap directly. " +
+                    "AfterCameraViewModel is permitted for overlay bitmap state management (rotation preprocessing).",
+            )
+
+    @ArchTest
+    val `V-13 ViewModel should not depend on infra impl classes`: ArchRule =
+        noClasses()
+            .that()
+            .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("com.pairshot.core.infra.camera.CameraSessionImpl")
+            .orShould()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("com.pairshot.core.infra.sensor.SensorSessionImpl")
+            .because(
+                "ViewModel must only hold infra interfaces (CameraSession/SensorSession). " +
+                    "Concrete *Impl types are forbidden (Pragmatic B-4).",
+            )
 }

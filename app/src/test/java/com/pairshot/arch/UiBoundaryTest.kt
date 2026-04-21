@@ -18,52 +18,62 @@ import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses
 )
 class UiBoundaryTest {
     @ArchTest
-    val `U-01 UI should not use ExifInterface`: ArchRule =
+    val `U-01 Feature should not use ExifInterface`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
             .resideInAPackage("androidx.exifinterface..")
-            .because("UI must not parse EXIF directly — use shared loader in core/util")
+            .because("Feature must not parse EXIF directly — use :core:rendering ExifBitmapLoader")
 
     @ArchTest
-    val `U-02 UI should not use BitmapFactory`: ArchRule =
+    val `U-02 Feature should not use BitmapFactory`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
             .haveFullyQualifiedName("android.graphics.BitmapFactory")
-            .because("UI must not decode bitmaps directly — use shared loader in core/util")
+            .because("Feature must not decode bitmaps directly — use :core:rendering loader")
 
     @ArchTest
-    val `U-03 UI should not use MediaStore`: ArchRule =
+    val `U-03 Feature should not use MediaStore`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
             .haveFullyQualifiedName("android.provider.MediaStore")
-            .because("UI must not access MediaStore — delegate to Data layer")
+            .because("Feature must not access MediaStore — delegate to Data layer")
 
     @ArchTest
-    val `U-04 UI should not use ZipOutputStream`: ArchRule =
+    val `U-04 Feature should not use ZipOutputStream`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
             .resideInAPackage("java.util.zip..")
-            .because("UI must not create ZIP — delegate to Data layer")
+            .because("Feature must not create ZIP — delegate to Data layer")
 
     @ArchTest
-    val `U-05 UI should not use ContentResolver`: ArchRule =
+    val `U-05 Feature should not use ContentResolver`: ArchRule =
         noClasses()
             .that()
-            .resideInAPackage("..ui..")
+            .resideInAPackage("com.pairshot.feature..")
             .should()
             .dependOnClassesThat()
             .haveFullyQualifiedName("android.content.ContentResolver")
-            .because("UI must not use ContentResolver — delegate to Data layer")
+            .because("Feature must not use ContentResolver — delegate to Data layer")
+
+    @ArchTest
+    val `U-06 Feature should not use android graphics Canvas`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.feature..")
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("android.graphics.Canvas")
+            .because("Feature must not render via Canvas — delegate to :core:rendering")
 }
