@@ -15,4 +15,5 @@ dependencies {
     implementation(project(":core:rendering"))
 
     implementation(libs.coil.compose)
+    implementation(libs.exifinterface)
 }

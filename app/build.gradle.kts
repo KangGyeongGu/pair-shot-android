@@ -92,6 +92,13 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))
 
+    implementation(project(":feature:camera"))
+    implementation(project(":feature:gallery"))
+    implementation(project(":feature:compare"))
+    implementation(project(":feature:export"))
+    implementation(project(":feature:project"))
+    implementation(project(":feature:settings"))
+
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     implementation(libs.compose.ui)

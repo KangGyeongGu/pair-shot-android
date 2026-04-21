@@ -28,17 +28,17 @@ import com.pairshot.core.navigation.ProjectList
 import com.pairshot.core.navigation.Settings
 import com.pairshot.core.navigation.WatermarkSettings
 import com.pairshot.core.designsystem.PairShotMotionTokens
-import com.pairshot.feature.camera.ui.route.AfterCameraRoute
-import com.pairshot.feature.camera.ui.route.CameraRoute
-import com.pairshot.feature.compare.ui.route.CombinedViewerRoute
-import com.pairshot.feature.compare.ui.route.CompareRoute
-import com.pairshot.feature.export.ui.route.ExportRoute
-import com.pairshot.feature.pair.ui.route.GalleryRoute
-import com.pairshot.feature.project.ui.route.ProjectListRoute
-import com.pairshot.feature.settings.ui.route.CombineSettingsRoute
-import com.pairshot.feature.settings.ui.route.SettingsRoute
-import com.pairshot.feature.settings.ui.route.WatermarkSettingsRoute
-import com.pairshot.feature.settings.ui.screen.LicenseScreen
+import com.pairshot.feature.camera.route.AfterCameraRoute
+import com.pairshot.feature.camera.route.CameraRoute
+import com.pairshot.feature.compare.route.CombinedViewerRoute
+import com.pairshot.feature.compare.route.CompareRoute
+import com.pairshot.feature.export.route.ExportRoute
+import com.pairshot.feature.gallery.route.GalleryRoute
+import com.pairshot.feature.project.route.ProjectListRoute
+import com.pairshot.feature.settings.route.CombineSettingsRoute
+import com.pairshot.feature.settings.route.SettingsRoute
+import com.pairshot.feature.settings.route.WatermarkSettingsRoute
+import com.pairshot.feature.settings.screen.LicenseScreen
 
 @Composable
 fun PairShotNavHost(
