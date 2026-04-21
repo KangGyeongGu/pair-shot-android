@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -31,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -43,13 +45,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.exifinterface.media.ExifInterface
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.combine.CombineConfig
 import com.pairshot.core.domain.combine.CombineLayout
 import com.pairshot.core.domain.combine.LabelAnchor
@@ -157,6 +163,7 @@ internal fun CombinePreviewBottomSheet(
     onNavigateToCombineSettings: () -> Unit,
     onNavigateToWatermarkSettings: () -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     var applyOverlays by remember { mutableStateOf(combineConfig.borderEnabled || combineConfig.labelEnabled) }
     var applyWatermark by remember { mutableStateOf(watermarkConfig.enabled) }
 
@@ -170,19 +177,22 @@ internal fun CombinePreviewBottomSheet(
         }
 
     PairShotBottomSheet(onDismissRequest = onDismiss) {
-        Text(
-            text = "합성 미리보기",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = "${selectedCount}개 페어",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "합성 미리보기",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "${selectedCount}개 페어",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -227,7 +237,16 @@ internal fun CombinePreviewBottomSheet(
             )
             Switch(
                 checked = applyOverlays,
-                onCheckedChange = { applyOverlays = it },
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    applyOverlays = it
+                },
+                colors =
+                    SwitchDefaults.colors(
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                modifier = Modifier.wrapContentHeight(unbounded = true).scale(0.67f),
             )
             IconButton(onClick = {
                 onDismiss()
@@ -256,7 +275,16 @@ internal fun CombinePreviewBottomSheet(
             )
             Switch(
                 checked = applyWatermark,
-                onCheckedChange = { applyWatermark = it },
+                onCheckedChange = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    applyWatermark = it
+                },
+                colors =
+                    SwitchDefaults.colors(
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                modifier = Modifier.wrapContentHeight(unbounded = true).scale(0.67f),
             )
             IconButton(onClick = {
                 onDismiss()
@@ -287,10 +315,10 @@ internal fun CombinePreviewBottomSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(PairShotSpacing.touchTarget),
             shape = MaterialTheme.shapes.medium,
         ) {
-            Text("합성 시작", style = MaterialTheme.typography.labelLarge)
+            Text("합성 시작")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -315,8 +343,11 @@ private fun GalleryCompositePreview(
                 val before = loadBitmapWithExif(context, Uri.parse(beforeUri), inSampleSize = 4)
                 val after = loadBitmapWithExif(context, Uri.parse(afterUri), inSampleSize = 4)
                 if (before != null && after != null) {
-                    val combined = buildGalleryPreviewBitmap(before, after, combineConfig, density)
-                    watermarkRenderer.apply(combined, watermarkConfig)
+                    val wmBefore = watermarkRenderer.apply(before, watermarkConfig)
+                    if (wmBefore !== before) before.recycle()
+                    val wmAfter = watermarkRenderer.apply(after, watermarkConfig)
+                    if (wmAfter !== after) after.recycle()
+                    buildGalleryPreviewBitmap(wmBefore, wmAfter, combineConfig, density)
                 } else {
                     null
                 }
@@ -467,15 +498,17 @@ private fun drawGalleryLabel(
                 LabelPosition.TOP -> imgTop
                 LabelPosition.BOTTOM -> imgTop + image.height - labelHeight
             }
-        canvas.drawRect(
-            RectF(
-                imgLeft.toFloat(),
-                labelTop.toFloat(),
-                (imgLeft + image.width).toFloat(),
-                (labelTop + labelHeight).toFloat(),
-            ),
-            bgPaint,
-        )
+        if (config.labelBgEnabled) {
+            canvas.drawRect(
+                RectF(
+                    imgLeft.toFloat(),
+                    labelTop.toFloat(),
+                    (imgLeft + image.width).toFloat(),
+                    (labelTop + labelHeight).toFloat(),
+                ),
+                bgPaint,
+            )
+        }
         val textX = imgLeft + image.width / 2f
         val textY = labelTop + labelHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
         canvas.drawText(text, textX, textY, textPaint)
@@ -523,10 +556,12 @@ private fun drawGalleryLabel(
                 (labelLeft + labelWidth).toFloat(),
                 (labelTop + labelHeight).toFloat(),
             )
-        if (cornerPx > 0f) {
-            canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
-        } else {
-            canvas.drawRect(rf, bgPaint)
+        if (config.labelBgEnabled) {
+            if (cornerPx > 0f) {
+                canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
+            } else {
+                canvas.drawRect(rf, bgPaint)
+            }
         }
         val textX = labelLeft + labelWidth / 2f
         val textY = labelTop + labelHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f

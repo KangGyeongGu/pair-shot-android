@@ -59,10 +59,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -260,7 +262,8 @@ fun CombineSettingsScreen(
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
-            item(key = "card_label") {
+            // Card 1: 레이블 텍스트
+            item(key = "card_label_text") {
                 SettingsCard {
                     SettingsSwitchItem(
                         label = "레이블",
@@ -292,53 +295,6 @@ fun CombineSettingsScreen(
                                 },
                             )
                             SettingsDivider()
-                            LabelPositionModeItem(
-                                selectedMode = combineConfig.labelPositionMode,
-                                onModeChange = { mode ->
-                                    onCombineConfigChange(combineConfig.copy(labelPositionMode = mode))
-                                },
-                            )
-                            SettingsDivider()
-                            if (combineConfig.labelPositionMode == LabelPositionMode.FULL_WIDTH) {
-                                LabelPositionItem(
-                                    selectedPosition = combineConfig.labelPosition,
-                                    onPositionChange = { position ->
-                                        onCombineConfigChange(combineConfig.copy(labelPosition = position))
-                                    },
-                                )
-                                SettingsDivider()
-                            } else {
-                                LabelAnchorPickerRow(
-                                    label = "BEFORE 위치",
-                                    selectedAnchor = combineConfig.beforeLabelAnchor,
-                                    onAnchorChange = { anchor ->
-                                        onCombineConfigChange(combineConfig.copy(beforeLabelAnchor = anchor))
-                                    },
-                                )
-                                SettingsDivider()
-                                LabelAnchorPickerRow(
-                                    label = "AFTER 위치",
-                                    selectedAnchor = combineConfig.afterLabelAnchor,
-                                    onAnchorChange = { anchor ->
-                                        onCombineConfigChange(combineConfig.copy(afterLabelAnchor = anchor))
-                                    },
-                                )
-                                SettingsDivider()
-                                SettingsSliderItem(
-                                    label = "배경 곡률",
-                                    value = combineConfig.labelBgCornerDp.toFloat(),
-                                    valueRange = 0f..50f,
-                                    steps = 24,
-                                    valueLabel = { "${it.toInt()}dp" },
-                                    onValueChange = { v ->
-                                        onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
-                                    },
-                                    onLiveUpdate = { v ->
-                                        onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
-                                    },
-                                )
-                                SettingsDivider()
-                            }
                             SettingsSliderItem(
                                 label = "폰트 크기",
                                 value = combineConfig.labelSizeRatio,
@@ -358,25 +314,118 @@ fun CombineSettingsScreen(
                                 colorArgb = combineConfig.labelTextColorArgb,
                                 onClick = { labelTextColorPickerVisible = true },
                             )
-                            SettingsDivider()
-                            ColorItem(
-                                label = "배경 색상",
-                                colorArgb = combineConfig.labelBgColorArgb,
-                                onClick = { labelBgColorPickerVisible = true },
-                            )
-                            SettingsDivider()
-                            SettingsSliderItem(
-                                label = "배경 투명도",
-                                value = combineConfig.labelBgAlpha,
-                                valueRange = 0f..1f,
-                                valueLabel = { "${(it * 100).roundToInt()}%" },
-                                onValueChange = { v ->
-                                    onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
+                        }
+                    }
+                }
+            }
+
+            // Card 2: 레이블 위치
+            item(key = "card_label_position") {
+                AnimatedVisibility(
+                    visible = combineConfig.labelEnabled,
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                        SettingsCard {
+                            LabelPositionModeItem(
+                                selectedMode = combineConfig.labelPositionMode,
+                                onModeChange = { mode ->
+                                    onCombineConfigChange(combineConfig.copy(labelPositionMode = mode))
                                 },
-                                onLiveUpdate = { v ->
-                                    onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
+                            )
+                            if (combineConfig.labelPositionMode == LabelPositionMode.FULL_WIDTH) {
+                                SettingsDivider()
+                                LabelPositionItem(
+                                    selectedPosition = combineConfig.labelPosition,
+                                    onPositionChange = { position ->
+                                        onCombineConfigChange(combineConfig.copy(labelPosition = position))
+                                    },
+                                )
+                            } else {
+                                SettingsDivider()
+                                LabelAnchorPickerRow(
+                                    label = "BEFORE 위치",
+                                    selectedAnchor = combineConfig.beforeLabelAnchor,
+                                    onAnchorChange = { anchor ->
+                                        onCombineConfigChange(combineConfig.copy(beforeLabelAnchor = anchor))
+                                    },
+                                )
+                                SettingsDivider()
+                                LabelAnchorPickerRow(
+                                    label = "AFTER 위치",
+                                    selectedAnchor = combineConfig.afterLabelAnchor,
+                                    onAnchorChange = { anchor ->
+                                        onCombineConfigChange(combineConfig.copy(afterLabelAnchor = anchor))
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Card 3: 레이블 배경
+            item(key = "card_label_bg") {
+                AnimatedVisibility(
+                    visible = combineConfig.labelEnabled,
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                        SettingsCard {
+                            SettingsSwitchItem(
+                                label = "레이블 배경",
+                                checked = combineConfig.labelBgEnabled,
+                                onCheckedChange = { checked ->
+                                    onCombineConfigChange(combineConfig.copy(labelBgEnabled = checked))
                                 },
                             )
+                            AnimatedVisibility(
+                                visible = combineConfig.labelBgEnabled,
+                                enter = expandVertically(),
+                                exit = shrinkVertically(),
+                            ) {
+                                Column {
+                                    SettingsDivider()
+                                    ColorItem(
+                                        label = "배경 색상",
+                                        colorArgb = combineConfig.labelBgColorArgb,
+                                        onClick = { labelBgColorPickerVisible = true },
+                                    )
+                                    SettingsDivider()
+                                    SettingsSliderItem(
+                                        label = "배경 투명도",
+                                        value = combineConfig.labelBgAlpha,
+                                        valueRange = 0f..1f,
+                                        valueLabel = { "${(it * 100).roundToInt()}%" },
+                                        onValueChange = { v ->
+                                            onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
+                                        },
+                                        onLiveUpdate = { v ->
+                                            onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
+                                        },
+                                    )
+                                    if (combineConfig.labelPositionMode == LabelPositionMode.FREE) {
+                                        SettingsDivider()
+                                        SettingsSliderItem(
+                                            label = "배경 곡률",
+                                            value = combineConfig.labelBgCornerDp.toFloat(),
+                                            valueRange = 0f..50f,
+                                            steps = 24,
+                                            valueLabel = { "${it.toInt()}dp" },
+                                            onValueChange = { v ->
+                                                onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
+                                            },
+                                            onLiveUpdate = { v ->
+                                                onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
+                                            },
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -984,6 +1033,7 @@ private fun LabelBgColorPickerDialog(
     onDismiss: () -> Unit,
     onConfirm: (color: Int, matchesBorder: Boolean) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     var matchesBorder by remember { mutableStateOf(initialMatchesBorder) }
     val initialHsv = remember { FloatArray(3).also { android.graphics.Color.colorToHSV(initialColor, it) } }
     var selectedIdx by remember { mutableStateOf(nearestPresetIdx(initialHsv)) }
@@ -1017,7 +1067,10 @@ private fun LabelBgColorPickerDialog(
                     )
                     androidx.compose.material3.Switch(
                         checked = matchesBorder,
-                        onCheckedChange = { matchesBorder = it },
+                        onCheckedChange = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            matchesBorder = it
+                        },
                         enabled = borderEnabled,
                     )
                 }
@@ -1091,8 +1144,9 @@ internal fun CombinePreviewSection(
     LaunchedEffect(config, watermarkConfig) {
         val result =
             withContext(Dispatchers.Default) {
-                val combined = buildCombinePreviewBitmap(sourceBitmap, sourceBitmap, config, density)
-                watermarkRenderer.apply(combined, watermarkConfig)
+                val wmBefore = watermarkRenderer.apply(sourceBitmap, watermarkConfig)
+                val wmAfter = watermarkRenderer.apply(sourceBitmap, watermarkConfig)
+                buildCombinePreviewBitmap(wmBefore, wmAfter, config, density)
             }
         previewBitmap?.let { old ->
             if (old !== result) old.recycle()
@@ -1268,15 +1322,17 @@ private fun drawLabel(
                 LabelPosition.TOP -> imgTop
                 LabelPosition.BOTTOM -> imgTop + image.height - labelHeight
             }
-        canvas.drawRect(
-            RectF(
-                imgLeft.toFloat(),
-                labelTop.toFloat(),
-                (imgLeft + image.width).toFloat(),
-                (labelTop + labelHeight).toFloat(),
-            ),
-            bgPaint,
-        )
+        if (config.labelBgEnabled) {
+            canvas.drawRect(
+                RectF(
+                    imgLeft.toFloat(),
+                    labelTop.toFloat(),
+                    (imgLeft + image.width).toFloat(),
+                    (labelTop + labelHeight).toFloat(),
+                ),
+                bgPaint,
+            )
+        }
         val textX = imgLeft + image.width / 2f
         val textY = labelTop + labelHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
         canvas.drawText(text, textX, textY, textPaint)
@@ -1324,10 +1380,12 @@ private fun drawLabel(
                 (labelLeft + labelWidth).toFloat(),
                 (labelTop + labelHeight).toFloat(),
             )
-        if (cornerPx > 0f) {
-            canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
-        } else {
-            canvas.drawRect(rf, bgPaint)
+        if (config.labelBgEnabled) {
+            if (cornerPx > 0f) {
+                canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
+            } else {
+                canvas.drawRect(rf, bgPaint)
+            }
         }
         val textX = labelLeft + labelWidth / 2f
         val textY = labelTop + labelHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
