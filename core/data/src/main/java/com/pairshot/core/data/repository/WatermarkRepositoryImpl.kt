@@ -1,4 +1,4 @@
-package com.pairshot.data.repository.settings
+package com.pairshot.core.data.repository
 
 import android.content.Context
 import android.net.Uri

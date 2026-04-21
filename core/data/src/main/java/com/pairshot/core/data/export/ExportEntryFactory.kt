@@ -1,4 +1,4 @@
-package com.pairshot.data.local.export
+package com.pairshot.core.data.export
 
 import android.net.Uri
 import com.pairshot.core.database.entity.PhotoPairEntity

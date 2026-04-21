@@ -1,4 +1,4 @@
-package com.pairshot.data.repository.combine
+package com.pairshot.core.data.repository
 
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.domain.combine.CombineSettingsRepository

@@ -1,4 +1,4 @@
-package com.pairshot.data.local.export
+package com.pairshot.core.data.export
 
 import android.graphics.Bitmap
 import android.graphics.Canvas

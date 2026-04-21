@@ -1,7 +1,7 @@
 package com.pairshot.di.feature
 
 import com.pairshot.core.domain.project.ProjectRepository
-import com.pairshot.data.repository.project.ProjectRepositoryImpl
+import com.pairshot.core.data.repository.ProjectRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

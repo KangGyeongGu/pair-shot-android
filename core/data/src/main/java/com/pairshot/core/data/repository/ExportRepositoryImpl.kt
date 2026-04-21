@@ -1,4 +1,4 @@
-package com.pairshot.data.repository.export
+package com.pairshot.core.data.repository
 
 import android.net.Uri
 import com.pairshot.core.model.CombineConfig
@@ -7,10 +7,10 @@ import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.rendering.ExifBitmapLoader
 import com.pairshot.core.database.dao.PhotoPairDao
-import com.pairshot.data.local.export.ExportEntryFactory
-import com.pairshot.data.local.export.ShareImagePreparer
-import com.pairshot.data.local.export.WatermarkedBitmapWriter
-import com.pairshot.data.local.export.WatermarkedZipTask
+import com.pairshot.core.data.export.ExportEntryFactory
+import com.pairshot.core.data.export.ShareImagePreparer
+import com.pairshot.core.data.export.WatermarkedBitmapWriter
+import com.pairshot.core.data.export.WatermarkedZipTask
 import com.pairshot.core.storage.MediaStoreManager
 import com.pairshot.core.storage.ZipImageEntry
 import com.pairshot.core.storage.ZipManager

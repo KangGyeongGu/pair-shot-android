@@ -1,4 +1,4 @@
-package com.pairshot.data.repository.project
+package com.pairshot.core.data.repository
 
 import com.pairshot.core.model.Project
 import com.pairshot.core.domain.project.ProjectRepository

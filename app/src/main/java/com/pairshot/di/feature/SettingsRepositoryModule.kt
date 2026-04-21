@@ -4,10 +4,10 @@ import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.StorageRepository
 import com.pairshot.core.domain.settings.WatermarkRepository
-import com.pairshot.data.repository.combine.CombineSettingsRepositoryImpl
-import com.pairshot.data.repository.settings.AppSettingsRepositoryImpl
-import com.pairshot.data.repository.settings.StorageRepositoryImpl
-import com.pairshot.data.repository.settings.WatermarkRepositoryImpl
+import com.pairshot.core.data.repository.CombineSettingsRepositoryImpl
+import com.pairshot.core.data.repository.AppSettingsRepositoryImpl
+import com.pairshot.core.data.repository.StorageRepositoryImpl
+import com.pairshot.core.data.repository.WatermarkRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

@@ -1,4 +1,4 @@
-package com.pairshot.data.repository.settings
+package com.pairshot.core.data.repository
 
 import com.pairshot.core.model.AppSettings
 import com.pairshot.core.domain.settings.AppSettingsRepository
