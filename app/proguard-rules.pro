@@ -100,21 +100,17 @@
 -keep class com.pairshot.**.navigation.** { *; }
 
 # =============================================================================
-# Coil
+# Glide
 # =============================================================================
 
-# Coil 이미지 로더 및 컴포넌트 — ServiceLoader로 동적 로딩
--keep class coil3.** { *; }
--keepclassmembers class coil3.** { *; }
--dontwarn coil3.**
-
-# =============================================================================
-# OkHttp (Coil 네트워크 백엔드 의존성)
-# =============================================================================
-
--dontwarn okhttp3.**
--dontwarn okio.**
--keep class okhttp3.internal.publicsuffix.PublicSuffixDatabase { *; }
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep public class * extends com.bumptech.glide.module.AppGlideModule
+-keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
+    **[] $VALUES;
+    public *;
+}
+-keep class com.bumptech.glide.GeneratedAppGlideModuleImpl
+-dontwarn com.bumptech.glide.**
 
 # =============================================================================
 # CameraX

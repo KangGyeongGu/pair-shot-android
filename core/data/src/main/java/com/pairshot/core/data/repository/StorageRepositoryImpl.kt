@@ -2,9 +2,9 @@ package com.pairshot.core.data.repository
 
 import android.content.Context
 import android.provider.MediaStore
-import coil3.imageLoader
-import com.pairshot.core.model.StorageInfo
+import com.bumptech.glide.Glide
 import com.pairshot.core.domain.settings.StorageRepository
+import com.pairshot.core.model.StorageInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,14 +25,9 @@ class StorageRepositoryImpl
         override suspend fun clearCache(): Long =
             withContext(Dispatchers.IO) {
                 val before = calculateCacheSize()
-                try {
-                    context.imageLoader.diskCache?.clear()
-                } catch (_: Exception) {
-                }
+                runCatching { Glide.get(context).clearDiskCache() }
                 context.cacheDir.listFiles()?.forEach { file ->
-                    if (file.name != "image_cache") {
-                        file.deleteRecursively()
-                    }
+                    file.deleteRecursively()
                 }
                 val after = calculateCacheSize()
                 before - after
@@ -55,18 +50,9 @@ class StorageRepositoryImpl
             return totalSize
         }
 
-        private fun calculateCacheSize(): Long {
-            val fileCacheSize =
-                context.cacheDir
-                    .walkTopDown()
-                    .filter { it.isFile }
-                    .sumOf { it.length() }
-            val coilCacheSize =
-                try {
-                    context.imageLoader.diskCache?.size ?: 0L
-                } catch (_: Exception) {
-                    0L
-                }
-            return maxOf(fileCacheSize, coilCacheSize)
-        }
+        private fun calculateCacheSize(): Long =
+            context.cacheDir
+                .walkTopDown()
+                .filter { it.isFile }
+                .sumOf { it.length() }
     }

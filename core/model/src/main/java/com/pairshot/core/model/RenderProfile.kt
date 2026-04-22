@@ -2,8 +2,8 @@ package com.pairshot.core.model
 
 enum class RenderProfile(
     val borderScale: Float,
+    val maxOutputPx: Int,
 ) {
-    FULL(1.0f),
-    PREVIEW(0.25f),
-    THUMBNAIL(0.125f),
+    FULL(borderScale = 1.0f, maxOutputPx = 0),
+    PREVIEW(borderScale = 0.25f, maxOutputPx = 2560),
 }

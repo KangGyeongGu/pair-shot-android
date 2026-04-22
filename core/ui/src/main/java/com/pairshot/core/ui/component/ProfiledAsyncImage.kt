@@ -1,38 +1,26 @@
 package com.pairshot.core.ui.component
 
-import android.content.Context
+import android.net.Uri
+import android.widget.ImageView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.IntSize
-import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
-import coil3.request.ImageRequest
-import coil3.size.Precision
-import kotlin.math.max
-import kotlin.math.roundToInt
+import androidx.compose.ui.viewinterop.AndroidView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 
-private const val CACHE_BUCKET_PX = 64
-
-enum class ImageProfile(
-    val cacheKey: String,
-    val oversample: Float,
-    val maxLongEdgePx: Int? = null,
-) {
-    THUMBNAIL(cacheKey = "thumbnail", oversample = 5.0f, maxLongEdgePx = 2048),
-    DETAIL(cacheKey = "detail", oversample = 2.5f, maxLongEdgePx = 2304),
+enum class ImageProfile {
+    THUMBNAIL,
+    DETAIL,
 }
 
 @Composable
@@ -43,104 +31,75 @@ fun ProfiledAsyncImage(
     contentScale: ContentScale,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    var slotSize by remember { mutableStateOf(IntSize.Zero) }
-    val request =
-        remember(context, data, slotSize, profile) {
-            buildProfiledRequest(
-                context = context,
-                data = data,
-                slotSize = slotSize,
-                profile = profile,
-            )
-        }
-
-    var isError by remember { mutableStateOf(false) }
-
-    Box(
-        modifier =
-            modifier.onSizeChanged { size ->
-                if (size.width > 0 && size.height > 0 && size != slotSize) {
-                    slotSize = size
-                }
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        if (request != null) {
-            AsyncImage(
-                model = request,
-                contentDescription = contentDescription,
-                contentScale = contentScale,
-                modifier = Modifier.fillMaxSize(),
-                onState = { state ->
-                    when (state) {
-                        is AsyncImagePainter.State.Loading -> {
-                            isError = false
-                        }
-
-                        is AsyncImagePainter.State.Error -> {
-                            isError = true
-                        }
-
-                        else -> {}
-                    }
-                },
-            )
-        }
-        if (isError) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "파일 없음",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                )
+    val model =
+        remember(data) {
+            when (data) {
+                is Uri -> data
+                is String -> runCatching { Uri.parse(data) }.getOrNull()
+                else -> null
             }
         }
-    }
-}
 
-private fun buildProfiledRequest(
-    context: Context,
-    data: Any?,
-    slotSize: IntSize,
-    profile: ImageProfile,
-): ImageRequest? {
-    if (data == null || slotSize.width <= 0 || slotSize.height <= 0) {
-        return null
+    if (model == null) {
+        ErrorPlaceholder(modifier)
+        return
     }
 
-    var requestedWidth = (slotSize.width * profile.oversample).roundToInt().coerceAtLeast(1)
-    var requestedHeight = (slotSize.height * profile.oversample).roundToInt().coerceAtLeast(1)
+    val context = LocalContext.current
+    val placeholderColor = MaterialTheme.colorScheme.surfaceVariant.toArgb()
 
-    profile.maxLongEdgePx?.let { maxLongEdge ->
-        val currentLongEdge = max(requestedWidth, requestedHeight)
-        if (currentLongEdge > maxLongEdge) {
-            val ratio = maxLongEdge.toFloat() / currentLongEdge
-            requestedWidth = (requestedWidth * ratio).roundToInt().coerceAtLeast(1)
-            requestedHeight = (requestedHeight * ratio).roundToInt().coerceAtLeast(1)
+    val scaleType =
+        when (contentScale) {
+            ContentScale.Crop -> ImageView.ScaleType.CENTER_CROP
+            ContentScale.Fit, ContentScale.Inside -> ImageView.ScaleType.FIT_CENTER
+            else -> ImageView.ScaleType.CENTER_CROP
         }
+
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                ImageView(ctx).apply {
+                    setBackgroundColor(placeholderColor)
+                    this.scaleType = scaleType
+                    this.contentDescription = contentDescription
+                }
+            },
+            update = { view ->
+                view.scaleType = scaleType
+                Glide
+                    .with(context)
+                    .load(model)
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(view)
+            },
+            onRelease = { view ->
+                Glide.with(context).clear(view)
+            },
+        )
     }
-
-    val bucketedWidth = toBucketSize(requestedWidth)
-    val bucketedHeight = toBucketSize(requestedHeight)
-
-    return ImageRequest
-        .Builder(context)
-        .data(data)
-        .size(bucketedWidth, bucketedHeight)
-        .precision(Precision.EXACT)
-        .memoryCacheKeyExtra("profile", profile.cacheKey)
-        .memoryCacheKeyExtra("bucket", "${bucketedWidth}x$bucketedHeight")
-        .build()
 }
 
-private fun toBucketSize(value: Int): Int {
-    val remainder = value % CACHE_BUCKET_PX
-    return if (remainder == 0) value else value + (CACHE_BUCKET_PX - remainder)
+@Composable
+private fun ErrorPlaceholder(modifier: Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        ErrorContent()
+    }
+}
+
+@Composable
+private fun ErrorContent() {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "파일 없음",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+        )
+    }
 }

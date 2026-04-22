@@ -11,6 +11,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
+    implementation(project(":core:rendering"))
 
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)

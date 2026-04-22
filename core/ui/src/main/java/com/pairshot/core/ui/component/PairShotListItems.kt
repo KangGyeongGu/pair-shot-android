@@ -3,14 +3,19 @@ package com.pairshot.core.ui.component
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -30,8 +35,10 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.PairShotSpacing
 import kotlin.math.abs
 
@@ -39,7 +46,26 @@ import kotlin.math.abs
 fun SettingsSectionLabel(
     label: String,
     modifier: Modifier = Modifier,
+    trailingWarning: String? = null,
 ) {
+    if (trailingWarning != null) {
+        Row(
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = PairShotSpacing.iconTextGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            WarningBadge(text = trailingWarning)
+        }
+        return
+    }
     Text(
         text = label,
         modifier =
@@ -49,6 +75,31 @@ fun SettingsSectionLabel(
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+@Composable
+fun WarningBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    val warningColor = LocalPairShotExtendedColors.current.warning
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.ErrorOutline,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = warningColor,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = warningColor,
+        )
+    }
 }
 
 @Composable
@@ -71,6 +122,7 @@ fun SettingsCard(
 fun SettingsItem(
     label: String,
     trailing: String? = null,
+    trailingIsError: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
     Row(
@@ -90,11 +142,15 @@ fun SettingsItem(
             modifier = Modifier.weight(1f),
         )
         if (trailing != null) {
-            Text(
-                text = trailing,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            if (trailingIsError) {
+                WarningBadge(text = trailing)
+            } else {
+                Text(
+                    text = trailing,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

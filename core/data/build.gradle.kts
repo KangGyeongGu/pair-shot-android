@@ -22,6 +22,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation(libs.timber)
-    implementation(libs.coil.compose)
+    implementation(libs.glide)
     implementation(libs.exifinterface)
 }

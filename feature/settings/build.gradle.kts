@@ -13,6 +13,4 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:rendering"))
-
-    implementation(libs.coil.compose)
 }

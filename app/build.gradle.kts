@@ -93,11 +93,11 @@ dependencies {
     implementation(project(":core:designsystem"))
 
     implementation(project(":feature:camera"))
-    implementation(project(":feature:gallery"))
-    implementation(project(":feature:compare"))
-    implementation(project(":feature:export"))
-    implementation(project(":feature:project"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:album"))
+    implementation(project(":feature:pair-preview"))
+    implementation(project(":feature:export-settings"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
@@ -137,9 +137,6 @@ dependencies {
     // Activity Compose
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
-
-    // Coil
-    implementation(libs.coil.compose)
 
     // ExifInterface
     implementation(libs.exifinterface)

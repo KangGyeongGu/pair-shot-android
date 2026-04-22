@@ -199,7 +199,22 @@ class PairImageComposer
                 if (wmAfter !== after && !wmAfter.isRecycled) wmAfter.recycle()
             }
 
-            return combined
+            return downscaleIfNeeded(combined, profile.maxOutputPx)
+        }
+
+        private fun downscaleIfNeeded(
+            source: Bitmap,
+            maxOutputPx: Int,
+        ): Bitmap {
+            if (maxOutputPx <= 0) return source
+            val longestSide = maxOf(source.width, source.height)
+            if (longestSide <= maxOutputPx) return source
+            val ratio = maxOutputPx.toFloat() / longestSide
+            val targetW = (source.width * ratio).toInt().coerceAtLeast(1)
+            val targetH = (source.height * ratio).toInt().coerceAtLeast(1)
+            val scaled = Bitmap.createScaledBitmap(source, targetW, targetH, true)
+            if (scaled !== source && !source.isRecycled) source.recycle()
+            return scaled
         }
 
         private fun drawLabel(

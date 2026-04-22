@@ -13,6 +13,7 @@ android {
 
 dependencies {
     implementation(project(":core:designsystem"))
+    implementation(project(":core:model"))
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
@@ -21,5 +22,5 @@ dependencies {
     implementation(libs.compose.tooling.preview)
     implementation(libs.compose.material.icons.extended)
     implementation(libs.lifecycle.runtime.compose)
-    implementation(libs.coil.compose)
+    implementation(libs.glide)
 }

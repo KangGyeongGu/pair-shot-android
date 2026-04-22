@@ -28,12 +28,21 @@ class WatermarkedBitmapWriter
             jpegQuality: Int,
         ) {
             val bitmap = exifBitmapLoader.loadBitmapWithExifCorrection(Uri.parse(sourceUri))
-            val watermarked = watermarkRenderer.apply(bitmap, config.copy(enabled = true))
-            FileOutputStream(destFile).use { out ->
-                watermarked.compress(Bitmap.CompressFormat.JPEG, jpegQuality, out)
+            val watermarked =
+                try {
+                    watermarkRenderer.apply(bitmap, config.copy(enabled = true))
+                } catch (e: Throwable) {
+                    if (!bitmap.isRecycled) bitmap.recycle()
+                    throw e
+                }
+            try {
+                FileOutputStream(destFile).use { out ->
+                    watermarked.compress(Bitmap.CompressFormat.JPEG, jpegQuality, out)
+                }
+            } finally {
+                if (watermarked !== bitmap && !bitmap.isRecycled) bitmap.recycle()
+                if (!watermarked.isRecycled) watermarked.recycle()
             }
-            if (watermarked !== bitmap) bitmap.recycle()
-            watermarked.recycle()
         }
 
         suspend fun combineWithWatermark(
