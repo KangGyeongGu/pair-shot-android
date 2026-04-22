@@ -1,19 +1,24 @@
 package com.pairshot.feature.pairpreview.screen
 
 import android.graphics.Bitmap
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.pairshot.core.model.CombineHistory
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
 import com.pairshot.feature.pairpreview.component.PairPreviewCenter
 import com.pairshot.feature.pairpreview.component.PairPreviewTopBar
+
+private val ModalWidth = 340.dp
+private val ModalHeight = 420.dp
 
 @Composable
 fun PairPreviewScreen(
@@ -29,26 +34,32 @@ fun PairPreviewScreen(
     onDeleteDismissed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .statusBarsPadding(),
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
     ) {
-        PairPreviewTopBar(
-            onClose = onClose,
-            onShareSelected = onShareSelected,
-            onNavigateToAfterCamera = onNavigateToAfterCamera,
-            onDeleteRequested = onDeleteRequested,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Surface(
+            modifier = Modifier.size(width = ModalWidth, height = ModalHeight),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = 8.dp,
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                PairPreviewTopBar(
+                    onClose = onClose,
+                    onShareSelected = onShareSelected,
+                    onNavigateToAfterCamera = onNavigateToAfterCamera,
+                    onDeleteRequested = onDeleteRequested,
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-        Box(modifier = Modifier.weight(1f)) {
-            PairPreviewCenter(
-                combined = combined,
-                livePreviewBitmap = livePreviewBitmap,
-            )
+                Box(modifier = Modifier.weight(1f)) {
+                    PairPreviewCenter(
+                        combined = combined,
+                        livePreviewBitmap = livePreviewBitmap,
+                    )
+                }
+            }
         }
     }
 

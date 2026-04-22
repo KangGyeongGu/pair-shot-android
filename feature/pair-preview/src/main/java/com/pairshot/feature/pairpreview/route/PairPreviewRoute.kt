@@ -2,6 +2,12 @@ package com.pairshot.feature.pairpreview.route
 
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.scaleIn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +27,8 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+
+private const val ModalEnterDurationMs = 220
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -88,17 +96,30 @@ fun PairPreviewRoute(
         }
     }
 
-    PairPreviewScreen(
-        combined = combined,
-        livePreviewBitmap = livePreviewBitmap,
-        showDeleteDialog = showDeleteDialog,
-        onClose = onDismiss,
-        onShareSelected = { onShareSelected(viewModel.pairId) },
-        onNavigateToAfterCamera = { onNavigateToAfterCamera(viewModel.pairId) },
-        onDeleteRequested = viewModel::showDeleteDialog,
-        onDeleteAll = viewModel::deletePair,
-        onDeleteCombinedOnly = viewModel::deleteCombinedOnly,
-        onDeleteDismissed = viewModel::dismissDeleteDialog,
-        modifier = modifier,
-    )
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visible = visible,
+            enter =
+                scaleIn(
+                    initialScale = 0.94f,
+                    animationSpec = tween(durationMillis = ModalEnterDurationMs),
+                ) + fadeIn(animationSpec = tween(durationMillis = ModalEnterDurationMs)),
+        ) {
+            PairPreviewScreen(
+                combined = combined,
+                livePreviewBitmap = livePreviewBitmap,
+                showDeleteDialog = showDeleteDialog,
+                onClose = onDismiss,
+                onShareSelected = { onShareSelected(viewModel.pairId) },
+                onNavigateToAfterCamera = { onNavigateToAfterCamera(viewModel.pairId) },
+                onDeleteRequested = viewModel::showDeleteDialog,
+                onDeleteAll = viewModel::deletePair,
+                onDeleteCombinedOnly = viewModel::deleteCombinedOnly,
+                onDeleteDismissed = viewModel::dismissDeleteDialog,
+            )
+        }
+    }
 }
