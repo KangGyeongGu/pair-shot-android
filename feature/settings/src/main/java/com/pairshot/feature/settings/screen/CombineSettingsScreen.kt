@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,11 +52,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.selected
@@ -72,16 +75,17 @@ import com.pairshot.core.model.CombineLayout
 import com.pairshot.core.model.LabelAnchor
 import com.pairshot.core.model.LabelPosition
 import com.pairshot.core.model.LabelPositionMode
-import com.pairshot.core.model.RenderProfile
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.rendering.PairImageComposer
-import com.pairshot.core.rendering.PreviewSampleProvider
+import com.pairshot.core.rendering.CombinePreviewEntryPoint
+import com.pairshot.core.rendering.CombinePreviewRenderer
 import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.SettingsSliderItem
 import com.pairshot.core.ui.component.SettingsSwitchItem
+import com.pairshot.feature.settings.component.PositionPicker3x3Row
+import dagger.hilt.android.EntryPointAccessors
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,8 +93,6 @@ import kotlin.math.roundToInt
 fun CombineSettingsScreen(
     combineConfig: CombineConfig,
     watermarkConfig: WatermarkConfig,
-    pairImageComposer: PairImageComposer,
-    previewSampleProvider: PreviewSampleProvider,
     onCombineConfigChange: (CombineConfig) -> Unit,
     onNavigateBack: () -> Unit,
 ) {
@@ -176,7 +178,7 @@ fun CombineSettingsScreen(
                 ),
         ) {
             item(key = "label_layout") {
-                SettingsSectionLabel(label = "레이아웃")
+                SettingsSectionLabel(label = "정렬")
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
@@ -203,7 +205,7 @@ fun CombineSettingsScreen(
             item(key = "card_border") {
                 SettingsCard {
                     SettingsSwitchItem(
-                        label = "테두리",
+                        label = "테두리 사용",
                         checked = combineConfig.borderEnabled,
                         onCheckedChange = { checked ->
                             onCombineConfigChange(combineConfig.copy(borderEnabled = checked))
@@ -231,7 +233,7 @@ fun CombineSettingsScreen(
                             )
                             SettingsDivider()
                             ColorItem(
-                                label = "테두리 색상",
+                                label = "색상",
                                 colorArgb = combineConfig.borderColorArgb,
                                 onClick = { borderColorPickerVisible = true },
                             )
@@ -252,7 +254,7 @@ fun CombineSettingsScreen(
             item(key = "card_label_text") {
                 SettingsCard {
                     SettingsSwitchItem(
-                        label = "레이블",
+                        label = "레이블 사용",
                         checked = combineConfig.labelEnabled,
                         onCheckedChange = { checked ->
                             onCombineConfigChange(combineConfig.copy(labelEnabled = checked))
@@ -282,7 +284,7 @@ fun CombineSettingsScreen(
                             )
                             SettingsDivider()
                             SettingsSliderItem(
-                                label = "폰트 크기",
+                                label = "텍스트 크기",
                                 value = combineConfig.labelSizeRatio,
                                 valueRange = 0f..0.10f,
                                 steps = 9,
@@ -305,6 +307,20 @@ fun CombineSettingsScreen(
                 }
             }
 
+            item(key = "label_label_mode") {
+                AnimatedVisibility(
+                    visible = combineConfig.labelEnabled,
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                        SettingsSectionLabel(label = "레이블 방식")
+                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                    }
+                }
+            }
+
             item(key = "card_label_position") {
                 AnimatedVisibility(
                     visible = combineConfig.labelEnabled,
@@ -312,7 +328,6 @@ fun CombineSettingsScreen(
                     exit = shrinkVertically(),
                 ) {
                     Column {
-                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                         SettingsCard {
                             LabelPositionModeItem(
                                 selectedMode = combineConfig.labelPositionMode,
@@ -330,23 +345,39 @@ fun CombineSettingsScreen(
                                 )
                             } else {
                                 SettingsDivider()
-                                LabelAnchorPickerRow(
+                                PositionPicker3x3Row(
                                     label = "BEFORE 위치",
-                                    selectedAnchor = combineConfig.beforeLabelAnchor,
-                                    onAnchorChange = { anchor ->
+                                    positions = labelAnchorOrder,
+                                    selectedPosition = combineConfig.beforeLabelAnchor,
+                                    onPositionChange = { anchor ->
                                         onCombineConfigChange(combineConfig.copy(beforeLabelAnchor = anchor))
                                     },
                                 )
                                 SettingsDivider()
-                                LabelAnchorPickerRow(
+                                PositionPicker3x3Row(
                                     label = "AFTER 위치",
-                                    selectedAnchor = combineConfig.afterLabelAnchor,
-                                    onAnchorChange = { anchor ->
+                                    positions = labelAnchorOrder,
+                                    selectedPosition = combineConfig.afterLabelAnchor,
+                                    onPositionChange = { anchor ->
                                         onCombineConfigChange(combineConfig.copy(afterLabelAnchor = anchor))
                                     },
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            item(key = "label_label_bg") {
+                AnimatedVisibility(
+                    visible = combineConfig.labelEnabled,
+                    enter = expandVertically(),
+                    exit = shrinkVertically(),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                        SettingsSectionLabel(label = "레이블 배경")
+                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     }
                 }
             }
@@ -358,10 +389,9 @@ fun CombineSettingsScreen(
                     exit = shrinkVertically(),
                 ) {
                     Column {
-                        Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                         SettingsCard {
                             SettingsSwitchItem(
-                                label = "레이블 배경",
+                                label = "배경 사용",
                                 checked = combineConfig.labelBgEnabled,
                                 onCheckedChange = { checked ->
                                     onCombineConfigChange(combineConfig.copy(labelBgEnabled = checked))
@@ -375,13 +405,13 @@ fun CombineSettingsScreen(
                                 Column {
                                     SettingsDivider()
                                     ColorItem(
-                                        label = "배경 색상",
+                                        label = "색상",
                                         colorArgb = combineConfig.labelBgColorArgb,
                                         onClick = { labelBgColorPickerVisible = true },
                                     )
                                     SettingsDivider()
                                     SettingsSliderItem(
-                                        label = "배경 투명도",
+                                        label = "투명도",
                                         value = combineConfig.labelBgAlpha,
                                         valueRange = 0f..1f,
                                         valueLabel = { "${(it * 100).roundToInt()}%" },
@@ -395,10 +425,10 @@ fun CombineSettingsScreen(
                                     if (combineConfig.labelPositionMode == LabelPositionMode.FREE) {
                                         SettingsDivider()
                                         SettingsSliderItem(
-                                            label = "배경 곡률",
+                                            label = "곡률",
                                             value = combineConfig.labelBgCornerDp.toFloat(),
                                             valueRange = 0f..50f,
-                                            steps = 24,
+                                            steps = 49,
                                             valueLabel = { "${it.toInt()}dp" },
                                             onValueChange = { v ->
                                                 onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
@@ -428,8 +458,6 @@ fun CombineSettingsScreen(
                 CombinePreviewSection(
                     config = combineConfig,
                     watermarkConfig = watermarkConfig,
-                    pairImageComposer = pairImageComposer,
-                    previewSampleProvider = previewSampleProvider,
                 )
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
             }
@@ -581,7 +609,7 @@ private fun LabelPositionModeItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "레이블 방식",
+            text = "방식",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -641,64 +669,6 @@ private val labelAnchorOrder =
         LabelAnchor.BOTTOM_CENTER,
         LabelAnchor.BOTTOM_RIGHT,
     )
-
-@Composable
-private fun LabelAnchorPickerRow(
-    label: String,
-    selectedAnchor: LabelAnchor,
-    onAnchorChange: (LabelAnchor) -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = PairShotSpacing.cardPadding,
-                    vertical = PairShotSpacing.cardPadding,
-                ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        Column(verticalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap)) {
-            labelAnchorOrder.chunked(3).forEach { rowAnchors ->
-                Row(horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap)) {
-                    rowAnchors.forEach { anchor ->
-                        val isSelected = anchor == selectedAnchor
-                        Box(
-                            modifier =
-                                Modifier
-                                    .size(PairShotSpacing.iconSize)
-                                    .clip(MaterialTheme.shapes.extraSmall)
-                                    .background(
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.surfaceContainerHigh
-                                        },
-                                    ).semantics { selected = isSelected }
-                                    .clickable { onAnchorChange(anchor) },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(14.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun LabelTextItem(
@@ -1110,28 +1080,23 @@ private fun LabelBgColorPickerDialog(
 internal fun CombinePreviewSection(
     config: CombineConfig,
     watermarkConfig: WatermarkConfig,
-    pairImageComposer: PairImageComposer,
-    previewSampleProvider: PreviewSampleProvider,
     modifier: Modifier = Modifier,
 ) {
+    val renderer = rememberCombinePreviewRenderer()
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(config, watermarkConfig) {
-        val sample = previewSampleProvider.get()
-        val result =
-            runCatching {
-                pairImageComposer.composeFromBitmaps(
-                    before = sample,
-                    after = sample,
-                    combineConfig = config,
-                    watermarkConfig = watermarkConfig,
-                    profile = RenderProfile.PREVIEW,
-                )
-            }.getOrNull()
+        val result = renderer.render(config, watermarkConfig)
         previewBitmap?.let { old ->
             if (old !== result && !old.isRecycled) old.recycle()
         }
         previewBitmap = result
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            previewBitmap?.takeIf { !it.isRecycled }?.recycle()
+        }
     }
 
     val aspectRatio =
@@ -1146,6 +1111,7 @@ internal fun CombinePreviewSection(
             bitmap = bmp.asImageBitmap(),
             contentDescription = "합성 미리보기",
             contentScale = ContentScale.Fit,
+            filterQuality = FilterQuality.High,
             modifier =
                 modifier
                     .fillMaxWidth()
@@ -1161,5 +1127,17 @@ internal fun CombinePreviewSection(
                     .fillMaxWidth()
                     .aspectRatio(aspectRatio),
         )
+    }
+}
+
+@Composable
+private fun rememberCombinePreviewRenderer(): CombinePreviewRenderer {
+    val context = LocalContext.current
+    return remember(context) {
+        EntryPointAccessors
+            .fromApplication(
+                context.applicationContext,
+                CombinePreviewEntryPoint::class.java,
+            ).combinePreviewRenderer()
     }
 }

@@ -3,18 +3,39 @@ package com.pairshot
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.metrics.performance.JankStats
 import androidx.metrics.performance.PerformanceMetricsState
 import com.pairshot.app.navigation.PairShotNavHost
+import com.pairshot.app.navigation.SelectionActionViewModel
+import com.pairshot.app.navigation.SelectionMessage
+import com.pairshot.app.navigation.effect.ExportShareEffect
 import com.pairshot.core.designsystem.PairShotTheme
+import com.pairshot.core.ui.component.PairShotSnackbar
+import com.pairshot.core.ui.component.SnackbarVariant
+import com.pairshot.core.ui.component.TopProgressPill
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -32,7 +53,7 @@ class MainActivity : ComponentActivity() {
                     Log.w("JankStats", frameData.toString())
                 }
             }
-        metricsStateHolder.state?.putState("screen", "Home")
+        metricsStateHolder.state?.putState("screen", "Camera")
 
         setContent {
             PairShotTheme {
@@ -40,11 +61,76 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
-                    PairShotNavHost(
-                        onDestinationChanged = { route ->
-                            metricsStateHolder.state?.putState("screen", route)
-                        },
-                    )
+                    val selectionVm: SelectionActionViewModel = hiltViewModel()
+                    val pendingZip by selectionVm.pendingZipSave.collectAsStateWithLifecycle()
+                    val progress by selectionVm.progress.collectAsStateWithLifecycle()
+                    var selectionMessage by remember { mutableStateOf<SelectionMessage?>(null) }
+
+                    LaunchedEffect(Unit) {
+                        selectionVm.messages.collect { msg -> selectionMessage = msg }
+                    }
+
+                    LaunchedEffect(selectionMessage) {
+                        if (selectionMessage != null) {
+                            delay(2500)
+                            selectionMessage = null
+                        }
+                    }
+
+                    val saveZipLauncher =
+                        rememberLauncherForActivityResult(
+                            ActivityResultContracts.CreateDocument("application/zip"),
+                        ) { uri ->
+                            selectionVm.completeZipSave(uri?.toString())
+                        }
+
+                    LaunchedEffect(pendingZip) {
+                        if (pendingZip != null) {
+                            saveZipLauncher.launch("PairShot_export.zip")
+                        }
+                    }
+
+                    ExportShareEffect(actions = selectionVm.exportAction)
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        PairShotNavHost(
+                            onDestinationChanged = { route ->
+                                metricsStateHolder.state?.putState("screen", route)
+                            },
+                            onShareSelected = selectionVm::shareSelection,
+                            onSaveSelectedToDevice = selectionVm::saveSelectionToDevice,
+                        )
+
+                        progress?.let { p ->
+                            TopProgressPill(
+                                label = "${p.label} · ${p.total}개",
+                                progress = if (p.total > 0) p.current.toFloat() / p.total else 0f,
+                                progressText = "${p.current}/${p.total}",
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.TopCenter)
+                                        .statusBarsPadding()
+                                        .padding(top = 8.dp),
+                            )
+                        }
+
+                        selectionMessage?.let { msg ->
+                            val (text, variant) =
+                                when (msg) {
+                                    is SelectionMessage.Info -> msg.text to SnackbarVariant.INFO
+                                    is SelectionMessage.Error -> msg.text to SnackbarVariant.ERROR
+                                }
+                            PairShotSnackbar(
+                                message = text,
+                                variant = variant,
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.TopCenter)
+                                        .statusBarsPadding()
+                                        .padding(top = if (progress != null) 64.dp else 8.dp),
+                            )
+                        }
+                    }
                 }
             }
         }

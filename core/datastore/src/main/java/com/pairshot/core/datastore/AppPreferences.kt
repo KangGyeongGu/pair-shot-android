@@ -43,7 +43,7 @@ class AppPreferences
 
         val jpegQuality: Flow<Int> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.JPEG_QUALITY] ?: 85
+                prefs[Keys.JPEG_QUALITY] ?: 95
             }
 
         val fileNamePrefix: Flow<String> =
@@ -58,7 +58,7 @@ class AppPreferences
 
         val overlayAlpha: Flow<Float> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.OVERLAY_ALPHA] ?: 0.5f
+                prefs[Keys.OVERLAY_ALPHA] ?: 0.35f
             }
 
         suspend fun setJpegQuality(quality: Int) {

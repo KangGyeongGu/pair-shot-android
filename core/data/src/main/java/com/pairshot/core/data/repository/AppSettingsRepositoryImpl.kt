@@ -3,6 +3,7 @@ package com.pairshot.core.data.repository
 import com.pairshot.core.datastore.AppPreferences
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.AppSettings
+import com.pairshot.core.model.ExportFormat
 import com.pairshot.core.model.ExportPreset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -59,6 +60,8 @@ class AppSettingsRepositoryImpl
                 )
             }
 
+        override suspend fun getCurrent(): AppSettings = settingsFlow.first()
+
         override suspend fun updateJpegQuality(quality: Int) = appPreferences.setJpegQuality(quality)
 
         override suspend fun updateFileNamePrefix(prefix: String) = appPreferences.setFileNamePrefix(prefix)
@@ -85,7 +88,7 @@ class AppSettingsRepositoryImpl
                 appPreferences.exportIncludeCombined,
             ) { format, before, after, combined ->
                 ExportPreset(
-                    format = format,
+                    format = runCatching { ExportFormat.valueOf(format) }.getOrDefault(ExportFormat.ZIP),
                     includeBefore = before,
                     includeAfter = after,
                     includeCombined = combined,
@@ -94,7 +97,7 @@ class AppSettingsRepositoryImpl
 
         override suspend fun saveLastExportPreset(preset: ExportPreset) {
             appPreferences.saveExportPreset(
-                format = preset.format,
+                format = preset.format.name,
                 includeBefore = preset.includeBefore,
                 includeAfter = preset.includeAfter,
                 includeCombined = preset.includeCombined,

@@ -16,13 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,8 +46,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
-import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.model.isContentMissing
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.SettingsCard
@@ -57,6 +55,7 @@ import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsItem
 import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.SettingsSliderItem
+import com.pairshot.core.ui.component.WarningBadge
 import com.pairshot.feature.settings.dialog.ClearCacheDialog
 import com.pairshot.feature.settings.dialog.FileNamePrefixDialog
 import com.pairshot.feature.settings.dialog.ImageQualityDialog
@@ -88,7 +87,7 @@ fun SettingsScreen(
 
     val currentQuality = (uiState as? SettingsUiState.Success)?.jpegQuality ?: 85
     val currentPrefix = (uiState as? SettingsUiState.Success)?.fileNamePrefix ?: "PAIRSHOT"
-    val currentAlpha = (uiState as? SettingsUiState.Success)?.overlayAlpha ?: 0.5f
+    val currentAlpha = (uiState as? SettingsUiState.Success)?.overlayAlpha ?: 0.35f
 
     if (showClearCacheDialog) {
         ClearCacheDialog(
@@ -259,23 +258,10 @@ fun SettingsScreen(
                                                 ) {
                                                     Row(
                                                         modifier = Modifier.fillMaxWidth().padding(bottom = PairShotSpacing.xs),
-                                                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
+                                                        horizontalArrangement = Arrangement.End,
                                                         verticalAlignment = Alignment.CenterVertically,
                                                     ) {
-                                                        Icon(
-                                                            imageVector = Icons.Outlined.ErrorOutline,
-                                                            contentDescription = null,
-                                                            modifier = Modifier.size(12.dp),
-                                                            tint = MaterialTheme.colorScheme.error,
-                                                        )
-                                                        Text(
-                                                            text = "75% 이하 권장",
-                                                            style =
-                                                                PairShotTypographyTokens.labelExtraSmall.copy(
-                                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                                                                ),
-                                                            color = MaterialTheme.colorScheme.error,
-                                                        )
+                                                        WarningBadge(text = "75% 이하 권장")
                                                     }
                                                 }
                                             },
@@ -337,6 +323,9 @@ fun SettingsScreen(
                                         SettingsDivider()
                                         SettingsItem(
                                             label = "사용자 설정",
+                                            trailing =
+                                                if (watermarkConfig.isContentMissing()) "설정 필요" else null,
+                                            trailingIsError = watermarkConfig.isContentMissing(),
                                             onClick = onWatermarkSettingsClick,
                                         )
                                     }

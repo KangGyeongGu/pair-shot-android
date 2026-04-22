@@ -1,67 +1,74 @@
 package com.pairshot.app.navigation.effect
 
 import android.content.ClipData
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
-import com.pairshot.feature.export.viewmodel.ExportAction
+import com.pairshot.core.domain.export.ExportAction
 import kotlinx.coroutines.flow.Flow
+import timber.log.Timber
 import java.io.File
 
 @Composable
-fun ExportShareEffect(exportAction: Flow<ExportAction>) {
+fun ExportShareEffect(actions: Flow<ExportAction>) {
     val context = LocalContext.current
-
-    LaunchedEffect("exportAction") {
-        exportAction.collect { action ->
-            val resolver = context.contentResolver
-            val intent =
-                when (action) {
-                    is ExportAction.ShareZip -> {
-                        val zipFile = File(action.filePath)
-                        val authority = "${context.packageName}.fileprovider"
-                        val uri = FileProvider.getUriForFile(context, authority, zipFile)
-                        Intent(Intent.ACTION_SEND).apply {
-                            type = "application/zip"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            clipData = ClipData.newUri(resolver, "PairShot ZIP", uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
+    LaunchedEffect(actions) {
+        actions.collect { action ->
+            runCatching {
+                val intent = buildShareIntent(context, action)
+                val chooser =
+                    Intent.createChooser(intent, null).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
-
-                    is ExportAction.ShareImages -> {
-                        val uris = action.uris.map { Uri.parse(it) }
-                        if (uris.size == 1) {
-                            Intent(Intent.ACTION_SEND).apply {
-                                type = "image/jpeg"
-                                putExtra(Intent.EXTRA_STREAM, uris.first())
-                                clipData = ClipData.newUri(resolver, "PairShot", uris.first())
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            }
-                        } else {
-                            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-                                type = "image/*"
-                                putParcelableArrayListExtra(
-                                    Intent.EXTRA_STREAM,
-                                    ArrayList(uris),
-                                )
-                                clipData =
-                                    ClipData
-                                        .newUri(resolver, "PairShot", uris.first())
-                                        .apply {
-                                            uris.drop(1).forEach {
-                                                addItem(ClipData.Item(it))
-                                            }
-                                        }
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            }
-                        }
-                    }
-                }
-            context.startActivity(Intent.createChooser(intent, null))
+                context.startActivity(chooser)
+            }.onFailure { error ->
+                Timber.e(error, "공유 Intent 실행 실패")
+            }
         }
+    }
+}
+
+private fun buildShareIntent(
+    context: Context,
+    action: ExportAction,
+): Intent =
+    when (action) {
+        is ExportAction.ShareImages -> buildSendMultipleIntent(context, action.uris)
+        is ExportAction.ShareZip -> buildSendZipIntent(context, action.filePath)
+    }
+
+private fun buildSendMultipleIntent(
+    context: Context,
+    uriStrings: List<String>,
+): Intent {
+    require(uriStrings.isNotEmpty()) { "공유할 URI가 없습니다" }
+    val uris = ArrayList(uriStrings.map { Uri.parse(it) })
+    return Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+        type = "image/*"
+        putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        clipData =
+            ClipData.newRawUri("images", uris.first()).apply {
+                uris.drop(1).forEach { addItem(ClipData.Item(it)) }
+            }
+    }
+}
+
+private fun buildSendZipIntent(
+    context: Context,
+    filePath: String,
+): Intent {
+    val file = File(filePath)
+    val authority = "${context.packageName}.fileprovider"
+    val uri = FileProvider.getUriForFile(context, authority, file)
+    return Intent(Intent.ACTION_SEND).apply {
+        type = "application/zip"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        clipData = ClipData.newRawUri("zip", uri)
     }
 }

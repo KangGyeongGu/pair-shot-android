@@ -152,13 +152,26 @@ class ViewModelBoundaryTest {
             .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
             .and()
             .haveSimpleNameNotContaining("AfterCameraViewModel")
+            .and()
+            .haveSimpleNameNotContaining("PairPreviewViewModel")
             .should()
             .dependOnClassesThat()
             .haveFullyQualifiedName("android.graphics.Bitmap")
             .because(
                 "ViewModel should not hold Bitmap directly. " +
-                    "AfterCameraViewModel is permitted for overlay bitmap state management (rotation preprocessing).",
+                    "AfterCameraViewModel is permitted for overlay bitmap state management (rotation preprocessing). " +
+                    "PairPreviewViewModel is permitted for live composite preview rendering.",
             )
+
+    @ArchTest
+    val `V-14 ViewModel should not use android graphics Matrix`: ArchRule =
+        noClasses()
+            .that()
+            .areAssignableTo(androidx.lifecycle.ViewModel::class.java)
+            .should()
+            .dependOnClassesThat()
+            .haveFullyQualifiedName("android.graphics.Matrix")
+            .because("ViewModel must not perform bitmap transform — delegate to infra layer (CameraSession.prepareOverlay)")
 
     @ArchTest
     val `V-13 ViewModel should not depend on infra impl classes`: ArchRule =

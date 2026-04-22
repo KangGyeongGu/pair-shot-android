@@ -1,13 +1,13 @@
 package com.pairshot.core.domain.settings
 
-import com.pairshot.core.model.ExportPreset
-
 import com.pairshot.core.model.AppSettings
-
+import com.pairshot.core.model.ExportPreset
 import kotlinx.coroutines.flow.Flow
 
 interface AppSettingsRepository {
     val settingsFlow: Flow<AppSettings>
+
+    suspend fun getCurrent(): AppSettings
 
     suspend fun updateJpegQuality(quality: Int)
 

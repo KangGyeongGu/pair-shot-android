@@ -58,35 +58,35 @@ class CombinePreferences
                         prefs[Keys.LAYOUT]?.let { name ->
                             runCatching { CombineLayout.valueOf(name) }.getOrNull()
                         } ?: CombineLayout.HORIZONTAL,
-                    borderEnabled = prefs[Keys.BORDER_ENABLED] ?: false,
-                    borderThicknessDp = prefs[Keys.BORDER_THICKNESS] ?: 12,
+                    borderEnabled = prefs[Keys.BORDER_ENABLED] ?: true,
+                    borderThicknessDp = prefs[Keys.BORDER_THICKNESS] ?: 16,
                     borderColorArgb = prefs[Keys.BORDER_COLOR_ARGB] ?: 0xFFFFFFFF.toInt(),
-                    labelEnabled = prefs[Keys.LABEL_ENABLED] ?: true,
+                    labelEnabled = prefs[Keys.LABEL_ENABLED] ?: false,
                     beforeLabel = prefs[Keys.BEFORE_LABEL] ?: "BEFORE",
                     afterLabel = prefs[Keys.AFTER_LABEL] ?: "AFTER",
                     labelPosition =
                         prefs[Keys.LABEL_POSITION]?.let { name ->
                             runCatching { LabelPosition.valueOf(name) }.getOrNull()
                         } ?: LabelPosition.BOTTOM,
-                    labelSizeRatio = prefs[Keys.LABEL_SIZE_RATIO] ?: 0.04f,
-                    labelTextColorArgb = prefs[Keys.LABEL_TEXT_COLOR_ARGB] ?: 0xFFFFFFFF.toInt(),
+                    labelSizeRatio = prefs[Keys.LABEL_SIZE_RATIO] ?: 0.05f,
+                    labelTextColorArgb = prefs[Keys.LABEL_TEXT_COLOR_ARGB] ?: 0xFF000000.toInt(),
                     labelBgColorArgb = prefs[Keys.LABEL_BG_COLOR_ARGB] ?: 0xFF000000.toInt(),
-                    labelBgAlpha = prefs[Keys.LABEL_BG_ALPHA] ?: 0.45f,
+                    labelBgAlpha = prefs[Keys.LABEL_BG_ALPHA] ?: 0.5f,
                     labelBgEnabled = prefs[Keys.LABEL_BG_ENABLED] ?: true,
                     labelBgMatchesBorder = prefs[Keys.LABEL_BG_MATCHES_BORDER] ?: true,
                     labelPositionMode =
                         prefs[Keys.LABEL_POSITION_MODE]?.let { name ->
                             runCatching { LabelPositionMode.valueOf(name) }.getOrNull()
-                        } ?: LabelPositionMode.FULL_WIDTH,
+                        } ?: LabelPositionMode.FREE,
                     beforeLabelAnchor =
                         prefs[Keys.BEFORE_LABEL_ANCHOR]?.let { name ->
                             runCatching { LabelAnchor.valueOf(name) }.getOrNull()
-                        } ?: LabelAnchor.BOTTOM_LEFT,
+                        } ?: LabelAnchor.TOP_LEFT,
                     afterLabelAnchor =
                         prefs[Keys.AFTER_LABEL_ANCHOR]?.let { name ->
                             runCatching { LabelAnchor.valueOf(name) }.getOrNull()
-                        } ?: LabelAnchor.BOTTOM_LEFT,
-                    labelBgCornerDp = prefs[Keys.LABEL_BG_CORNER] ?: 0,
+                        } ?: LabelAnchor.TOP_LEFT,
+                    labelBgCornerDp = prefs[Keys.LABEL_BG_CORNER] ?: 25,
                 )
             }
 

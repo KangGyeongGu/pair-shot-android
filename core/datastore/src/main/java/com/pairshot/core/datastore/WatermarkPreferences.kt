@@ -51,16 +51,16 @@ class WatermarkPreferences
                             runCatching { WatermarkType.valueOf(name) }.getOrNull()
                         } ?: WatermarkType.TEXT,
                     text = prefs[Keys.TEXT] ?: "",
-                    alpha = prefs[Keys.ALPHA] ?: 0.3f,
-                    diagonalCount = prefs[Keys.DIAGONAL_COUNT] ?: 5,
-                    repeatDensity = prefs[Keys.REPEAT_DENSITY] ?: 1.0f,
+                    alpha = prefs[Keys.ALPHA] ?: 0.5f,
+                    diagonalCount = prefs[Keys.DIAGONAL_COUNT] ?: 10,
+                    repeatDensity = prefs[Keys.REPEAT_DENSITY] ?: 1.5f,
                     textSizeRatio = prefs[Keys.TEXT_SIZE_RATIO] ?: 0.03f,
                     logoPath = prefs[Keys.LOGO_PATH] ?: "",
                     logoPosition =
                         prefs[Keys.LOGO_POSITION]?.let { name ->
                             runCatching { LogoPosition.valueOf(name) }.getOrNull()
-                        } ?: LogoPosition.BOTTOM_RIGHT,
-                    logoSizeRatio = prefs[Keys.LOGO_SIZE_RATIO] ?: 0.15f,
+                        } ?: LogoPosition.CENTER,
+                    logoSizeRatio = prefs[Keys.LOGO_SIZE_RATIO] ?: 0.5f,
                     logoAlpha = prefs[Keys.LOGO_ALPHA] ?: 0.5f,
                 )
             }

@@ -34,7 +34,7 @@ class MediaStoreManager
     ) {
         fun saveToGallery(
             tempFileUri: Uri,
-            projectName: String,
+            subfolder: String,
             displayName: String,
         ): Uri {
             val resolver = context.contentResolver
@@ -51,7 +51,9 @@ class MediaStoreManager
                     put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PairShot/$projectName/")
+                        val relativePath =
+                            if (subfolder.isBlank()) "Pictures/PairShot/" else "Pictures/PairShot/$subfolder/"
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
                         put(MediaStore.Images.Media.IS_PENDING, 1)
                     }
                 }
@@ -96,7 +98,7 @@ class MediaStoreManager
 
         fun saveBitmapToGallery(
             bitmap: Bitmap,
-            projectName: String,
+            subfolder: String,
             displayName: String,
             quality: Int = 95,
         ): Uri {
@@ -114,7 +116,9 @@ class MediaStoreManager
                     put(MediaStore.Images.Media.DISPLAY_NAME, displayName)
                     put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/PairShot/$projectName/")
+                        val relativePath =
+                            if (subfolder.isBlank()) "Pictures/PairShot/" else "Pictures/PairShot/$subfolder/"
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
                         put(MediaStore.Images.Media.IS_PENDING, 1)
                     }
                 }

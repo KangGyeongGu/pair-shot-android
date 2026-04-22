@@ -39,11 +39,4 @@ class ShareManager
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
-
-        fun createTempZipFile(projectName: String): File {
-            val shareDir = File(context.cacheDir, "share")
-            shareDir.mkdirs()
-            shareDir.listFiles()?.forEach { it.delete() }
-            return File(shareDir, "PairShot_$projectName.zip")
-        }
     }

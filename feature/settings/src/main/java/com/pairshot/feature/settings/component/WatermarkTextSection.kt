@@ -68,7 +68,7 @@ internal fun WatermarkTextSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "대각선 줄 수",
+            label = "줄 수",
             value = watermarkConfig.diagonalCount.toFloat(),
             valueRange = 0f..20f,
             steps = 19,
@@ -78,7 +78,7 @@ internal fun WatermarkTextSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "반복 밀도",
+            label = "반복수",
             value = watermarkConfig.repeatDensity,
             valueRange = 0f..3.0f,
             valueLabel = { "%.1f".format(it) },
@@ -104,7 +104,7 @@ internal fun WatermarkTypeItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "유형",
+            text = "워터마크 유형",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -191,7 +191,7 @@ private fun WatermarkTextItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "반복 텍스트",
+            text = "텍스트",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(0.35f),

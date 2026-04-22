@@ -16,6 +16,7 @@ local.properties
 .claude/
 archive/
 final-docs/
+final-guide/
 .agents
 uiux.md
 CLAUDE.md

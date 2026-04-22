@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.WatermarkType
+import com.pairshot.core.model.isContentMissing
 import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.component.SettingsCard
@@ -86,7 +87,7 @@ fun WatermarkSettingsScreen(
             item(key = "card_basic") {
                 SettingsCard {
                     SettingsSwitchItem(
-                        label = "워터마크",
+                        label = "워터마크 사용",
                         checked = watermarkConfig.enabled,
                         onCheckedChange = { checked ->
                             onWatermarkConfigChange(watermarkConfig.copy(enabled = checked))
@@ -102,10 +103,15 @@ fun WatermarkSettingsScreen(
                 }
             }
 
+            val showWarning = watermarkConfig.enabled && watermarkConfig.isContentMissing()
+
             if (watermarkConfig.type == WatermarkType.TEXT) {
                 item(key = "label_text") {
                     Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                    SettingsSectionLabel(label = "텍스트 설정")
+                    SettingsSectionLabel(
+                        label = "텍스트 설정",
+                        trailingWarning = if (showWarning) "설정 필요" else null,
+                    )
                     Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                 }
                 item(key = "card_text") {
@@ -119,7 +125,10 @@ fun WatermarkSettingsScreen(
             if (watermarkConfig.type == WatermarkType.LOGO) {
                 item(key = "label_logo") {
                     Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                    SettingsSectionLabel(label = "로고 설정")
+                    SettingsSectionLabel(
+                        label = "로고 설정",
+                        trailingWarning = if (showWarning) "설정 필요" else null,
+                    )
                     Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                 }
                 item(key = "card_logo") {
