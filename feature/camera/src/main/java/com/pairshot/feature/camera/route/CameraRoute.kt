@@ -13,7 +13,6 @@ import com.pairshot.feature.camera.viewmodel.CameraViewModel
 
 @Composable
 fun CameraRoute(
-    projectId: Long,
     onNavigateBack: () -> Unit,
     viewModel: CameraViewModel = hiltViewModel(),
 ) {
@@ -25,7 +24,6 @@ fun CameraRoute(
     ) {
         CameraPermissionGate(onNavigateBack = onNavigateBack) {
             CameraScreen(
-                projectId = projectId,
                 viewModel = viewModel,
                 onNavigateBack = onNavigateBack,
             )

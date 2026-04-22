@@ -1,10 +1,16 @@
 package com.pairshot.feature.camera.component
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.ScrollableDefaults
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,18 +26,42 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
+import kotlin.math.abs
 
-private val DefaultStripHeight = 120.dp
+internal val BeforeStripHeight: Dp = 168.dp
+
+private val ActiveCardWidth = 100.dp
+private val ActiveCardHeight = 134.dp
+private val CardSpacing = 8.dp
+private val FallbackHorizontalPadding = 20.dp
+private val ProgressIndicatorHeight = 28.dp
+private const val InactiveScale = 0.85f
+private val InactiveBorderWidth = 1.dp
+private val ActiveBorderWidth = 3.dp
+
+data class StripProgress(
+    val completed: Int,
+    val total: Int,
+)
 
 @Composable
 fun BeforePreviewStrip(
@@ -41,15 +71,38 @@ fun BeforePreviewStrip(
     onSelectIndex: ((Int) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     emptyMessage: String = "아직 촬영된 Before가 없습니다",
-    stripHeight: Dp = DefaultStripHeight,
+    stripHeight: Dp = BeforeStripHeight,
+    allActiveSize: Boolean = false,
+    progress: StripProgress? = null,
 ) {
+    val snapEnabled = onSelectIndex != null
+    val haptic = LocalHapticFeedback.current
+
+    if (snapEnabled) {
+        val snappedIndex by remember(listState) {
+            derivedStateOf {
+                val info = listState.layoutInfo
+                val items = info.visibleItemsInfo
+                if (items.isEmpty()) return@derivedStateOf -1
+                val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2
+                items.minByOrNull { abs((it.offset + it.size / 2) - viewportCenter) }?.index ?: -1
+            }
+        }
+        LaunchedEffect(snappedIndex) {
+            if (snappedIndex < 0) return@LaunchedEffect
+            if (listState.isScrollInProgress && snappedIndex != selectedIndex) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                onSelectIndex?.invoke(snappedIndex)
+            }
+        }
+    }
+
     Box(
         modifier =
             modifier
                 .fillMaxWidth()
                 .height(stripHeight)
                 .background(Color.Black),
-        contentAlignment = Alignment.Center,
     ) {
         if (beforePreviewUris.isEmpty()) {
             Text(
@@ -59,62 +112,117 @@ fun BeforePreviewStrip(
                 textAlign = TextAlign.Center,
                 modifier =
                     Modifier
+                        .align(Alignment.Center)
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = FallbackHorizontalPadding),
             )
         } else {
-            LazyRow(
-                state = listState,
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                itemsIndexed(
-                    items = beforePreviewUris,
-                    key = { index, uri -> "$uri-$index" },
-                ) { index, beforeUri ->
-                    val isSelected = selectedIndex == index
-                    val borderWidth = if (isSelected) 2.dp else 1.dp
-                    val borderColor =
-                        if (isSelected) {
-                            MaterialTheme.colorScheme.primary
+            Column(modifier = Modifier.fillMaxSize()) {
+                BoxWithConstraints(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                ) {
+                    val horizontalPadding =
+                        if (snapEnabled) {
+                            ((maxWidth - ActiveCardWidth) / 2).coerceAtLeast(FallbackHorizontalPadding)
                         } else {
-                            MaterialTheme.colorScheme.outlineVariant
+                            FallbackHorizontalPadding
                         }
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    val flingBehavior =
+                        if (snapEnabled) {
+                            rememberSnapFlingBehavior(
+                                lazyListState = listState,
+                                snapPosition = SnapPosition.Center,
+                            )
+                        } else {
+                            ScrollableDefaults.flingBehavior()
+                        }
+                    LazyRow(
+                        state = listState,
+                        flingBehavior = flingBehavior,
+                        contentPadding = PaddingValues(horizontal = horizontalPadding),
+                        horizontalArrangement = Arrangement.spacedBy(CardSpacing),
+                        verticalAlignment = Alignment.Bottom,
+                        modifier = Modifier.fillMaxSize(),
                     ) {
-                        ProfiledAsyncImage(
-                            data = beforeUri,
-                            profile = ImageProfile.THUMBNAIL,
-                            contentDescription = "Before 썸네일 ${index + 1}",
-                            contentScale = ContentScale.Crop,
-                            modifier =
-                                Modifier
-                                    .size(width = 72.dp, height = 96.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .border(
-                                        width = borderWidth,
-                                        color = borderColor,
-                                        shape = RoundedCornerShape(8.dp),
-                                    ).then(
-                                        if (onSelectIndex != null) {
-                                            Modifier.clickable { onSelectIndex(index) }
-                                        } else {
-                                            Modifier
-                                        },
-                                    ),
-                        )
-                        Text(
-                            text = "${index + 1}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        itemsIndexed(
+                            items = beforePreviewUris,
+                            key = { index, uri -> "$uri-$index" },
+                        ) { index, beforeUri ->
+                            val isSelected = selectedIndex == index
+                            val useActiveSize = allActiveSize || isSelected
+                            val scale by animateFloatAsState(
+                                targetValue = if (useActiveSize) 1f else InactiveScale,
+                                animationSpec = tween(durationMillis = 180),
+                                label = "stripCardScale",
+                            )
+                            val borderWidth = if (isSelected) ActiveBorderWidth else InactiveBorderWidth
+                            val borderColor =
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                }
+
+                            ProfiledAsyncImage(
+                                data = beforeUri,
+                                profile = ImageProfile.THUMBNAIL,
+                                contentDescription = "Before 썸네일 ${index + 1}",
+                                contentScale = ContentScale.Crop,
+                                modifier =
+                                    Modifier
+                                        .size(width = ActiveCardWidth, height = ActiveCardHeight)
+                                        .graphicsLayer {
+                                            scaleX = scale
+                                            scaleY = scale
+                                            transformOrigin = TransformOrigin(0.5f, 1f)
+                                        }.clip(RoundedCornerShape(10.dp))
+                                        .border(
+                                            width = borderWidth,
+                                            color = borderColor,
+                                            shape = RoundedCornerShape(10.dp),
+                                        ).then(
+                                            if (onSelectIndex != null) {
+                                                Modifier.clickable { onSelectIndex(index) }
+                                            } else {
+                                                Modifier
+                                            },
+                                        ),
+                            )
+                        }
                     }
+                }
+
+                if (progress != null) {
+                    StripProgressIndicator(
+                        completed = progress.completed,
+                        total = progress.total,
+                    )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StripProgressIndicator(
+    completed: Int,
+    total: Int,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(ProgressIndicatorHeight),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "$completed / $total 완료",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = Color.White,
+        )
     }
 }

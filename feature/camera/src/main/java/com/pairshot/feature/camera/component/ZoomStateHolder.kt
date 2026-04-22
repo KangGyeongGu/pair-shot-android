@@ -22,9 +22,11 @@ class ZoomStateHolder {
         minRatio: Float,
         maxRatio: Float,
     ) {
+        val current = _zoomUiState.value
+        if (current.minRatio == minRatio && current.maxRatio == maxRatio) return
         val presets = buildPresetRatios(minRatio, maxRatio)
-        _zoomUiState.update { current ->
-            current.copy(
+        _zoomUiState.update {
+            it.copy(
                 minRatio = minRatio,
                 maxRatio = maxRatio,
                 presetRatios = presets,

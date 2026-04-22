@@ -47,6 +47,7 @@ internal fun CameraPreviewPane(
     onExposureReset: () -> Unit,
     onExposureAdjust: (Int) -> Unit,
     onTapToFocus: (x: Float, y: Float, viewWidth: Int, viewHeight: Int) -> Unit,
+    onToggleLens: () -> Unit,
     overlayContent: (@Composable () -> Unit)? = null,
 ) {
     val latestZoomRatio = rememberUpdatedState(zoomUiState.currentRatio)
@@ -147,6 +148,7 @@ internal fun CameraPreviewPane(
                     onZoomRatioChanged = onZoomRatioChanged,
                     onPresetTapped = onPresetTapped,
                     onDragEnd = onDragEnd,
+                    onToggleLens = onToggleLens,
                     modifier =
                         Modifier
                             .align(Alignment.BottomCenter)

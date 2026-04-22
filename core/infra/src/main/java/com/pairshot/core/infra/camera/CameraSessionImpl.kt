@@ -1,6 +1,8 @@
 package com.pairshot.core.infra.camera
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Matrix
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.net.Uri
@@ -26,6 +28,8 @@ import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
 import com.pairshot.core.model.ZoomRange
+import com.pairshot.core.rendering.ExifBitmapLoader
+import com.pairshot.core.rendering.OverlayTransformCalculator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +45,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -54,6 +59,7 @@ class CameraSessionImpl
     constructor(
         @ApplicationContext private val context: Context,
         private val sensorSession: SensorSession,
+        private val exifBitmapLoader: ExifBitmapLoader,
     ) : CameraSession {
         private val _surfaceRequest = MutableStateFlow<SurfaceRequest?>(null)
         override val surfaceRequest: StateFlow<SurfaceRequest?> = _surfaceRequest.asStateFlow()
@@ -220,6 +226,8 @@ class CameraSessionImpl
             val tempFile = File(tempDir, "capture_${UUID.randomUUID()}.jpg")
             val options = ImageCapture.OutputFileOptions.Builder(tempFile).build()
 
+            runCatching { camera?.cameraControl?.cancelFocusAndMetering() }
+
             return runCatching {
                 shutterSoundPlayer.play()
                 val savedUri: String =
@@ -253,7 +261,14 @@ class CameraSessionImpl
                         }
                     }
                 savedUri
+            }.also {
+                releaseMeteringAfterCapture()
             }
+        }
+
+        private fun releaseMeteringAfterCapture() {
+            focusJob?.cancel()
+            runCatching { camera?.cameraControl?.cancelFocusAndMetering() }
         }
 
         override fun setZoom(ratio: Float) {
@@ -351,6 +366,30 @@ class CameraSessionImpl
             }.getOrDefault(90)
         }
 
+        override suspend fun prepareOverlay(
+            beforePhotoUri: String,
+            lensFacing: LensFacing,
+        ): OverlayBitmap? =
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val uri = Uri.parse(beforePhotoUri)
+                    val source = exifBitmapLoader.loadBitmapWithExifCorrection(uri, inSampleSize = OVERLAY_IN_SAMPLE_SIZE)
+                    val exifDegrees = exifBitmapLoader.readExifDegrees(uri)
+                    val sensor = sensorRotationDegrees(lensFacing)
+                    val rotation = OverlayTransformCalculator.calculate(sensor, exifDegrees)
+                    if (rotation == 0f) {
+                        OverlayBitmap(source, 0f)
+                    } else {
+                        val matrix = Matrix().apply { postRotate(rotation) }
+                        val rotated = Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
+                        if (rotated !== source) source.recycle()
+                        OverlayBitmap(rotated, rotation)
+                    }
+                }
+            }.onFailure { error ->
+                Timber.w(error, "Overlay 준비 실패: $beforePhotoUri")
+            }.getOrNull()
+
         override fun playShutterSound() {
             shutterSoundPlayer.play()
         }
@@ -369,5 +408,6 @@ class CameraSessionImpl
         companion object {
             private const val EXTENSIONS_DEBOUNCE_MS = 300L
             private const val FOCUS_DEBOUNCE_MS = 200L
+            private const val OVERLAY_IN_SAMPLE_SIZE = 2
         }
     }

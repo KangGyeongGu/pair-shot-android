@@ -1,5 +1,6 @@
 package com.pairshot.feature.camera.screen
 
+import android.graphics.Bitmap
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -17,10 +18,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,46 +32,55 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
-import com.pairshot.feature.camera.chrome.AfterCameraTopBar
 import com.pairshot.feature.camera.chrome.CameraBottomBar
 import com.pairshot.feature.camera.component.BeforePreviewStrip
+import com.pairshot.feature.camera.component.BeforeStripHeight
 import com.pairshot.feature.camera.component.CameraSettingsSheet
 import com.pairshot.feature.camera.component.OverlayGuide
+import com.pairshot.feature.camera.component.StripProgress
 import com.pairshot.feature.camera.preview.CameraPreviewPane
 import com.pairshot.feature.camera.viewmodel.AfterCameraEvent
 import com.pairshot.feature.camera.viewmodel.AfterCameraViewModel
+import com.pairshot.feature.camera.viewmodel.CameraSessionViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-private val CameraTopBarHeight = 56.dp
-private val CameraStripHeight = 120.dp
 private val CameraShutterHeight = 116.dp
 
 @Composable
 internal fun AfterCameraScreen(
     viewModel: AfterCameraViewModel,
     onNavigateBack: () -> Unit,
+    sessionViewModel: CameraSessionViewModel = hiltViewModel(),
 ) {
     val haptic = LocalHapticFeedback.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+
+    val cameraSession = sessionViewModel.cameraSession
+    val sensorSession = sessionViewModel.sensorSession
 
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
+    val pairsLoaded by viewModel.pairsLoaded.collectAsStateWithLifecycle()
     val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
+    val lastPairThumbnailUri by viewModel.lastPairThumbnailUri.collectAsStateWithLifecycle()
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
     val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val overlayEnabled by viewModel.overlayEnabled.collectAsStateWithLifecycle()
     val overlayAlpha by viewModel.overlayAlpha.collectAsStateWithLifecycle()
-    val overlayBitmap by viewModel.overlayBitmap.collectAsStateWithLifecycle()
+    val overlayInputs by viewModel.overlayInputs.collectAsStateWithLifecycle()
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
-    val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
-    val roll by viewModel.roll.collectAsStateWithLifecycle()
-    val surfaceRequest by viewModel.surfaceRequest.collectAsStateWithLifecycle()
+    val capabilities by cameraSession.capabilities.collectAsStateWithLifecycle()
+    val roll by sensorSession.roll.collectAsStateWithLifecycle()
+    val surfaceRequest by cameraSession.surfaceRequest.collectAsStateWithLifecycle()
 
     val currentPair = unpairedPhotos.getOrNull(currentIndex)
     val totalCount = unpairedPhotos.size
@@ -78,8 +90,59 @@ internal fun AfterCameraScreen(
     val snackbarController = remember { PairShotSnackbarController() }
     val thumbnailListState = rememberLazyListState()
 
+    // Overlay bitmap is owned by the Screen, produced via cameraSession.
+    var overlayBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(overlayInputs) {
+        val inputs = overlayInputs
+        val pair = inputs.pair
+        val next: Bitmap? =
+            if (pair == null || !inputs.enabled || inputs.alpha <= 0f) {
+                null
+            } else {
+                cameraSession.prepareOverlay(pair.beforePhotoUri, inputs.lensFacing)?.bitmap
+            }
+        val previous = overlayBitmap
+        overlayBitmap = next
+        if (previous != null && previous !== next && !previous.isRecycled) {
+            previous.recycle()
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            overlayBitmap?.takeIf { !it.isRecycled }?.recycle()
+            overlayBitmap = null
+        }
+    }
+
     LaunchedEffect(lifecycleOwner) {
-        viewModel.bind(lifecycleOwner)
+        val initial = viewModel.loadInitialSettings()
+        cameraSession.setFlash(initial.flashMode)
+        cameraSession.setNightMode(initial.nightModeEnabled)
+        cameraSession.setHdrMode(initial.hdrEnabled)
+        sensorSession.bind(lifecycleOwner)
+        cameraSession.bind(lifecycleOwner)
+    }
+
+    LaunchedEffect(cameraSession) {
+        var capabilitiesInitialized = false
+        cameraSession.zoomState.collect { zoom ->
+            viewModel.onCameraZoomCapabilities(zoom.min, zoom.max)
+            if (!capabilitiesInitialized && zoom.max > zoom.min) {
+                capabilitiesInitialized = true
+                val pair = viewModel.unpairedPhotos.value.getOrNull(viewModel.currentIndex.value)
+                if (pair?.zoomLevel != null) {
+                    viewModel.restoreZoomForPair(pair.zoomLevel)
+                    cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(capabilities) {
+        val adjustment = viewModel.adjustForCapabilities(capabilities)
+        adjustment.flashMode?.let { cameraSession.setFlash(it) }
+        adjustment.nightModeEnabled?.let { cameraSession.setNightMode(it) }
+        adjustment.hdrEnabled?.let { cameraSession.setHdrMode(it) }
     }
 
     var showBlackout by remember { mutableStateOf(false) }
@@ -92,13 +155,13 @@ internal fun AfterCameraScreen(
 
     LaunchedEffect(unpairedPhotos) {
         viewModel.onUnpairedPhotosUpdated(unpairedPhotos)
-        if (unpairedPhotos.isEmpty()) {
+        if (pairsLoaded && unpairedPhotos.isEmpty()) {
             viewModel.emitAllCompleted()
         }
     }
 
     LaunchedEffect(currentIndex) {
-        if (unpairedPhotos.isNotEmpty()) {
+        if (unpairedPhotos.isNotEmpty() && !thumbnailListState.isScrollInProgress) {
             val index = currentIndex.coerceIn(0, unpairedPhotos.lastIndex)
             thumbnailListState.animateScrollToItem(index)
         }
@@ -107,6 +170,7 @@ internal fun AfterCameraScreen(
     LaunchedEffect(currentIndex, unpairedPhotos) {
         val pair = unpairedPhotos.getOrNull(currentIndex) ?: return@LaunchedEffect
         viewModel.restoreZoomForPair(pair.zoomLevel)
+        cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
     }
 
     LaunchedEffect(Unit) {
@@ -147,20 +211,19 @@ internal fun AfterCameraScreen(
         val fullHeightPx = with(density) { maxHeight.roundToPx() }
         val safeAvailableHeightPx = (fullHeightPx - safeTopPx - safeBottomPx).coerceAtLeast(0)
         val safeAvailableHeightDp = with(density) { safeAvailableHeightPx.toDp() }
-        val topSectionHeight = CameraTopBarHeight
-        val stripSectionHeight = CameraStripHeight
+        val stripSectionHeight = BeforeStripHeight
         val shutterSectionHeight = CameraShutterHeight
         val bottomSpacerDesired = 32.dp
         val minPreviewHeight = 180.dp
 
-        val reservedHeight = topSectionHeight + stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
+        val reservedHeight = stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
         val previewHeightRaw = safeAvailableHeightDp - reservedHeight
         val previewSectionHeight = if (previewHeightRaw >= minPreviewHeight) previewHeightRaw else minPreviewHeight
         val bottomSpacerHeight =
             if (previewHeightRaw >= minPreviewHeight) {
                 bottomSpacerDesired
             } else {
-                (safeAvailableHeightDp - (topSectionHeight + stripSectionHeight + shutterSectionHeight + previewSectionHeight))
+                (safeAvailableHeightDp - (stripSectionHeight + shutterSectionHeight + previewSectionHeight))
                     .coerceAtLeast(0.dp)
             }
 
@@ -171,13 +234,6 @@ internal fun AfterCameraScreen(
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
-                AfterCameraTopBar(
-                    onNavigateBack = onNavigateBack,
-                    completedCount = completedCount,
-                    totalPairCount = totalPairCount,
-                    height = topSectionHeight,
-                )
-
                 CameraPreviewPane(
                     surfaceRequest = surfaceRequest,
                     zoomUiState = zoomUiState,
@@ -191,13 +247,30 @@ internal fun AfterCameraScreen(
                     exposureStepNumerator = capabilities.exposureStepNumerator,
                     exposureStepDenominator = capabilities.exposureStepDenominator,
                     height = previewSectionHeight,
-                    onZoomRatioChanged = { newRatio -> viewModel.updateZoomRatio(newRatio) },
-                    onPresetTapped = { preset -> viewModel.onPresetTapped(preset) },
+                    onZoomRatioChanged = { newRatio ->
+                        viewModel.updateZoomRatio(newRatio)
+                        cameraSession.setZoom(newRatio)
+                    },
+                    onPresetTapped = { preset ->
+                        viewModel.onPresetTapped(preset)
+                        cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
+                    },
                     onDragEnd = { viewModel.applyCustomRatio() },
-                    onExposureReset = { viewModel.setExposureIndex(0) },
-                    onExposureAdjust = { index -> viewModel.setExposureIndex(index) },
+                    onExposureReset = {
+                        viewModel.setExposureIndex(0)
+                        cameraSession.setExposureIndex(0)
+                    },
+                    onExposureAdjust = { index ->
+                        viewModel.setExposureIndex(index)
+                        cameraSession.setExposureIndex(index)
+                    },
                     onTapToFocus = { x, y, w, h ->
-                        viewModel.onFocusRequested(x, y, w.toFloat(), h.toFloat())
+                        cameraSession.startFocusAndMetering(x, y, w.toFloat(), h.toFloat())
+                    },
+                    onToggleLens = {
+                        val next = viewModel.toggleLensFacing()
+                        cameraSession.setLensFacing(next)
+                        cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
                     },
                     overlayContent = {
                         if (overlayEnabled) {
@@ -218,18 +291,34 @@ internal fun AfterCameraScreen(
                     listState = thumbnailListState,
                     emptyMessage = "촬영할 Before가 없습니다",
                     stripHeight = stripSectionHeight,
+                    progress = StripProgress(completed = completedCount, total = totalPairCount),
                 )
 
                 CameraBottomBar(
                     isSaving = isSaving,
                     shutterEnabled = currentPair != null,
                     height = shutterSectionHeight,
-                    onToggleLens = { viewModel.toggleLensFacing() },
                     onToggleSettings = { viewModel.toggleSettingsPanel() },
                     onShutterClick = {
+                        if (isSaving) return@CameraBottomBar
+                        val pair = currentPair ?: return@CameraBottomBar
                         showBlackout = true
-                        viewModel.onAfterCaptured()
+                        scope.launch {
+                            viewModel.startCapturing()
+                            val captureResult = cameraSession.capture()
+                            val tempUri = captureResult.getOrNull()
+                            if (captureResult.isFailure || tempUri == null) {
+                                viewModel.emitCaptureError(
+                                    captureResult.exceptionOrNull()?.message ?: "촬영 실패",
+                                )
+                                viewModel.finishCapturing()
+                                return@launch
+                            }
+                            viewModel.saveAfterPhoto(tempUri)
+                        }
                     },
+                    lastPairThumbnailUri = lastPairThumbnailUri,
+                    onThumbnailClick = onNavigateBack,
                 )
 
                 Spacer(modifier = Modifier.height(bottomSpacerHeight))
@@ -240,9 +329,20 @@ internal fun AfterCameraScreen(
                 settingsState = settingsState,
                 capabilities = capabilities,
                 onToggleGrid = viewModel::toggleGrid,
-                onCycleFlash = viewModel::cycleFlash,
-                onToggleNightMode = viewModel::toggleNightMode,
-                onToggleHdr = viewModel::toggleHdr,
+                onCycleFlash = {
+                    val next = viewModel.cycleFlash()
+                    cameraSession.setFlash(next)
+                },
+                onToggleNightMode = {
+                    val next = viewModel.toggleNightMode()
+                    cameraSession.setNightMode(next)
+                    if (next) cameraSession.setHdrMode(false)
+                },
+                onToggleHdr = {
+                    val next = viewModel.toggleHdr()
+                    cameraSession.setHdrMode(next)
+                    if (next) cameraSession.setNightMode(false)
+                },
                 onToggleLevel = viewModel::toggleLevel,
                 onDismiss = viewModel::dismissSettingsPanel,
                 overlayEnabled = overlayEnabled,

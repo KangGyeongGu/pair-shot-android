@@ -1,6 +1,7 @@
 package com.pairshot.feature.camera.component
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.fadeIn
@@ -19,6 +20,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FlipCameraAndroid
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +37,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -42,6 +49,9 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+private val LensButtonSize = 36.dp
+private val LensButtonIconSize = 18.dp
+
 @Composable
 fun ZoomControls(
     zoomUiState: ZoomUiState,
@@ -49,6 +59,7 @@ fun ZoomControls(
     onPresetTapped: (Float) -> Unit,
     onDragEnd: () -> Unit,
     modifier: Modifier = Modifier,
+    onToggleLens: (() -> Unit)? = null,
 ) {
     var isDragging by remember { mutableStateOf(false) }
     val density = LocalDensity.current
@@ -137,6 +148,36 @@ fun ZoomControls(
                     ZoomPresetCard(
                         zoomUiState = zoomUiState,
                         onPresetTapped = onPresetTapped,
+                    )
+                }
+            }
+        }
+
+        if (onToggleLens != null) {
+            val toggleLens: () -> Unit = onToggleLens
+            AnimatedVisibility(
+                visible = !isDragging,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 12.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(LensButtonSize)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.35f))
+                            .clickable(onClick = toggleLens),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FlipCameraAndroid,
+                        contentDescription = "카메라 전환",
+                        tint = Color.White,
+                        modifier = Modifier.size(LensButtonIconSize),
                     )
                 }
             }

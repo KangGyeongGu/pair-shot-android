@@ -13,8 +13,6 @@ import com.pairshot.feature.camera.viewmodel.AfterCameraViewModel
 
 @Composable
 fun AfterCameraRoute(
-    projectId: Long,
-    initialPairId: Long?,
     onNavigateBack: () -> Unit,
     viewModel: AfterCameraViewModel = hiltViewModel(),
 ) {

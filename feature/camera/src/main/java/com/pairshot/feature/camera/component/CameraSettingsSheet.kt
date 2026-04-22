@@ -58,6 +58,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.PairShotGlassTokens
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.designsystem.PairShotSpacing
@@ -386,6 +387,7 @@ private fun OverlayAlphaSlider(
             enter = expandVertically() + fadeIn(),
             exit = shrinkVertically() + fadeOut(),
         ) {
+            val warningColor = LocalPairShotExtendedColors.current.warning
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.End),
@@ -395,12 +397,12 @@ private fun OverlayAlphaSlider(
                     imageVector = Icons.Outlined.ErrorOutline,
                     contentDescription = null,
                     modifier = Modifier.size(12.dp),
-                    tint = Color.White,
+                    tint = warningColor,
                 )
                 Text(
                     text = "75% 이하 권장",
                     style = PairShotTypographyTokens.labelExtraSmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
-                    color = Color.White,
+                    color = warningColor,
                 )
             }
         }

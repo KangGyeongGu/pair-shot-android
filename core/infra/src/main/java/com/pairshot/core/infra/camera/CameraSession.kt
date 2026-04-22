@@ -38,6 +38,11 @@ interface CameraSession {
 
     fun sensorRotationDegrees(facing: LensFacing): Int
 
+    suspend fun prepareOverlay(
+        beforePhotoUri: String,
+        lensFacing: LensFacing,
+    ): OverlayBitmap?
+
     fun playShutterSound()
 
     fun release()

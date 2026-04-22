@@ -1,17 +1,16 @@
 package com.pairshot.feature.camera.viewmodel
 
-import androidx.camera.core.SurfaceRequest
-import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.pairshot.core.domain.capture.SaveBeforePhotoUseCase
-import com.pairshot.core.domain.pair.GetPairsByProjectUseCase
+import androidx.navigation.toRoute
+import com.pairshot.core.domain.pair.GetLatestBeforeThumbnailUseCase
+import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
-import com.pairshot.core.infra.camera.CameraSession
-import com.pairshot.core.infra.sensor.SensorSession
 import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
+import com.pairshot.core.navigation.Camera
 import com.pairshot.feature.camera.component.ZoomStateHolder
 import com.pairshot.feature.camera.component.ZoomUiState
 import com.pairshot.feature.camera.state.CameraSettingsState
@@ -20,10 +19,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,16 +42,30 @@ sealed interface CameraEvent {
     ) : CameraEvent
 }
 
+data class InitialCameraSessionConfig(
+    val flashMode: FlashMode,
+    val nightModeEnabled: Boolean,
+    val hdrEnabled: Boolean,
+)
+
+data class CapabilityAdjustment(
+    val flashMode: FlashMode? = null,
+    val nightModeEnabled: Boolean? = null,
+    val hdrEnabled: Boolean? = null,
+)
+
 @HiltViewModel
 class CameraViewModel
     @Inject
     constructor(
-        private val cameraSession: CameraSession,
-        private val sensorSession: SensorSession,
-        private val saveBeforePhotoUseCase: SaveBeforePhotoUseCase,
-        private val getPairsByProjectUseCase: GetPairsByProjectUseCase,
+        savedStateHandle: SavedStateHandle,
+        private val photoPairRepository: PhotoPairRepository,
+        private val getLatestBeforeThumbnailUseCase: GetLatestBeforeThumbnailUseCase,
         private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
+        private val albumId: Long? = savedStateHandle.toRoute<Camera>().albumId
+        private val sessionStartTimestamp: Long = System.currentTimeMillis()
+
         private val _events = MutableSharedFlow<CameraEvent>()
         val events: SharedFlow<CameraEvent> = _events.asSharedFlow()
 
@@ -67,73 +81,42 @@ class CameraViewModel
         private val _beforePreviewUris = MutableStateFlow<List<String>>(emptyList())
         val beforePreviewUris: StateFlow<List<String>> = _beforePreviewUris.asStateFlow()
 
+        val lastPairThumbnailUri: StateFlow<String?> =
+            getLatestBeforeThumbnailUseCase()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
         private val _settingsState = MutableStateFlow(CameraSettingsState())
         val settingsState: StateFlow<CameraSettingsState> = _settingsState.asStateFlow()
 
-        val surfaceRequest: StateFlow<SurfaceRequest?> = cameraSession.surfaceRequest
+        private var observePairsJob: Job? = null
 
-        val capabilities: StateFlow<CameraCapabilities> = cameraSession.capabilities
-
-        val roll: StateFlow<Float> = sensorSession.roll
-
-        init {
-            viewModelScope.launch {
-                val s = appSettingsRepository.settingsFlow.first()
-                val initial =
-                    CameraSettingsState(
-                        gridEnabled = s.cameraGridEnabled,
-                        levelEnabled = s.cameraLevelEnabled,
-                        flashMode = runCatching { FlashMode.valueOf(s.cameraFlashMode) }.getOrDefault(FlashMode.OFF),
-                        nightModeEnabled = s.cameraNightModeEnabled,
-                        hdrEnabled = s.cameraHdrEnabled,
-                    )
-                _settingsState.value = initial
-                cameraSession.setFlash(initial.flashMode)
-                cameraSession.setNightMode(initial.nightModeEnabled)
-                cameraSession.setHdrMode(initial.hdrEnabled)
-            }
-            viewModelScope.launch {
-                cameraSession.capabilities.collect { caps ->
-                    val state = _settingsState.value
-                    var changed = state
-                    if (!caps.hasFlash && state.flashMode != FlashMode.OFF) {
-                        changed = changed.copy(flashMode = FlashMode.OFF)
-                        cameraSession.setFlash(FlashMode.OFF)
-                    }
-                    if (!caps.nightModeAvailable && state.nightModeEnabled) {
-                        changed = changed.copy(nightModeEnabled = false)
-                        cameraSession.setNightMode(false)
-                    }
-                    if (!caps.hdrAvailable && state.hdrEnabled) {
-                        changed = changed.copy(hdrEnabled = false)
-                        cameraSession.setHdrMode(false)
-                    }
-                    if (changed !== state) _settingsState.value = changed
-                }
-            }
-            viewModelScope.launch {
-                cameraSession.zoomState.collect { zoom ->
-                    zoomHolder.initFromZoomState(zoom.min, zoom.max)
-                }
-            }
+        suspend fun loadInitialSettings(): InitialCameraSessionConfig {
+            val s = appSettingsRepository.getCurrent()
+            val initial =
+                CameraSettingsState(
+                    gridEnabled = s.cameraGridEnabled,
+                    levelEnabled = s.cameraLevelEnabled,
+                    flashMode = runCatching { FlashMode.valueOf(s.cameraFlashMode) }.getOrDefault(FlashMode.OFF),
+                    nightModeEnabled = s.cameraNightModeEnabled,
+                    hdrEnabled = s.cameraHdrEnabled,
+                )
+            _settingsState.value = initial
+            return InitialCameraSessionConfig(initial.flashMode, initial.nightModeEnabled, initial.hdrEnabled)
         }
 
-        suspend fun bind(owner: LifecycleOwner) {
-            sensorSession.bind(owner)
-            cameraSession.bind(owner)
+        fun onCameraZoomCapabilities(
+            min: Float,
+            max: Float,
+        ) {
+            zoomHolder.initFromZoomState(min, max)
         }
-
-        private var observedProjectId: Long? = null
-        private var observeProjectJob: Job? = null
 
         fun updateZoomRatio(ratio: Float) {
             zoomHolder.updateZoomRatio(ratio)
-            cameraSession.setZoom(ratio)
         }
 
         fun onPresetTapped(preset: Float) {
             zoomHolder.onPresetTapped(preset)
-            cameraSession.setZoom(zoomHolder.zoomUiState.value.currentRatio)
         }
 
         fun applyCustomRatio() {
@@ -142,31 +125,55 @@ class CameraViewModel
 
         fun resetZoomForLensSwitch() {
             zoomHolder.resetZoomForLensSwitch()
-            cameraSession.setZoom(zoomHolder.zoomUiState.value.currentRatio)
         }
 
-        fun onShutterClick(projectId: Long) {
-            if (_isSaving.value) return
+        fun adjustForCapabilities(caps: CameraCapabilities): CapabilityAdjustment {
+            val state = _settingsState.value
+            var changed = state
+            var adjustedFlash: FlashMode? = null
+            var adjustedNight: Boolean? = null
+            var adjustedHdr: Boolean? = null
+            if (!caps.hasFlash && state.flashMode != FlashMode.OFF) {
+                changed = changed.copy(flashMode = FlashMode.OFF)
+                adjustedFlash = FlashMode.OFF
+            }
+            if (!caps.nightModeAvailable && state.nightModeEnabled) {
+                changed = changed.copy(nightModeEnabled = false)
+                adjustedNight = false
+            }
+            if (!caps.hdrAvailable && state.hdrEnabled) {
+                changed = changed.copy(hdrEnabled = false)
+                adjustedHdr = false
+            }
+            if (changed !== state) _settingsState.value = changed
+            return CapabilityAdjustment(adjustedFlash, adjustedNight, adjustedHdr)
+        }
+
+        fun startCapturing() {
+            _isSaving.value = true
+        }
+
+        fun finishCapturing() {
+            _isSaving.value = false
+        }
+
+        fun emitCaptureError(message: String) {
             viewModelScope.launch {
-                _isSaving.value = true
-                val captureResult = cameraSession.capture()
-                val tempUri = captureResult.getOrNull()
-                if (captureResult.isFailure || tempUri == null) {
-                    _events.emit(
-                        CameraEvent.CaptureError(
-                            captureResult.exceptionOrNull()?.message ?: "촬영 실패",
-                        ),
-                    )
-                    _isSaving.value = false
-                    return@launch
-                }
+                _events.emit(CameraEvent.CaptureError(message))
+            }
+        }
+
+        fun saveBeforePhoto(
+            tempUri: String,
+            zoomLevel: Float,
+        ) {
+            viewModelScope.launch {
                 try {
                     val pairId =
-                        saveBeforePhotoUseCase(
-                            projectId = projectId,
+                        photoPairRepository.saveBeforePhoto(
                             tempFileUri = tempUri,
-                            zoomLevel = zoomHolder.zoomUiState.value.currentRatio,
-                            lensId = null,
+                            zoomLevel = zoomLevel,
+                            albumId = albumId,
                         )
                     _events.emit(CameraEvent.PhotoSaved(pairId))
                 } catch (e: Exception) {
@@ -177,31 +184,22 @@ class CameraViewModel
             }
         }
 
-        fun onFocusRequested(
-            x: Float,
-            y: Float,
-            viewWidth: Float,
-            viewHeight: Float,
-        ) {
-            cameraSession.startFocusAndMetering(x, y, viewWidth, viewHeight)
-        }
-
-        fun toggleLensFacing() {
+        fun toggleLensFacing(): LensFacing {
             val next = if (_lensFacing.value == LensFacing.BACK) LensFacing.FRONT else LensFacing.BACK
             _lensFacing.value = next
-            cameraSession.setLensFacing(next)
-            resetZoomForLensSwitch()
+            zoomHolder.resetZoomForLensSwitch()
+            return next
         }
 
-        fun observeProject(projectId: Long) {
-            if (observedProjectId == projectId && observeProjectJob?.isActive == true) return
-
-            observedProjectId = projectId
-            observeProjectJob?.cancel()
-            observeProjectJob =
+        fun observeBeforeUris() {
+            if (observePairsJob?.isActive == true) return
+            observePairsJob =
                 viewModelScope.launch {
-                    getPairsByProjectUseCase(projectId).collect { pairs ->
-                        _beforePreviewUris.value = pairs.map { it.beforePhotoUri }
+                    photoPairRepository.observeAll().collect { pairs ->
+                        _beforePreviewUris.value =
+                            pairs
+                                .filter { it.beforeTimestamp >= sessionStartTimestamp }
+                                .map { it.beforePhotoUri }
                     }
                 }
         }
@@ -212,12 +210,11 @@ class CameraViewModel
         }
 
         fun toggleLevel() {
-            val next = !_settingsState.value.levelEnabled
-            _settingsState.update { it.copy(levelEnabled = next) }
+            _settingsState.update { it.copy(levelEnabled = !it.levelEnabled) }
             persistSettings()
         }
 
-        fun cycleFlash() {
+        fun cycleFlash(): FlashMode {
             _settingsState.update {
                 val next =
                     when (it.flashMode) {
@@ -228,11 +225,11 @@ class CameraViewModel
                     }
                 it.copy(flashMode = next)
             }
-            cameraSession.setFlash(_settingsState.value.flashMode)
             persistSettings()
+            return _settingsState.value.flashMode
         }
 
-        fun toggleNightMode() {
+        fun toggleNightMode(): Boolean {
             val next = !_settingsState.value.nightModeEnabled
             _settingsState.update {
                 it.copy(
@@ -240,12 +237,11 @@ class CameraViewModel
                     hdrEnabled = if (next) false else it.hdrEnabled,
                 )
             }
-            cameraSession.setNightMode(next)
-            if (next) cameraSession.setHdrMode(false)
             persistSettings()
+            return next
         }
 
-        fun toggleHdr() {
+        fun toggleHdr(): Boolean {
             val next = !_settingsState.value.hdrEnabled
             _settingsState.update {
                 it.copy(
@@ -253,14 +249,12 @@ class CameraViewModel
                     nightModeEnabled = if (next) false else it.nightModeEnabled,
                 )
             }
-            cameraSession.setHdrMode(next)
-            if (next) cameraSession.setNightMode(false)
             persistSettings()
+            return next
         }
 
         fun setExposureIndex(index: Int) {
             _settingsState.update { it.copy(exposureIndex = index) }
-            cameraSession.setExposureIndex(index)
         }
 
         fun toggleSettingsPanel() {
@@ -280,11 +274,5 @@ class CameraViewModel
                 appSettingsRepository.updateCameraNightMode(state.nightModeEnabled)
                 appSettingsRepository.updateCameraHdr(state.hdrEnabled)
             }
-        }
-
-        override fun onCleared() {
-            super.onCleared()
-            cameraSession.release()
-            sensorSession.release()
         }
     }
