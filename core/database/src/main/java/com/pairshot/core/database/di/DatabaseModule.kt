@@ -3,8 +3,10 @@ package com.pairshot.core.database.di
 import android.content.Context
 import androidx.room.Room
 import com.pairshot.core.database.PairShotDatabase
+import com.pairshot.core.database.dao.AlbumDao
+import com.pairshot.core.database.dao.CombineHistoryDao
+import com.pairshot.core.database.dao.PairAlbumCrossRefDao
 import com.pairshot.core.database.dao.PhotoPairDao
-import com.pairshot.core.database.dao.ProjectDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,9 +29,17 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideProjectDao(db: PairShotDatabase): ProjectDao = db.projectDao()
+    fun providePhotoPairDao(db: PairShotDatabase): PhotoPairDao = db.photoPairDao()
 
     @Provides
     @Singleton
-    fun providePhotoPairDao(db: PairShotDatabase): PhotoPairDao = db.photoPairDao()
+    fun provideAlbumDao(db: PairShotDatabase): AlbumDao = db.albumDao()
+
+    @Provides
+    @Singleton
+    fun providePairAlbumCrossRefDao(db: PairShotDatabase): PairAlbumCrossRefDao = db.pairAlbumCrossRefDao()
+
+    @Provides
+    @Singleton
+    fun provideCombineHistoryDao(db: PairShotDatabase): CombineHistoryDao = db.combineHistoryDao()
 }

@@ -1,5 +1,8 @@
 package com.pairshot.core.domain.export
 
+import com.pairshot.core.model.CombineConfig
+import com.pairshot.core.model.ExportPreset
+import com.pairshot.core.model.WatermarkConfig
 import javax.inject.Inject
 
 class ExportZipUseCase
@@ -10,20 +13,17 @@ class ExportZipUseCase
         suspend operator fun invoke(
             pairIds: List<Long>,
             outputUri: String,
-            includeBefore: Boolean,
-            includeAfter: Boolean,
-            includeCombined: Boolean,
+            preset: ExportPreset,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig?,
             onProgress: (current: Int, total: Int) -> Unit,
         ) {
-            require(includeBefore || includeAfter || includeCombined) {
-                "최소 하나의 항목을 포함해야 합니다"
-            }
-            exportRepository.exportZip(
+            exportRepository.exportZipToDevice(
                 pairIds = pairIds,
                 outputUri = outputUri,
-                includeBefore = includeBefore,
-                includeAfter = includeAfter,
-                includeCombined = includeCombined,
+                preset = preset,
+                combineConfig = combineConfig,
+                watermarkConfig = watermarkConfig,
                 onProgress = onProgress,
             )
         }

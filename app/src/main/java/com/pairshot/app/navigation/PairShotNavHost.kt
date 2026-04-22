@@ -15,26 +15,25 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.navigation.AfterCamera
+import com.pairshot.core.navigation.AlbumDetail
 import com.pairshot.core.navigation.Camera
 import com.pairshot.core.navigation.CombineSettings
-import com.pairshot.core.navigation.CombinedViewer
-import com.pairshot.core.navigation.Compare
-import com.pairshot.core.navigation.Export
+import com.pairshot.core.navigation.ExportSettings
+import com.pairshot.core.navigation.Home
 import com.pairshot.core.navigation.License
-import com.pairshot.core.navigation.ProjectDetail
-import com.pairshot.core.navigation.ProjectList
+import com.pairshot.core.navigation.PairPicker
+import com.pairshot.core.navigation.PairPreview
 import com.pairshot.core.navigation.Settings
 import com.pairshot.core.navigation.WatermarkSettings
+import com.pairshot.feature.album.route.AlbumDetailRoute
+import com.pairshot.feature.album.route.PairPickerRoute
 import com.pairshot.feature.camera.route.AfterCameraRoute
 import com.pairshot.feature.camera.route.CameraRoute
-import com.pairshot.feature.compare.route.CombinedViewerRoute
-import com.pairshot.feature.compare.route.CompareRoute
-import com.pairshot.feature.export.route.ExportRoute
-import com.pairshot.feature.gallery.route.GalleryRoute
-import com.pairshot.feature.project.route.ProjectListRoute
+import com.pairshot.feature.exportsettings.route.ExportSettingsRoute
+import com.pairshot.feature.home.route.HomeRoute
+import com.pairshot.feature.pairpreview.route.PairPreviewRoute
 import com.pairshot.feature.settings.route.CombineSettingsRoute
 import com.pairshot.feature.settings.route.SettingsRoute
 import com.pairshot.feature.settings.route.WatermarkSettingsRoute
@@ -44,6 +43,8 @@ import com.pairshot.feature.settings.screen.LicenseScreen
 fun PairShotNavHost(
     navController: NavHostController = rememberNavController(),
     onDestinationChanged: (String) -> Unit = {},
+    onShareSelected: (Set<Long>) -> Unit = {},
+    onSaveSelectedToDevice: (Set<Long>) -> Unit = {},
 ) {
     DisposableEffect(navController) {
         val listener =
@@ -59,7 +60,7 @@ fun PairShotNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = ProjectList,
+        startDestination = Camera(),
         modifier =
             Modifier
                 .fillMaxSize()
@@ -78,80 +79,82 @@ fun PairShotNavHost(
         },
         sizeTransform = { null },
     ) {
-        composable<ProjectList> {
-            ProjectListRoute(
+        composable<Home> {
+            HomeRoute(
+                onNavigateToPairPreview = { pairId -> navController.navigate(PairPreview(pairId)) },
+                onNavigateToAfterCamera = { pairId ->
+                    navController.navigate(AfterCamera(initialPairId = pairId))
+                },
+                onNavigateToAlbumDetail = { albumId -> navController.navigate(AlbumDetail(albumId)) },
+                onNavigateToCamera = { navController.navigate(Camera()) },
                 onNavigateToSettings = { navController.navigate(Settings) },
-                onNavigateToProject = { projectId -> navController.navigate(ProjectDetail(projectId)) },
-            )
-        }
-        composable<ProjectDetail> { backStackEntry ->
-            val route = backStackEntry.toRoute<ProjectDetail>()
-            GalleryRoute(
-                projectId = route.projectId,
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToCamera = { navController.navigate(Camera(route.projectId)) },
-                onNavigateToAfterCamera = { pairId -> navController.navigate(AfterCamera(route.projectId, pairId)) },
-                onNavigateToCompare = { pairId -> navController.navigate(Compare(pairId)) },
-                onNavigateToCombined = { pairId -> navController.navigate(CombinedViewer(pairId)) },
-                onNavigateToExport = { selectedIds ->
-                    navController.navigate(Export(route.projectId, selectedIds.joinToString(",")))
+                onNavigateToExportSettings = { ids ->
+                    navController.navigate(ExportSettings(ids.joinToString(",")))
                 },
-                onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
-                onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
+                onShareSelected = onShareSelected,
+                onSaveToDevice = onSaveSelectedToDevice,
             )
         }
-        composable<Camera> { backStackEntry ->
-            val route = backStackEntry.toRoute<Camera>()
+        composable<AlbumDetail> {
+            AlbumDetailRoute(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToPairPreview = { pairId -> navController.navigate(PairPreview(pairId)) },
+                onNavigateToAfterCamera = { pairId, albumId ->
+                    navController.navigate(AfterCamera(initialPairId = pairId, albumId = albumId))
+                },
+                onNavigateToCamera = { albumId ->
+                    navController.navigate(Camera(albumId = albumId))
+                },
+                onNavigateToPairPicker = { albumId -> navController.navigate(PairPicker(albumId)) },
+                onNavigateToExportSettings = { ids ->
+                    navController.navigate(ExportSettings(ids.joinToString(",")))
+                },
+                onShareSelected = onShareSelected,
+                onSaveSelectedToDevice = onSaveSelectedToDevice,
+            )
+        }
+        composable<PairPicker> {
+            PairPickerRoute(
+                onNavigateBack = { navController.popBackStack() },
+            )
+        }
+        composable<Camera> {
             CameraRoute(
-                projectId = route.projectId,
-                onNavigateBack = { navController.popBackStack() },
-            )
-        }
-        composable<AfterCamera> { backStackEntry ->
-            val route = backStackEntry.toRoute<AfterCamera>()
-            AfterCameraRoute(
-                projectId = route.projectId,
-                initialPairId = route.initialPairId,
-                onNavigateBack = { navController.popBackStack() },
-            )
-        }
-        dialog<CombinedViewer>(
-            dialogProperties =
-                DialogProperties(
-                    usePlatformDefaultWidth = false,
-                    dismissOnClickOutside = true,
-                ),
-        ) {
-            CombinedViewerRoute(
-                onNavigateBack = { navController.popBackStack() },
-            )
-        }
-        dialog<Compare>(
-            dialogProperties =
-                DialogProperties(
-                    usePlatformDefaultWidth = false,
-                    dismissOnClickOutside = true,
-                ),
-        ) {
-            CompareRoute(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToAfterCamera = { projectId, pairId ->
-                    navController.navigate(AfterCamera(projectId, pairId))
+                onNavigateBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Home) {
+                            popUpTo<Camera> { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
                 },
             )
         }
-        composable<Export> {
-            val exportViewModel: com.pairshot.feature.export.viewmodel.ExportViewModel =
-                androidx.hilt.navigation.compose
-                    .hiltViewModel()
-            com.pairshot.app.navigation.effect.ExportShareEffect(
-                exportAction = exportViewModel.exportAction,
+        composable<AfterCamera> {
+            AfterCameraRoute(
+                onNavigateBack = { navController.popBackStack() },
             )
-            ExportRoute(
+        }
+        dialog<PairPreview>(
+            dialogProperties =
+                DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = true,
+                ),
+        ) {
+            PairPreviewRoute(
+                onDismiss = { navController.popBackStack() },
+                onShareSelected = { pairId -> onShareSelected(setOf(pairId)) },
+                onNavigateToAfterCamera = { pairId ->
+                    navController.navigate(AfterCamera(initialPairId = pairId))
+                },
+            )
+        }
+        composable<ExportSettings> {
+            ExportSettingsRoute(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
                 onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
-                viewModel = exportViewModel,
             )
         }
         composable<Settings> {

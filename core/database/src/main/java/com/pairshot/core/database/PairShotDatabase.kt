@@ -3,19 +3,32 @@ package com.pairshot.core.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.pairshot.core.database.dao.AlbumDao
+import com.pairshot.core.database.dao.CombineHistoryDao
+import com.pairshot.core.database.dao.PairAlbumCrossRefDao
 import com.pairshot.core.database.dao.PhotoPairDao
-import com.pairshot.core.database.dao.ProjectDao
+import com.pairshot.core.database.entity.AlbumEntity
+import com.pairshot.core.database.entity.CombineHistoryEntity
+import com.pairshot.core.database.entity.PairAlbumCrossRefEntity
 import com.pairshot.core.database.entity.PhotoPairEntity
-import com.pairshot.core.database.entity.ProjectEntity
 
 @Database(
-    entities = [ProjectEntity::class, PhotoPairEntity::class],
+    entities = [
+        PhotoPairEntity::class,
+        AlbumEntity::class,
+        PairAlbumCrossRefEntity::class,
+        CombineHistoryEntity::class,
+    ],
     version = 1,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
 abstract class PairShotDatabase : RoomDatabase() {
-    abstract fun projectDao(): ProjectDao
-
     abstract fun photoPairDao(): PhotoPairDao
+
+    abstract fun albumDao(): AlbumDao
+
+    abstract fun pairAlbumCrossRefDao(): PairAlbumCrossRefDao
+
+    abstract fun combineHistoryDao(): CombineHistoryDao
 }

@@ -59,10 +59,10 @@ private val licenseItems =
             url = "https://developer.android.com/training/data-storage/room",
         ),
         LicenseItem(
-            name = "Coil",
-            author = "Coil Contributors",
-            license = "Apache License 2.0",
-            url = "https://coil-kt.github.io/coil/",
+            name = "Glide",
+            author = "bumptech",
+            license = "BSD, part MIT and Apache 2.0",
+            url = "https://github.com/bumptech/glide",
         ),
         LicenseItem(
             name = "Navigation Compose",

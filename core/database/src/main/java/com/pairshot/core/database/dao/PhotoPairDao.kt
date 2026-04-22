@@ -6,19 +6,24 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.pairshot.core.database.entity.PhotoPairEntity
+import com.pairshot.core.database.entity.PhotoPairWithCountsEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PhotoPairDao {
-    @Query("SELECT * FROM photo_pairs WHERE projectId = :projectId ORDER BY beforeTimestamp ASC")
-    fun getPairsByProject(projectId: Long): Flow<List<PhotoPairEntity>>
-
     @Query(
-        "SELECT * FROM photo_pairs " +
-            "WHERE projectId = :projectId AND status = 'BEFORE_ONLY' " +
-            "ORDER BY beforeTimestamp ASC",
+        """
+        SELECT
+            pp.*,
+            EXISTS(SELECT 1 FROM combine_history ch WHERE ch.pairId = pp.id) AS hasCombined
+        FROM photo_pairs pp
+        ORDER BY pp.beforeTimestamp ASC
+        """,
     )
-    fun getUnpairedByProject(projectId: Long): Flow<List<PhotoPairEntity>>
+    fun observeAllWithCounts(): Flow<List<PhotoPairWithCountsEntity>>
+
+    @Query("SELECT * FROM photo_pairs WHERE status = 'BEFORE_ONLY' ORDER BY beforeTimestamp ASC")
+    fun observeUnpaired(): Flow<List<PhotoPairEntity>>
 
     @Query("SELECT * FROM photo_pairs WHERE id = :id")
     suspend fun getById(id: Long): PhotoPairEntity?
@@ -35,15 +40,9 @@ interface PhotoPairDao {
     @Delete
     suspend fun delete(pair: PhotoPairEntity)
 
-    @Query("SELECT COUNT(*) FROM photo_pairs WHERE projectId = :projectId")
-    fun countByProject(projectId: Long): Flow<Int>
+    @Query("SELECT COUNT(*) FROM photo_pairs")
+    fun countAll(): Flow<Int>
 
     @Query("SELECT MAX(id) FROM photo_pairs")
     suspend fun getMaxId(): Long?
-
-    @Query("SELECT * FROM photo_pairs WHERE projectId = :projectId")
-    suspend fun getAllByProjectOnce(projectId: Long): List<PhotoPairEntity>
-
-    @Query("SELECT * FROM photo_pairs")
-    suspend fun getAll(): List<PhotoPairEntity>
 }

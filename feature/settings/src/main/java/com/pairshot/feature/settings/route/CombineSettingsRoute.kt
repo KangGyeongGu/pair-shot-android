@@ -17,8 +17,6 @@ fun CombineSettingsRoute(
     CombineSettingsScreen(
         combineConfig = combineConfig,
         watermarkConfig = watermarkConfig,
-        pairImageComposer = viewModel.pairImageComposer,
-        previewSampleProvider = viewModel.previewSampleProvider,
         onCombineConfigChange = viewModel::updateCombineConfig,
         onNavigateBack = onNavigateBack,
     )
