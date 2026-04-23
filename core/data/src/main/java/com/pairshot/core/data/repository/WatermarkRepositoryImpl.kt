@@ -2,9 +2,9 @@ package com.pairshot.core.data.repository
 
 import android.content.Context
 import android.net.Uri
-import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.datastore.WatermarkPreferences
+import com.pairshot.core.domain.settings.WatermarkRepository
+import com.pairshot.core.model.WatermarkConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -12,9 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class WatermarkRepositoryImpl
     @Inject
     constructor(

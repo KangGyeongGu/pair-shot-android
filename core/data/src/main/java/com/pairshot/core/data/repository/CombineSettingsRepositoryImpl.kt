@@ -1,14 +1,12 @@
 package com.pairshot.core.data.repository
 
-import com.pairshot.core.model.CombineConfig
-import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.datastore.CombinePreferences
+import com.pairshot.core.domain.combine.CombineSettingsRepository
+import com.pairshot.core.model.CombineConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class CombineSettingsRepositoryImpl
     @Inject
     constructor(

@@ -124,16 +124,12 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
 
-    implementation(libs.play.services.location)
-
     implementation(libs.datastore.preferences)
 
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
 
     implementation(libs.appcompat)
-
-    implementation(libs.exifinterface)
 
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)

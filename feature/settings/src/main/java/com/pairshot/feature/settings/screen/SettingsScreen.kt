@@ -42,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -67,9 +66,6 @@ import com.pairshot.feature.settings.locale.AppLocale
 import com.pairshot.feature.settings.locale.apply
 import com.pairshot.feature.settings.locale.currentAppLocale
 import com.pairshot.feature.settings.theme.AppTheme
-import com.pairshot.feature.settings.theme.applyNightMode
-import com.pairshot.feature.settings.theme.loadAppTheme
-import com.pairshot.feature.settings.theme.saveAppTheme
 import com.pairshot.feature.settings.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.viewmodel.formatBytes
 import kotlin.math.roundToInt
@@ -80,6 +76,8 @@ import com.pairshot.core.ui.R as CoreR
 fun SettingsScreen(
     uiState: SettingsUiState,
     watermarkConfig: WatermarkConfig,
+    currentTheme: AppTheme,
+    onThemeChange: (AppTheme) -> Unit,
     onClearCache: () -> Unit,
     onLicenseClick: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -93,14 +91,12 @@ fun SettingsScreen(
     snackbarController: PairShotSnackbarController,
 ) {
     val haptic = LocalHapticFeedback.current
-    val context = LocalContext.current
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
     var showPrefixDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var currentLocale by remember { mutableStateOf(currentAppLocale()) }
-    var currentTheme by remember { mutableStateOf(context.loadAppTheme()) }
 
     if (showLanguageDialog) {
         LanguageDialog(
@@ -116,11 +112,7 @@ fun SettingsScreen(
     if (showThemeDialog) {
         ThemeDialog(
             current = currentTheme,
-            onSelect = { option ->
-                currentTheme = option
-                context.saveAppTheme(option)
-                option.applyNightMode()
-            },
+            onSelect = { option -> onThemeChange(option) },
             onDismiss = { showThemeDialog = false },
         )
     }

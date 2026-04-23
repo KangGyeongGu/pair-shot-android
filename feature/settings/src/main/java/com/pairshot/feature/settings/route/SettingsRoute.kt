@@ -23,6 +23,7 @@ fun SettingsRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
+    val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val snackbarController = remember { PairShotSnackbarController() }
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -41,6 +42,8 @@ fun SettingsRoute(
     SettingsScreen(
         uiState = uiState,
         watermarkConfig = watermarkConfig,
+        currentTheme = appTheme,
+        onThemeChange = viewModel::updateAppTheme,
         onClearCache = viewModel::clearCache,
         onLicenseClick = onNavigateToLicense,
         onNavigateBack = onNavigateBack,

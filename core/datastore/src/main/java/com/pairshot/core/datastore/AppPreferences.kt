@@ -42,6 +42,7 @@ class AppPreferences
             val EXPORT_APPLY_COMBINE_CONFIG = booleanPreferencesKey("export_apply_combine_config")
             val HOME_SORT_ORDER = stringPreferencesKey("home_sort_order")
             val ALBUM_SORT_ORDER = stringPreferencesKey("album_sort_order")
+            val APP_THEME = stringPreferencesKey("app_theme")
         }
 
         val jpegQuality: Flow<Int> =
@@ -227,6 +228,17 @@ class AppPreferences
         suspend fun setAlbumSortOrder(value: String) {
             context.appDataStore.edit { prefs ->
                 prefs[Keys.ALBUM_SORT_ORDER] = value
+            }
+        }
+
+        val appTheme: Flow<String> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.APP_THEME] ?: "SYSTEM"
+            }
+
+        suspend fun setAppTheme(theme: String) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.APP_THEME] = theme
             }
         }
     }

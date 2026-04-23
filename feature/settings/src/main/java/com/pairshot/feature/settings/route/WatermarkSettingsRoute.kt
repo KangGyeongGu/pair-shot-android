@@ -5,10 +5,26 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.rendering.PreviewSampleProvider
+import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.feature.settings.screen.WatermarkSettingsScreen
 import com.pairshot.feature.settings.viewmodel.SettingsViewModel
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+internal interface WatermarkSettingsRenderEntryPoint {
+    fun watermarkRenderer(): WatermarkRenderer
+
+    fun previewSampleProvider(): PreviewSampleProvider
+}
 
 @Composable
 fun WatermarkSettingsRoute(
@@ -16,6 +32,17 @@ fun WatermarkSettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    val entryPoint =
+        remember(context) {
+            EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                WatermarkSettingsRenderEntryPoint::class.java,
+            )
+        }
+    val watermarkRenderer = remember(entryPoint) { entryPoint.watermarkRenderer() }
+    val previewSampleProvider = remember(entryPoint) { entryPoint.previewSampleProvider() }
 
     val logoPickerLauncher =
         rememberLauncherForActivityResult(
@@ -29,7 +56,7 @@ fun WatermarkSettingsRoute(
         onWatermarkConfigChange = viewModel::updateWatermarkConfig,
         onSelectLogo = { logoPickerLauncher.launch(arrayOf("image/*")) },
         onNavigateBack = onNavigateBack,
-        watermarkRenderer = viewModel.watermarkRenderer,
-        previewSampleProvider = viewModel.previewSampleProvider,
+        watermarkRenderer = watermarkRenderer,
+        previewSampleProvider = previewSampleProvider,
     )
 }

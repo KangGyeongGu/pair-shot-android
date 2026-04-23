@@ -34,20 +34,26 @@ abstract class RepositoryModule {
     abstract fun bindExportHistoryRepository(impl: ExportHistoryRepositoryImpl): ExportHistoryRepository
 
     @Binds
+    @Singleton
     abstract fun bindExportRepository(impl: ExportRepositoryImpl): ExportRepository
 
     @Binds
+    @Singleton
     abstract fun bindPhotoPairRepository(impl: PhotoPairRepositoryImpl): PhotoPairRepository
 
     @Binds
+    @Singleton
     abstract fun bindAppSettingsRepository(impl: AppSettingsRepositoryImpl): AppSettingsRepository
 
     @Binds
+    @Singleton
     abstract fun bindStorageRepository(impl: StorageRepositoryImpl): StorageRepository
 
     @Binds
+    @Singleton
     abstract fun bindWatermarkRepository(impl: WatermarkRepositoryImpl): WatermarkRepository
 
     @Binds
+    @Singleton
     abstract fun bindCombineSettingsRepository(impl: CombineSettingsRepositoryImpl): CombineSettingsRepository
 }

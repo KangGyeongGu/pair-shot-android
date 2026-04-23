@@ -11,9 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
 class AppSettingsRepositoryImpl
     @Inject
     constructor(
@@ -114,6 +112,10 @@ class AppSettingsRepositoryImpl
         override suspend fun updateHomeSortOrder(order: SortOrder) = appPreferences.setHomeSortOrder(order.name)
 
         override suspend fun updateAlbumSortOrder(order: SortOrder) = appPreferences.setAlbumSortOrder(order.name)
+
+        override val appThemeNameFlow: Flow<String> = appPreferences.appTheme
+
+        override suspend fun updateAppThemeName(name: String) = appPreferences.setAppTheme(name)
     }
 
 private fun String.toSortOrder(): SortOrder = runCatching { SortOrder.valueOf(this) }.getOrDefault(SortOrder.DESC)

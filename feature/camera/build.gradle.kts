@@ -17,5 +17,4 @@ dependencies {
 
     implementation(libs.camerax.compose)
     implementation(libs.camerax.view)
-    implementation(libs.exifinterface)
 }

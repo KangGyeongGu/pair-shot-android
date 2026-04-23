@@ -8,12 +8,11 @@ import com.pairshot.core.domain.settings.ClearCacheUseCase
 import com.pairshot.core.domain.settings.GetStorageInfoUseCase
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.rendering.PreviewSampleProvider
-import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.text.UiText
+import com.pairshot.feature.settings.theme.AppTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -50,8 +50,6 @@ class SettingsViewModel
         private val getStorageInfoUseCase: GetStorageInfoUseCase,
         private val clearCacheUseCase: ClearCacheUseCase,
         private val watermarkRepository: WatermarkRepository,
-        val watermarkRenderer: WatermarkRenderer,
-        val previewSampleProvider: PreviewSampleProvider,
         private val appSettingsRepository: AppSettingsRepository,
         private val appInfo: AppInfo,
     ) : ViewModel() {
@@ -72,7 +70,11 @@ class SettingsViewModel
                         )
                     }
 
-                    else -> {
+                    SettingsUiState.Loading -> {
+                        storageState
+                    }
+
+                    SettingsUiState.Error -> {
                         storageState
                     }
                 }
@@ -91,6 +93,22 @@ class SettingsViewModel
                 started = SharingStarted.Eagerly,
                 initialValue = WatermarkConfig(),
             )
+
+        val appTheme: StateFlow<AppTheme> =
+            appSettingsRepository.appThemeNameFlow
+                .map { AppTheme.fromName(it) }
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.Eagerly,
+                    initialValue = AppTheme.SYSTEM,
+                )
+
+        fun updateAppTheme(theme: AppTheme) {
+            viewModelScope.launch {
+                appSettingsRepository.updateAppThemeName(theme.name)
+                theme.apply()
+            }
+        }
 
         init {
             loadStorageInfo()

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.export.ExportAction
+import com.pairshot.core.domain.export.HasSavableSelectionUseCase
 import com.pairshot.core.domain.export.SaveSelectionToDeviceUseCase
 import com.pairshot.core.domain.export.ShareSelectionUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
@@ -47,6 +48,7 @@ class SelectionActionViewModel
     constructor(
         private val shareSelectionUseCase: ShareSelectionUseCase,
         private val saveSelectionToDeviceUseCase: SaveSelectionToDeviceUseCase,
+        private val hasSavableSelectionUseCase: HasSavableSelectionUseCase,
         private val combineSettingsRepository: CombineSettingsRepository,
         private val watermarkRepository: WatermarkRepository,
         private val appSettingsRepository: AppSettingsRepository,
@@ -91,7 +93,7 @@ class SelectionActionViewModel
                 val (preset, combine, watermark) = loadConfig()
                 val hasWork =
                     runCatching {
-                        saveSelectionToDeviceUseCase.hasSavableVariants(ids.toList(), preset, watermark)
+                        hasSavableSelectionUseCase(ids.toList(), preset, watermark)
                     }.getOrDefault(false)
                 if (!hasWork) {
                     _messages.emit(

@@ -14,22 +14,9 @@ local.properties
 
 # Claude Code & 프로젝트 문서 (로컬 전용)
 .claude/
-archive/
-final-docs/
-final-guide/
-.agents
-uiux.md
+.agents/
 CLAUDE.md
 CLAUDE.local.md
-architecture.md
-research.md
-/mvvm-refactor.md
 /AGENTS.md
-guidance/
-final-test.md
-final-architecture.md
-snackbar-redesign-plan.md
-snackbar-improvement-plan.md
-i18n-migration-plan.md
-export-flow-audit.md
-export-flow-redesign.md
+archive/
+report/

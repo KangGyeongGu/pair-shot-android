@@ -39,4 +39,8 @@ interface AppSettingsRepository {
     suspend fun updateHomeSortOrder(order: SortOrder)
 
     suspend fun updateAlbumSortOrder(order: SortOrder)
+
+    val appThemeNameFlow: Flow<String>
+
+    suspend fun updateAppThemeName(name: String)
 }
