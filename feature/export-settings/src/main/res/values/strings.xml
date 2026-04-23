@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="export_settings_title">내보내기 설정</string>
+
+    <string name="export_section_include">포함 항목</string>
+    <string name="export_section_format">저장 형식</string>
+    <string name="export_section_watermark">워터마크</string>
+    <string name="export_section_combine">합성</string>
+
+    <string name="export_include_combined_only">합성본만</string>
+    <string name="export_include_before_only">Before만</string>
+    <string name="export_include_after_only">After만</string>
+
+    <string name="export_format_image">이미지로 전송/저장</string>
+    <string name="export_format_zip">zip 파일로 전송/저장</string>
+
+    <string name="export_watermark_apply">워터마크 옵션 적용</string>
+    <string name="export_combine_apply">합성 옵션 적용</string>
+
+</resources>

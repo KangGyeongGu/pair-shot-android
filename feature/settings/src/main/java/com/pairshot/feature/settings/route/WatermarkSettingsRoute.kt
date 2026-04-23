@@ -1,0 +1,51 @@
+package com.pairshot.feature.settings.route
+
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.rendering.PreviewSampleProvider
+import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.feature.settings.screen.WatermarkSettingsScreen
+import com.pairshot.feature.settings.viewmodel.SettingsViewModel
+import dagger.hilt.android.EntryPointAccessors
+
+@Composable
+fun WatermarkSettingsRoute(
+    onNavigateBack: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val watermarkConfig by viewModel.watermarkConfig.collectAsStateWithLifecycle()
+
+    val context = LocalContext.current
+    val entryPoint =
+        remember(context) {
+            EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                WatermarkSettingsRenderEntryPoint::class.java,
+            )
+        }
+    val watermarkRenderer = remember(entryPoint) { entryPoint.watermarkRenderer() }
+    val previewSampleProvider = remember(entryPoint) { entryPoint.previewSampleProvider() }
+
+    val logoPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+        ) { uri: Uri? ->
+            uri?.let { viewModel.saveLogoFile(it.toString()) }
+        }
+
+    WatermarkSettingsScreen(
+        watermarkConfig = watermarkConfig,
+        onWatermarkConfigChange = viewModel::updateWatermarkConfig,
+        onSelectLogo = { logoPickerLauncher.launch(arrayOf("image/*")) },
+        onNavigateBack = onNavigateBack,
+        watermarkRenderer = watermarkRenderer,
+        previewSampleProvider = previewSampleProvider,
+    )
+}

@@ -4,16 +4,19 @@
 /local.properties
 /.idea
 .DS_Store
-/build
-/app/build
+**/build/
+/app/release
 /captures
 .externalNativeBuild
 .cxx
 local.properties
+.kotlin/
 
 # Claude Code & 프로젝트 문서 (로컬 전용)
 .claude/
+.agents/
 CLAUDE.md
 CLAUDE.local.md
-architecture.md
-research.md
+/AGENTS.md
+archive/
+report/

@@ -1,0 +1,155 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+val localProperties =
+    Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) load(file.inputStream())
+    }
+
+android {
+    namespace = "com.pairshot"
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = "com.pairshot"
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile =
+                file(
+                    System.getenv("KEYSTORE_PATH")
+                        ?: localProperties["KEYSTORE_PATH"] as String,
+                )
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+                ?: localProperties["KEYSTORE_PASSWORD"] as String
+            keyAlias = System.getenv("KEY_ALIAS")
+                ?: localProperties["KEY_ALIAS"] as String
+            keyPassword = System.getenv("KEY_PASSWORD")
+                ?: localProperties["KEY_PASSWORD"] as String
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        jvmToolchain(21)
+    }
+
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:navigation"))
+    implementation(project(":core:rendering"))
+    implementation(project(":core:infra"))
+    implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:storage"))
+    implementation(project(":core:data"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:designsystem"))
+
+    implementation(project(":feature:camera"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:album"))
+    implementation(project(":feature:pair-preview"))
+    implementation(project(":feature:export-settings"))
+
+    val composeBom = platform(libs.compose.bom)
+    implementation(composeBom)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
+    implementation(libs.compose.tooling.preview)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.camerax.compose)
+    implementation(libs.camerax.extensions)
+
+    implementation(libs.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.datastore.preferences)
+
+    implementation(libs.activity.compose)
+    implementation(libs.core.splashscreen)
+
+    implementation(libs.appcompat)
+
+    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+
+    implementation(libs.concurrent.futures.ktx)
+
+    implementation(libs.profileinstaller)
+
+    implementation(libs.colorpicker.compose)
+
+    implementation(libs.timber)
+
+    implementation(libs.jankstats)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.archunit.junit5)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    androidTestImplementation(composeBom)
+    androidTestImplementation(libs.compose.ui.test)
+}

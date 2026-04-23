@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="export_settings_title">Export settings</string>
+
+    <string name="export_section_include">Include</string>
+    <string name="export_section_format">Format</string>
+    <string name="export_section_watermark">Watermark</string>
+    <string name="export_section_combine">Combining</string>
+
+    <string name="export_include_combined_only">Combined only</string>
+    <string name="export_include_before_only">Before only</string>
+    <string name="export_include_after_only">After only</string>
+
+    <string name="export_format_image">Send/save as images</string>
+    <string name="export_format_zip">Send/save as ZIP</string>
+
+    <string name="export_watermark_apply">Apply watermark option</string>
+    <string name="export_combine_apply">Apply combine option</string>
+
+</resources>

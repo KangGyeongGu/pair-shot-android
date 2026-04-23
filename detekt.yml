@@ -1,0 +1,108 @@
+style:
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+    ignoreHashCodeFunction: true
+    ignoreConstantDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNamedArgument: true
+    ignoreExtensionFunctions: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+  WildcardImport:
+    active: true
+  DataClassShouldBeImmutable:
+    active: true
+  UnusedParameter:
+    active: true
+    ignoreAnnotated:
+      - 'Composable'
+  UseCheckOrError:
+    active: true
+  ReturnCount:
+    active: true
+    max: 3
+  DestructuringDeclarationWithTooManyEntries:
+    active: true
+    maxDestructuringEntries: 5
+  ThrowsCount:
+    active: true
+    max: 3
+    excludeGuardClauses: true
+
+naming:
+  TopLevelPropertyNaming:
+    active: true
+  MatchingDeclarationName:
+    active: true
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+      - '**/core/designsystem/**'
+  VariableNaming:
+    active: true
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+  FunctionNaming:
+    active: true
+    excludes:
+      - '**/test/**'
+      - '**/androidTest/**'
+    ignoreAnnotated:
+      - 'Composable'
+
+complexity:
+  LongMethod:
+    active: true
+    threshold: 80
+    ignoreAnnotated:
+      - 'Composable'
+  LongParameterList:
+    active: true
+    functionThreshold: 10
+    constructorThreshold: 12
+    ignoreAnnotated:
+      - 'Composable'
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 30
+    thresholdInClasses: 30
+    thresholdInInterfaces: 20
+    thresholdInObjects: 20
+    thresholdInEnums: 10
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 15
+    ignoreAnnotated:
+      - 'Composable'
+
+empty-blocks:
+  EmptyCatchBlock:
+    active: true
+    allowedExceptionNameRegex: '_^'
+  EmptyFunctionBlock:
+    active: true
+    ignoreOverridden: true
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: true
+  InstanceOfCheckForException:
+    active: true
+
+potential-bugs:
+  UnsafeCast:
+    active: true
+
+performance:
+  SpreadOperator:
+    active: true

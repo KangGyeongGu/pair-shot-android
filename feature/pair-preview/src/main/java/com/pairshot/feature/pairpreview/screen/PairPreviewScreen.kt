@@ -1,0 +1,72 @@
+package com.pairshot.feature.pairpreview.screen
+
+import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.ui.component.DeletePairConfirmDialog
+import com.pairshot.feature.pairpreview.component.PairPreviewCenter
+import com.pairshot.feature.pairpreview.component.PairPreviewTopBar
+
+@Composable
+fun PairPreviewScreen(
+    hasCombined: Boolean,
+    livePreviewBitmap: Bitmap?,
+    showDeleteDialog: Boolean,
+    onClose: () -> Unit,
+    onShareSelected: () -> Unit,
+    onNavigateToAfterCamera: () -> Unit,
+    onDeleteRequested: () -> Unit,
+    onDeleteAll: () -> Unit,
+    onDeleteCombinedOnly: () -> Unit,
+    onDeleteDismissed: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Surface(
+            modifier =
+                Modifier.size(
+                    width = PairShotSpacing.modalWidth,
+                    height = PairShotSpacing.modalHeight,
+                ),
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.surface,
+            shadowElevation = PairShotSpacing.modalElevation,
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                PairPreviewTopBar(
+                    onClose = onClose,
+                    onShareSelected = onShareSelected,
+                    onNavigateToAfterCamera = onNavigateToAfterCamera,
+                    onDeleteRequested = onDeleteRequested,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                Box(modifier = Modifier.weight(1f)) {
+                    PairPreviewCenter(livePreviewBitmap = livePreviewBitmap)
+                }
+            }
+        }
+    }
+
+    if (showDeleteDialog) {
+        DeletePairConfirmDialog(
+            pairCount = 1,
+            combinedCount = if (hasCombined) 1 else 0,
+            onDeleteAll = onDeleteAll,
+            onDeleteCombinedOnly = onDeleteCombinedOnly,
+            onDismiss = onDeleteDismissed,
+        )
+    }
+}
