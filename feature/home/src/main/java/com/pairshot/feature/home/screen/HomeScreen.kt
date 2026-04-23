@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.infra.location.LocationResult
 import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.SortOrder
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
 import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.feature.home.R
@@ -48,7 +49,9 @@ fun HomeScreen(
     selectedAlbumIds: Set<Long>,
     currentLocation: LocationResult?,
     showCreateAlbumDialog: Boolean,
+    sortOrder: SortOrder,
     onModeSelected: (HomeMode) -> Unit,
+    onToggleSortOrder: () -> Unit,
     onPairClick: (Long) -> Unit,
     onPairLongClick: (Long) -> Unit,
     onAlbumClick: (Long) -> Unit,
@@ -101,6 +104,7 @@ fun HomeScreen(
                 onExitSelectionMode =
                     if (albumSelectionMode) onExitAlbumSelectionMode else onExitSelectionMode,
                 onToggleSelectAll = onToggleSelectAll,
+                onEnterSelectionMode = onEnterSelectionMode,
                 onNavigateToSettings = onNavigateToSettings,
             )
         },
@@ -144,8 +148,9 @@ fun HomeScreen(
             HomeFilterRow(
                 selectedMode = mode,
                 inSelectionMode = inSelectionMode,
+                sortOrder = sortOrder,
                 onModeSelected = onModeSelected,
-                onEnterSelectionMode = onEnterSelectionMode,
+                onToggleSortOrder = onToggleSortOrder,
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -169,6 +174,7 @@ fun HomeScreen(
                             pairs = pairs,
                             selectedIds = selectedIds,
                             selectionMode = selectionMode,
+                            sortOrder = sortOrder,
                             onPairClick = onPairClick,
                             onPairLongClick = onPairLongClick,
                             contentPadding = contentPadding,

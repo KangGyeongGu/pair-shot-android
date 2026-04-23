@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -29,7 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -90,11 +93,28 @@ fun BeforePreviewStrip(
                 items.minByOrNull { abs((it.offset + it.size / 2) - viewportCenter) }?.index ?: -1
             }
         }
+        val isDragging by listState.interactionSource.collectIsDraggedAsState()
+        var userInteracting by remember { mutableStateOf(false) }
+        var lastHapticIndex by remember { mutableStateOf(-1) }
+        LaunchedEffect(isDragging) {
+            if (isDragging) {
+                userInteracting = true
+                lastHapticIndex = snappedIndex
+            }
+        }
+        LaunchedEffect(listState.isScrollInProgress) {
+            if (!listState.isScrollInProgress) userInteracting = false
+        }
         LaunchedEffect(snappedIndex) {
             if (snappedIndex < 0) return@LaunchedEffect
-            if (listState.isScrollInProgress && snappedIndex != selectedIndex) {
-                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            if (lastHapticIndex < 0) {
+                lastHapticIndex = snappedIndex
+                return@LaunchedEffect
+            }
+            if (userInteracting && snappedIndex != lastHapticIndex) {
+                haptic.performHapticFeedback(HapticFeedbackType.SegmentTick)
                 onSelectIndex?.invoke(snappedIndex)
+                lastHapticIndex = snappedIndex
             }
         }
     }

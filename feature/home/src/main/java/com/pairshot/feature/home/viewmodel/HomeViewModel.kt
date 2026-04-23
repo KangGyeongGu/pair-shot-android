@@ -11,10 +11,12 @@ import com.pairshot.core.domain.pair.DeletePairsUseCase
 import com.pairshot.core.domain.pair.PairNavigationTarget
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.pair.ResolvePairNavigationTargetUseCase
+import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.infra.location.LocationProvider
 import com.pairshot.core.infra.location.LocationResult
 import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.SortOrder
 import com.pairshot.core.ui.text.UiText
 import com.pairshot.feature.home.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -76,6 +78,7 @@ class HomeViewModel
         private val deleteCombinedPhotosUseCase: DeleteCombinedPhotosUseCase,
         private val resolvePairNavigationTargetUseCase: ResolvePairNavigationTargetUseCase,
         private val locationProvider: LocationProvider,
+        private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
         private val _mode = MutableStateFlow(HomeMode.PAIRS)
         val mode: StateFlow<HomeMode> = _mode.asStateFlow()
@@ -115,6 +118,20 @@ class HomeViewModel
 
         private val _events = MutableSharedFlow<HomeEvent>()
         val events = _events.asSharedFlow()
+
+        val sortOrder: StateFlow<SortOrder> =
+            appSettingsRepository.homeSortOrderFlow.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = SortOrder.DESC,
+            )
+
+        fun toggleSortOrder() {
+            viewModelScope.launch {
+                val next = if (sortOrder.value == SortOrder.DESC) SortOrder.ASC else SortOrder.DESC
+                appSettingsRepository.updateHomeSortOrder(next)
+            }
+        }
 
         fun setMode(mode: HomeMode) {
             _mode.value = mode

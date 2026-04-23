@@ -32,6 +32,7 @@ fun HomeRoute(
     val albumSelectionMode by viewModel.albumSelectionMode.collectAsStateWithLifecycle()
     val selectedAlbumIds by viewModel.selectedAlbumIds.collectAsStateWithLifecycle()
     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
+    val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
 
     var showCreateAlbumDialog by remember { mutableStateOf(false) }
 
@@ -64,7 +65,9 @@ fun HomeRoute(
         selectedAlbumIds = selectedAlbumIds,
         currentLocation = currentLocation,
         showCreateAlbumDialog = showCreateAlbumDialog,
+        sortOrder = sortOrder,
         onModeSelected = viewModel::setMode,
+        onToggleSortOrder = viewModel::toggleSortOrder,
         onPairClick = viewModel::onPairCardClick,
         onPairLongClick = { id ->
             if (!selectionMode) {

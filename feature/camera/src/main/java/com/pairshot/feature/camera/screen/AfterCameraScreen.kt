@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -36,8 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.core.ui.component.PairShotSnackbarContent
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotSnackbarController
+import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.text.UiText
@@ -74,6 +74,7 @@ internal fun AfterCameraScreen(
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
     val pairsLoaded by viewModel.pairsLoaded.collectAsStateWithLifecycle()
     val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
+    val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
     val lastPairThumbnailUri by viewModel.lastPairThumbnailUri.collectAsStateWithLifecycle()
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
     val zoomUiState by viewModel.zoomUiState.collectAsStateWithLifecycle()
@@ -185,7 +186,6 @@ internal fun AfterCameraScreen(
                 }
 
                 is AfterCameraEvent.AllCompleted -> {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     snackbarController.show(
                         SnackbarEvent(
                             UiText.Resource(CoreR.string.snackbar_success_all_after_captured),
@@ -362,18 +362,17 @@ internal fun AfterCameraScreen(
                 onToggleOverlay = viewModel::toggleOverlay,
                 overlayAlpha = overlayAlpha,
                 onOverlayAlphaChange = viewModel::updateOverlayAlpha,
+                sortOrder = sortOrder,
+                onToggleSortOrder = viewModel::toggleSortOrder,
             )
 
-            SnackbarHost(
-                hostState = snackbarController.hostState,
+            PairShotSnackbarHost(
+                controller = snackbarController,
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter)
                         .statusBarsPadding()
-                        .padding(top = 8.dp),
-                snackbar = { data ->
-                    PairShotSnackbarContent(data, snackbarController.currentVariant)
-                },
+                        .padding(top = PairShotSpacing.snackbarTopOffset),
             )
         }
     }

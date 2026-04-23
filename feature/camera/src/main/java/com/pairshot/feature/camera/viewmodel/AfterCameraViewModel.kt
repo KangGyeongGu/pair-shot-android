@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.pairshot.core.domain.album.AlbumRepository
 import com.pairshot.core.domain.pair.GetLatestBeforeThumbnailUseCase
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
@@ -11,6 +12,7 @@ import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.SortOrder
 import com.pairshot.core.navigation.AfterCamera
 import com.pairshot.feature.camera.component.ZoomStateHolder
 import com.pairshot.feature.camera.component.ZoomUiState
@@ -24,9 +26,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 sealed interface AfterCameraEvent {
@@ -60,24 +66,85 @@ class AfterCameraViewModel
         private val photoPairRepository: PhotoPairRepository,
         private val getLatestBeforeThumbnailUseCase: GetLatestBeforeThumbnailUseCase,
         private val appSettingsRepository: AppSettingsRepository,
+        albumRepository: AlbumRepository,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AfterCamera>()
         private val initialPairId: Long? = route.initialPairId
         private val albumId: Long? = route.albumId
 
+        private val isDateFilterActive: Boolean = albumId == null && initialPairId != null
+
+        private val _targetBeforeDate = MutableStateFlow<LocalDate?>(null)
+
+        val sortOrder: StateFlow<SortOrder> =
+            if (albumId != null) {
+                appSettingsRepository.albumSortOrderFlow
+            } else {
+                appSettingsRepository.homeSortOrderFlow
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = SortOrder.DESC,
+            )
+
+        fun toggleSortOrder() {
+            viewModelScope.launch {
+                val next = if (sortOrder.value == SortOrder.DESC) SortOrder.ASC else SortOrder.DESC
+                if (albumId != null) {
+                    appSettingsRepository.updateAlbumSortOrder(next)
+                } else {
+                    appSettingsRepository.updateHomeSortOrder(next)
+                }
+            }
+        }
+
         val totalPairCount: StateFlow<Int> =
-            photoPairRepository
-                .countAll()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+            when {
+                albumId != null -> {
+                    albumRepository.observePairs(albumId).map { it.size }
+                }
+
+                initialPairId != null -> {
+                    combine(photoPairRepository.observeAll(), _targetBeforeDate) { all, date ->
+                        if (date == null) 0 else all.count { it.beforeTimestamp.toLocalDate() == date }
+                    }
+                }
+
+                else -> {
+                    photoPairRepository.countAll()
+                }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+        init {
+            if (isDateFilterActive) {
+                viewModelScope.launch {
+                    val pair = photoPairRepository.getById(initialPairId!!)
+                    _targetBeforeDate.value = pair?.beforeTimestamp?.toLocalDate()
+                }
+            }
+        }
 
         val unpairedPhotos: StateFlow<List<PhotoPair>> =
-            (
+            combine(
                 if (albumId != null) {
                     photoPairRepository.observeUnpairedByAlbum(albumId)
                 } else {
                     photoPairRepository.observeUnpaired()
+                },
+                sortOrder,
+                _targetBeforeDate,
+            ) { list, order, targetDate ->
+                val filtered =
+                    when {
+                        !isDateFilterActive -> list
+                        targetDate == null -> emptyList()
+                        else -> list.filter { it.beforeTimestamp.toLocalDate() == targetDate }
+                    }
+                when (order) {
+                    SortOrder.DESC -> filtered.sortedByDescending { it.beforeTimestamp }
+                    SortOrder.ASC -> filtered.sortedBy { it.beforeTimestamp }
                 }
-            ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
         val lastPairThumbnailUri: StateFlow<String?> =
             getLatestBeforeThumbnailUseCase()
@@ -359,3 +426,5 @@ class AfterCameraViewModel
             }
         }
     }
+
+private fun Long.toLocalDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()

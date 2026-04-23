@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,9 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.R
-import com.pairshot.core.ui.component.PairShotSnackbarContent
 import com.pairshot.core.ui.component.PairShotSnackbarController
+import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.text.UiText
@@ -277,16 +277,13 @@ internal fun CameraScreen(
                 onDismiss = viewModel::dismissSettingsPanel,
             )
 
-            SnackbarHost(
-                hostState = snackbarController.hostState,
+            PairShotSnackbarHost(
+                controller = snackbarController,
                 modifier =
                     Modifier
                         .align(Alignment.TopCenter)
                         .statusBarsPadding()
-                        .padding(top = 8.dp),
-                snackbar = { data ->
-                    PairShotSnackbarContent(data, snackbarController.currentVariant)
-                },
+                        .padding(top = PairShotSpacing.snackbarTopOffset),
             )
         }
     }

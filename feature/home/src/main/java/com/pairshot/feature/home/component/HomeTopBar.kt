@@ -2,6 +2,7 @@ package com.pairshot.feature.home.component
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ fun HomeTopBar(
     allSelected: Boolean,
     onExitSelectionMode: () -> Unit,
     onToggleSelectAll: () -> Unit,
+    onEnterSelectionMode: () -> Unit,
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -70,6 +72,13 @@ fun HomeTopBar(
                     )
                 }
             } else {
+                IconButton(onClick = onEnterSelectionMode) {
+                    Icon(
+                        imageVector = Icons.Outlined.CheckCircle,
+                        contentDescription = stringResource(R.string.home_desc_selection_mode),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
                 IconButton(onClick = onNavigateToSettings) {
                     Icon(
                         imageVector = Icons.Outlined.Settings,

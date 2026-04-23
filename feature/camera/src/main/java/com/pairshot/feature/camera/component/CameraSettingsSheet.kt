@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Sort
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.FlashAuto
 import androidx.compose.material.icons.outlined.FlashOff
@@ -66,6 +67,7 @@ import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
+import com.pairshot.core.model.SortOrder
 import com.pairshot.feature.camera.R
 import com.pairshot.feature.camera.state.CameraSettingsState
 import kotlin.math.roundToInt
@@ -85,6 +87,8 @@ fun CameraSettingsSheet(
     onToggleOverlay: (() -> Unit)? = null,
     overlayAlpha: Float? = null,
     onOverlayAlphaChange: ((Float) -> Unit)? = null,
+    sortOrder: SortOrder? = null,
+    onToggleSortOrder: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -140,20 +144,33 @@ fun CameraSettingsSheet(
                         onToggleLevel = onToggleLevel,
                         overlayEnabled = overlayEnabled,
                         onToggleOverlay = onToggleOverlay,
+                        sortOrder = sortOrder,
+                        onToggleSortOrder = onToggleSortOrder,
                     )
 
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    settingItems.forEach { item ->
-                        SettingIconItem(
-                            icon = item.icon,
-                            label = item.label,
-                            isActive = item.isActive,
-                            onClick = item.onClick,
-                            modifier = Modifier.weight(1f),
-                        )
+                    settingItems.chunked(3).forEach { rowItems ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            rowItems.forEach { item ->
+                                SettingIconItem(
+                                    icon = item.icon,
+                                    label = item.label,
+                                    isActive = item.isActive,
+                                    onClick = item.onClick,
+                                    iconFlippedVertical = item.iconFlippedVertical,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            repeat(3 - rowItems.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
 
@@ -175,6 +192,7 @@ private data class SettingItem(
     val label: String,
     val isActive: Boolean,
     val onClick: () -> Unit,
+    val iconFlippedVertical: Boolean = false,
 )
 
 @Composable
@@ -188,6 +206,8 @@ private fun buildSettingItems(
     onToggleLevel: () -> Unit,
     overlayEnabled: Boolean? = null,
     onToggleOverlay: (() -> Unit)? = null,
+    sortOrder: SortOrder? = null,
+    onToggleSortOrder: (() -> Unit)? = null,
 ): List<SettingItem> {
     val items = mutableListOf<SettingItem>()
 
@@ -260,6 +280,18 @@ private fun buildSettingItems(
         ),
     )
 
+    if (sortOrder != null && onToggleSortOrder != null) {
+        items.add(
+            SettingItem(
+                icon = Icons.AutoMirrored.Outlined.Sort,
+                label = stringResource(R.string.camera_settings_sort),
+                isActive = true,
+                onClick = onToggleSortOrder,
+                iconFlippedVertical = sortOrder == SortOrder.ASC,
+            ),
+        )
+    }
+
     return items
 }
 
@@ -270,6 +302,7 @@ private fun SettingIconItem(
     isActive: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    iconFlippedVertical: Boolean = false,
 ) {
     val haptic = LocalHapticFeedback.current
     Column(
@@ -302,14 +335,17 @@ private fun SettingIconItem(
             Icon(
                 imageVector = icon,
                 contentDescription = label,
-                modifier = Modifier.size(24.dp),
-                tint = if (isActive) Color.White else Color.White.copy(alpha = 0.55f),
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .graphicsLayer(scaleY = if (iconFlippedVertical) -1f else 1f),
+                tint = if (isActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.55f),
             )
         }
         Text(
             text = label,
             style = PairShotTypographyTokens.labelExtraSmall,
-            color = if (isActive) Color.White else Color.White.copy(alpha = 0.55f),
+            color = if (isActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.55f),
         )
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.SortOrder
 import com.pairshot.core.ui.component.PairCard
 import com.pairshot.feature.home.R
 import java.time.Instant
@@ -48,6 +49,7 @@ fun HomePairGridSection(
     pairs: List<PhotoPair>,
     selectedIds: Set<Long>,
     selectionMode: Boolean,
+    sortOrder: SortOrder,
     onPairClick: (Long) -> Unit,
     onPairLongClick: (Long) -> Unit,
     contentPadding: PaddingValues,
@@ -55,11 +57,16 @@ fun HomePairGridSection(
 ) {
     val today = remember { LocalDate.now(ZoneId.systemDefault()) }
     val grouped =
-        remember(pairs) {
+        remember(pairs, sortOrder) {
             pairs
                 .groupBy { it.beforeTimestamp.toLocalDate() }
                 .toSortedMap(compareByDescending { it })
-                .mapValues { (_, items) -> items.sortedByDescending { it.beforeTimestamp } }
+                .mapValues { (_, items) ->
+                    when (sortOrder) {
+                        SortOrder.DESC -> items.sortedByDescending { it.beforeTimestamp }
+                        SortOrder.ASC -> items.sortedBy { it.beforeTimestamp }
+                    }
+                }
         }
 
     LazyVerticalGrid(
