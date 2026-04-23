@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.pairshot.core.domain.export.ExportAction
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
@@ -43,7 +44,7 @@ private fun buildShareIntent(
 
 private fun buildSendMultipleIntent(uriStrings: List<String>): Intent {
     require(uriStrings.isNotEmpty()) { "no URIs to share" }
-    val uris = ArrayList(uriStrings.map { Uri.parse(it) })
+    val uris = ArrayList<Uri>(uriStrings.map { it.toUri() })
     return Intent(Intent.ACTION_SEND_MULTIPLE).apply {
         type = "image/*"
         putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
