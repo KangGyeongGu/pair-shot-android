@@ -87,6 +87,7 @@ fun SettingsScreen(
     onThemeChange: (AppTheme) -> Unit,
     onClearCache: () -> Unit,
     onLicenseClick: () -> Unit,
+    onPrivacyPolicyClick: () -> Unit,
     onNavigateBack: () -> Unit,
     onWatermarkConfigChange: (WatermarkConfig) -> Unit,
     onWatermarkSettingsClick: () -> Unit,
@@ -477,6 +478,11 @@ fun SettingsScreen(
                                 SettingsItem(
                                     label = stringResource(R.string.settings_item_license),
                                     onClick = onLicenseClick,
+                                )
+                                SettingsDivider()
+                                SettingsItem(
+                                    label = stringResource(R.string.settings_item_privacy_policy),
+                                    onClick = onPrivacyPolicyClick,
                                 )
                             }
                         }

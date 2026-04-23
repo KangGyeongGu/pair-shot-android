@@ -1,10 +1,13 @@
 package com.pairshot.feature.settings.route
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -12,6 +15,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.feature.settings.screen.SettingsScreen
 import com.pairshot.feature.settings.viewmodel.SettingsViewModel
+
+private const val PRIVACY_POLICY_URL = "https://www.kangkyeonggu.com/pairshot/privacy"
 
 @Composable
 fun SettingsRoute(
@@ -26,6 +31,7 @@ fun SettingsRoute(
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val snackbarController = remember { PairShotSnackbarController() }
     val lifecycleOwner = LocalLifecycleOwner.current
+    val context = LocalContext.current
 
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -46,6 +52,13 @@ fun SettingsRoute(
         onThemeChange = viewModel::updateAppTheme,
         onClearCache = viewModel::clearCache,
         onLicenseClick = onNavigateToLicense,
+        onPrivacyPolicyClick = {
+            runCatching {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri()),
+                )
+            }
+        },
         onNavigateBack = onNavigateBack,
         onWatermarkConfigChange = viewModel::updateWatermarkConfig,
         onWatermarkSettingsClick = onNavigateToWatermarkSettings,

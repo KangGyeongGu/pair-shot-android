@@ -32,6 +32,7 @@
     <string name="settings_item_cache">Cache</string>
     <string name="settings_item_app_version">App version</string>
     <string name="settings_item_license">Licenses</string>
+    <string name="settings_item_privacy_policy">Privacy policy</string>
 
     <string name="settings_file_name_prefix_none">None</string>
     <string name="settings_file_name_prefix_with_underscore">%1$s_</string>
