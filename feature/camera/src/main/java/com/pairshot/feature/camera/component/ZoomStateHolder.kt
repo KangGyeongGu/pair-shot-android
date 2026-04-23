@@ -18,6 +18,12 @@ class ZoomStateHolder {
     private val _zoomUiState = MutableStateFlow(ZoomUiState())
     val zoomUiState: StateFlow<ZoomUiState> = _zoomUiState.asStateFlow()
 
+    companion object {
+        private const val MIN_ULTRA_WIDE_RATIO = 0.5f
+        private const val TELE_PRESET_RATIO = 5f
+        private const val CUSTOM_RATIO_SNAP_THRESHOLD = 0.05f
+    }
+
     fun initFromZoomState(
         minRatio: Float,
         maxRatio: Float,
@@ -53,9 +59,8 @@ class ZoomStateHolder {
     fun applyCustomRatio() {
         val state = _zoomUiState.value
         val nearest = state.presetRatios.minByOrNull { abs(it - state.currentRatio) } ?: return
-        val threshold = 0.05f
         _zoomUiState.update {
-            if (abs(state.currentRatio - nearest) > threshold) {
+            if (abs(state.currentRatio - nearest) > CUSTOM_RATIO_SNAP_THRESHOLD) {
                 it.copy(customRatios = it.customRatios + (nearest to state.currentRatio))
             } else {
                 it.copy(
@@ -89,10 +94,10 @@ class ZoomStateHolder {
         maxRatio: Float,
     ): List<Float> {
         val presets = mutableListOf<Float>()
-        if (minRatio < 1f) presets.add(minRatio.coerceAtLeast(0.5f))
+        if (minRatio < 1f) presets.add(minRatio.coerceAtLeast(MIN_ULTRA_WIDE_RATIO))
         presets.add(1f)
         if (maxRatio >= 2f) presets.add(2f)
-        if (maxRatio >= 5f) presets.add(5f)
+        if (maxRatio >= TELE_PRESET_RATIO) presets.add(TELE_PRESET_RATIO)
         return presets.distinct().sorted()
     }
 }

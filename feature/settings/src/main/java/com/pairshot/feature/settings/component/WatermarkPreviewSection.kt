@@ -27,6 +27,9 @@ import com.pairshot.feature.settings.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private const val PREVIEW_SCALE_FACTOR = 0.5f
+private const val PREVIEW_MIN_DIMENSION_PX = 200
+
 @Composable
 internal fun WatermarkPreviewSection(
     config: WatermarkConfig,
@@ -50,8 +53,8 @@ internal fun WatermarkPreviewSection(
                 val scaled =
                     Bitmap.createScaledBitmap(
                         sample,
-                        (sample.width * 0.5f).toInt().coerceAtLeast(200),
-                        (sample.height * 0.5f).toInt().coerceAtLeast(200),
+                        (sample.width * PREVIEW_SCALE_FACTOR).toInt().coerceAtLeast(PREVIEW_MIN_DIMENSION_PX),
+                        (sample.height * PREVIEW_SCALE_FACTOR).toInt().coerceAtLeast(PREVIEW_MIN_DIMENSION_PX),
                         true,
                     )
                 val applied = watermarkRenderer.apply(scaled, previewConfig)

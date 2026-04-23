@@ -329,7 +329,7 @@ class CameraSessionImpl
                     val action =
                         FocusMeteringAction
                             .Builder(point)
-                            .setAutoCancelDuration(3, TimeUnit.SECONDS)
+                            .setAutoCancelDuration(FOCUS_AUTO_CANCEL_SECONDS, TimeUnit.SECONDS)
                             .build()
                     control.startFocusAndMetering(action)
                 }
@@ -340,30 +340,30 @@ class CameraSessionImpl
             camera?.cameraControl?.setExposureCompensationIndex(index)
         }
 
-        override fun sensorRotationDegrees(facing: LensFacing): Int {
-            camera?.let { c ->
-                return c.cameraInfo.sensorRotationDegrees
-            }
+        override fun sensorRotationDegrees(facing: LensFacing): Int =
+            camera?.cameraInfo?.sensorRotationDegrees
+                ?: sensorRotationDegreesFromCamera2(facing)
+
+        private fun sensorRotationDegreesFromCamera2(facing: LensFacing): Int {
             val cameraManager =
-                context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager ?: return 90
+                context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager
+                    ?: return DEFAULT_SENSOR_ORIENTATION_DEGREES
             val targetFacing =
                 if (facing == LensFacing.BACK) {
                     CameraCharacteristics.LENS_FACING_BACK
                 } else {
                     CameraCharacteristics.LENS_FACING_FRONT
                 }
-            val id =
-                runCatching {
+            return runCatching {
+                val id =
                     cameraManager.cameraIdList.firstOrNull { id ->
                         val chars = cameraManager.getCameraCharacteristics(id)
                         chars.get(CameraCharacteristics.LENS_FACING) == targetFacing
-                    }
-                }.getOrNull() ?: return 90
-            return runCatching {
+                    } ?: return@runCatching DEFAULT_SENSOR_ORIENTATION_DEGREES
                 cameraManager
                     .getCameraCharacteristics(id)
-                    .get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 90
-            }.getOrDefault(90)
+                    .get(CameraCharacteristics.SENSOR_ORIENTATION) ?: DEFAULT_SENSOR_ORIENTATION_DEGREES
+            }.getOrDefault(DEFAULT_SENSOR_ORIENTATION_DEGREES)
         }
 
         override suspend fun prepareOverlay(
@@ -409,5 +409,7 @@ class CameraSessionImpl
             private const val EXTENSIONS_DEBOUNCE_MS = 300L
             private const val FOCUS_DEBOUNCE_MS = 200L
             private const val OVERLAY_IN_SAMPLE_SIZE = 2
+            private const val DEFAULT_SENSOR_ORIENTATION_DEGREES = 90
+            private const val FOCUS_AUTO_CANCEL_SECONDS = 3L
         }
     }

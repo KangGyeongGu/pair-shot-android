@@ -32,9 +32,9 @@ class PreviewSampleProvider
                     context.packageName,
                 )
             if (resId == 0) {
-                throw IllegalStateException("watermark_preview_sample drawable not found")
+                error("watermark_preview_sample drawable not found")
             }
             return BitmapFactory.decodeResource(resources, resId)
-                ?: throw IllegalStateException("Failed to decode watermark_preview_sample")
+                ?: error("Failed to decode watermark_preview_sample")
         }
     }

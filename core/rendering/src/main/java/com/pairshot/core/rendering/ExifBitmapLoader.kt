@@ -28,12 +28,12 @@ class ExifBitmapLoader
                 }
             val inputStream =
                 context.contentResolver.openInputStream(uri)
-                    ?: throw IllegalStateException("Cannot open input stream for $uri")
+                    ?: error("Cannot open input stream for $uri")
 
             val bitmap =
                 inputStream.use { stream ->
                     BitmapFactory.decodeStream(stream, null, options)
-                } ?: throw IllegalStateException("Cannot decode bitmap for $uri")
+                } ?: error("Cannot decode bitmap for $uri")
 
             val rotation = readExifDegrees(uri)
             if (rotation == 0) return bitmap
@@ -49,11 +49,17 @@ class ExifBitmapLoader
             return inputStream.use { stream ->
                 val exif = ExifInterface(stream)
                 when (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
-                    ExifInterface.ORIENTATION_ROTATE_90 -> 90
-                    ExifInterface.ORIENTATION_ROTATE_180 -> 180
-                    ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                    ExifInterface.ORIENTATION_ROTATE_90 -> ROTATE_QUARTER
+                    ExifInterface.ORIENTATION_ROTATE_180 -> ROTATE_HALF
+                    ExifInterface.ORIENTATION_ROTATE_270 -> ROTATE_THREE_QUARTERS
                     else -> 0
                 }
             }
+        }
+
+        companion object {
+            private const val ROTATE_QUARTER = 90
+            private const val ROTATE_HALF = 180
+            private const val ROTATE_THREE_QUARTERS = 270
         }
     }

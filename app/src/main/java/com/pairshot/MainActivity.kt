@@ -37,6 +37,8 @@ import com.pairshot.core.ui.component.TopProgressPill
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 
+private const val SELECTION_MESSAGE_AUTO_DISMISS_MS = 2500L
+
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var jankStats: JankStats
@@ -71,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 
                     LaunchedEffect(selectionMessage) {
                         if (selectionMessage != null) {
-                            delay(2500)
+                            delay(SELECTION_MESSAGE_AUTO_DISMISS_MS)
                             selectionMessage = null
                         }
                     }

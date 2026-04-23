@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
+import android.graphics.RectF
 import android.net.Uri
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.CombineLayout
@@ -21,6 +22,30 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val OPAQUE_ALPHA = 255
+private const val ALPHA_MAX_FLOAT = 255f
+private const val LABEL_RECT_HEIGHT_FACTOR = 1.6f
+private const val LABEL_HPAD_FACTOR = 0.75f
+private const val LABEL_MARGIN_FACTOR = 0.4f
+private const val LABEL_MIN_FONT_PX = 10f
+private const val BORDER_SLOT_COUNT = 3
+
+private data class LayoutPlacement(
+    val canvasWidth: Int,
+    val canvasHeight: Int,
+    val beforeLeft: Int,
+    val beforeTop: Int,
+    val afterLeft: Int,
+    val afterTop: Int,
+)
+
+private data class LabelRect(
+    val left: Int,
+    val top: Int,
+    val width: Int,
+    val height: Int,
+)
 
 @Singleton
 class PairImageComposer
@@ -106,91 +131,54 @@ class PairImageComposer
             profile: RenderProfile,
             recycleInputs: Boolean = true,
         ): Bitmap {
-            val wmBefore =
-                if (watermarkConfig.enabled) watermarkRenderer.apply(before, watermarkConfig) else before
-            val wmAfter =
-                if (watermarkConfig.enabled) watermarkRenderer.apply(after, watermarkConfig) else after
+            val wmBefore = applyWatermarkIfEnabled(before, watermarkConfig)
+            val wmAfter = applyWatermarkIfEnabled(after, watermarkConfig)
 
-            if (recycleInputs) {
-                if (wmBefore !== before && !before.isRecycled) before.recycle()
-                if (wmAfter !== after && !after.isRecycled) after.recycle()
-            }
+            recycleOriginalsIfReplaced(before, wmBefore, after, wmAfter, recycleInputs)
 
-            val density = context.resources.displayMetrics.density
-            val border =
-                if (combineConfig.borderEnabled) {
-                    (combineConfig.borderThicknessDp * density * profile.borderScale).toInt()
-                } else {
-                    0
-                }
+            val border = resolveBorderPx(combineConfig, profile)
+            val placement = calculatePlacement(wmBefore, wmAfter, combineConfig.layout, border)
 
-            val (width, height) =
-                when (combineConfig.layout) {
-                    CombineLayout.HORIZONTAL -> {
-                        val w = wmBefore.width + wmAfter.width + border * 3
-                        val h = maxOf(wmBefore.height, wmAfter.height) + border * 2
-                        w to h
-                    }
-
-                    CombineLayout.VERTICAL -> {
-                        val w = maxOf(wmBefore.width, wmAfter.width) + border * 2
-                        val h = wmBefore.height + wmAfter.height + border * 3
-                        w to h
-                    }
-                }
-
-            val combined =
-                Bitmap.createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+            val combined = createCanvasBitmap(placement)
             val canvas = Canvas(combined)
+            paintBackground(canvas, combineConfig)
 
-            if (combineConfig.borderEnabled) {
-                canvas.drawColor(combineConfig.borderColorArgb)
-            } else {
-                canvas.drawColor(android.graphics.Color.BLACK)
-            }
-
-            val (beforeLeft, beforeTop, afterLeft, afterTop) =
-                when (combineConfig.layout) {
-                    CombineLayout.HORIZONTAL -> {
-                        listOf(border, border, border + wmBefore.width + border, border)
-                    }
-
-                    CombineLayout.VERTICAL -> {
-                        listOf(border, border, border, border + wmBefore.height + border)
-                    }
-                }
-
-            canvas.drawBitmap(wmBefore, beforeLeft.toFloat(), beforeTop.toFloat(), null)
-            canvas.drawBitmap(wmAfter, afterLeft.toFloat(), afterTop.toFloat(), null)
+            canvas.drawBitmap(wmBefore, placement.beforeLeft.toFloat(), placement.beforeTop.toFloat(), null)
+            canvas.drawBitmap(wmAfter, placement.afterLeft.toFloat(), placement.afterTop.toFloat(), null)
 
             if (combineConfig.labelEnabled) {
-                val isFree = combineConfig.labelPositionMode == LabelPositionMode.FREE
-                val cornerPx =
-                    if (isFree) combineConfig.labelBgCornerDp * density * profile.borderScale else 0f
-                drawLabel(
-                    canvas = canvas,
-                    text = combineConfig.beforeLabel,
-                    imageLeft = beforeLeft,
-                    imageTop = beforeTop,
-                    imageWidth = wmBefore.width,
-                    imageHeight = wmBefore.height,
-                    config = combineConfig,
-                    anchor = if (isFree) combineConfig.beforeLabelAnchor else null,
-                    cornerPx = cornerPx,
-                )
-                drawLabel(
-                    canvas = canvas,
-                    text = combineConfig.afterLabel,
-                    imageLeft = afterLeft,
-                    imageTop = afterTop,
-                    imageWidth = wmAfter.width,
-                    imageHeight = wmAfter.height,
-                    config = combineConfig,
-                    anchor = if (isFree) combineConfig.afterLabelAnchor else null,
-                    cornerPx = cornerPx,
-                )
+                drawBothLabels(canvas, combineConfig, profile, wmBefore, wmAfter, placement)
             }
 
+            recycleIntermediateBitmaps(before, wmBefore, after, wmAfter, recycleInputs)
+
+            return downscaleIfNeeded(combined, profile.maxOutputPx)
+        }
+
+        private suspend fun applyWatermarkIfEnabled(
+            source: Bitmap,
+            watermarkConfig: WatermarkConfig,
+        ): Bitmap = if (watermarkConfig.enabled) watermarkRenderer.apply(source, watermarkConfig) else source
+
+        private fun recycleOriginalsIfReplaced(
+            before: Bitmap,
+            wmBefore: Bitmap,
+            after: Bitmap,
+            wmAfter: Bitmap,
+            recycleInputs: Boolean,
+        ) {
+            if (!recycleInputs) return
+            if (wmBefore !== before && !before.isRecycled) before.recycle()
+            if (wmAfter !== after && !after.isRecycled) after.recycle()
+        }
+
+        private fun recycleIntermediateBitmaps(
+            before: Bitmap,
+            wmBefore: Bitmap,
+            after: Bitmap,
+            wmAfter: Bitmap,
+            recycleInputs: Boolean,
+        ) {
             if (recycleInputs) {
                 if (!wmBefore.isRecycled) wmBefore.recycle()
                 if (!wmAfter.isRecycled) wmAfter.recycle()
@@ -198,8 +186,99 @@ class PairImageComposer
                 if (wmBefore !== before && !wmBefore.isRecycled) wmBefore.recycle()
                 if (wmAfter !== after && !wmAfter.isRecycled) wmAfter.recycle()
             }
+        }
 
-            return downscaleIfNeeded(combined, profile.maxOutputPx)
+        private fun resolveBorderPx(
+            combineConfig: CombineConfig,
+            profile: RenderProfile,
+        ): Int {
+            if (!combineConfig.borderEnabled) return 0
+            val density = context.resources.displayMetrics.density
+            return (combineConfig.borderThicknessDp * density * profile.borderScale).toInt()
+        }
+
+        private fun calculatePlacement(
+            wmBefore: Bitmap,
+            wmAfter: Bitmap,
+            layout: CombineLayout,
+            border: Int,
+        ): LayoutPlacement =
+            when (layout) {
+                CombineLayout.HORIZONTAL -> {
+                    LayoutPlacement(
+                        canvasWidth = wmBefore.width + wmAfter.width + border * BORDER_SLOT_COUNT,
+                        canvasHeight = maxOf(wmBefore.height, wmAfter.height) + border * 2,
+                        beforeLeft = border,
+                        beforeTop = border,
+                        afterLeft = border + wmBefore.width + border,
+                        afterTop = border,
+                    )
+                }
+
+                CombineLayout.VERTICAL -> {
+                    LayoutPlacement(
+                        canvasWidth = maxOf(wmBefore.width, wmAfter.width) + border * 2,
+                        canvasHeight = wmBefore.height + wmAfter.height + border * BORDER_SLOT_COUNT,
+                        beforeLeft = border,
+                        beforeTop = border,
+                        afterLeft = border,
+                        afterTop = border + wmBefore.height + border,
+                    )
+                }
+            }
+
+        private fun createCanvasBitmap(placement: LayoutPlacement): Bitmap =
+            Bitmap.createBitmap(
+                placement.canvasWidth.coerceAtLeast(1),
+                placement.canvasHeight.coerceAtLeast(1),
+                Bitmap.Config.ARGB_8888,
+            )
+
+        private fun paintBackground(
+            canvas: Canvas,
+            combineConfig: CombineConfig,
+        ) {
+            if (combineConfig.borderEnabled) {
+                canvas.drawColor(combineConfig.borderColorArgb)
+            } else {
+                canvas.drawColor(android.graphics.Color.BLACK)
+            }
+        }
+
+        private fun drawBothLabels(
+            canvas: Canvas,
+            combineConfig: CombineConfig,
+            profile: RenderProfile,
+            wmBefore: Bitmap,
+            wmAfter: Bitmap,
+            placement: LayoutPlacement,
+        ) {
+            val isFree = combineConfig.labelPositionMode == LabelPositionMode.FREE
+            val density = context.resources.displayMetrics.density
+            val cornerPx = if (isFree) combineConfig.labelBgCornerDp * density * profile.borderScale else 0f
+
+            drawLabel(
+                canvas = canvas,
+                text = combineConfig.beforeLabel,
+                imageLeft = placement.beforeLeft,
+                imageTop = placement.beforeTop,
+                imageWidth = wmBefore.width,
+                imageHeight = wmBefore.height,
+                config = combineConfig,
+                anchor = if (isFree) combineConfig.beforeLabelAnchor else null,
+                cornerPx = cornerPx,
+            )
+            drawLabel(
+                canvas = canvas,
+                text = combineConfig.afterLabel,
+                imageLeft = placement.afterLeft,
+                imageTop = placement.afterTop,
+                imageWidth = wmAfter.width,
+                imageHeight = wmAfter.height,
+                config = combineConfig,
+                anchor = if (isFree) combineConfig.afterLabelAnchor else null,
+                cornerPx = cornerPx,
+            )
         }
 
         private fun downscaleIfNeeded(
@@ -228,95 +307,155 @@ class PairImageComposer
             anchor: LabelAnchor? = null,
             cornerPx: Float = 0f,
         ) {
-            val fontSize = (imageHeight * config.labelSizeRatio).coerceAtLeast(10f)
-            val rectHeight = (fontSize * 1.6f).toInt()
-            val bgAlpha = (config.labelBgAlpha * 255).toInt().coerceIn(0, 255)
+            val fontSize = (imageHeight * config.labelSizeRatio).coerceAtLeast(LABEL_MIN_FONT_PX)
+            val rectHeight = (fontSize * LABEL_RECT_HEIGHT_FACTOR).toInt()
+            val bgPaint = buildLabelBgPaint(config)
+            val textPaint = buildLabelTextPaint(config, fontSize)
 
-            val bgPaint =
-                Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = config.effectiveLabelBgColor()
-                    alpha = bgAlpha
-                    style = Paint.Style.FILL
-                }
-            val textPaint =
-                Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = config.labelTextColorArgb
-                    alpha = 255
-                    textSize = fontSize
-                    textAlign = Paint.Align.CENTER
+            val labelRect =
+                if (anchor == null) {
+                    fixedLabelRect(config.labelPosition, imageLeft, imageTop, imageWidth, imageHeight, rectHeight)
+                } else {
+                    anchoredLabelRect(anchor, text, textPaint, fontSize, imageLeft, imageTop, imageWidth, imageHeight, rectHeight)
                 }
 
-            if (anchor == null) {
-                val rectTop =
-                    when (config.labelPosition) {
-                        LabelPosition.TOP -> imageTop
-                        LabelPosition.BOTTOM -> imageTop + imageHeight - rectHeight
-                    }
-                if (config.labelBgEnabled) {
-                    canvas.drawRect(
-                        imageLeft.toFloat(),
-                        rectTop.toFloat(),
-                        (imageLeft + imageWidth).toFloat(),
-                        (rectTop + rectHeight).toFloat(),
-                        bgPaint,
-                    )
-                }
-                val textX = imageLeft + imageWidth / 2f
-                val textY = rectTop + rectHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-                canvas.drawText(text, textX, textY, textPaint)
-            } else {
-                val textBounds = Rect()
-                textPaint.getTextBounds(text, 0, text.length, textBounds)
-                val hPad = (fontSize * 0.75f).toInt()
-                val rectWidth = (textBounds.width() + hPad * 2).coerceAtLeast(rectHeight)
-                val margin = (fontSize * 0.4f).toInt()
+            drawLabelBackgroundIfEnabled(canvas, config, labelRect, anchor, cornerPx, bgPaint)
+            drawLabelText(canvas, text, labelRect, textPaint)
+        }
 
-                val rectLeft =
-                    when (anchor) {
-                        LabelAnchor.TOP_LEFT, LabelAnchor.MIDDLE_LEFT, LabelAnchor.BOTTOM_LEFT -> {
-                            imageLeft + margin
-                        }
-
-                        LabelAnchor.TOP_CENTER, LabelAnchor.MIDDLE_CENTER, LabelAnchor.BOTTOM_CENTER -> {
-                            imageLeft + (imageWidth - rectWidth) / 2
-                        }
-
-                        LabelAnchor.TOP_RIGHT, LabelAnchor.MIDDLE_RIGHT, LabelAnchor.BOTTOM_RIGHT -> {
-                            imageLeft + imageWidth - rectWidth - margin
-                        }
-                    }
-                val rectTop =
-                    when (anchor) {
-                        LabelAnchor.TOP_LEFT, LabelAnchor.TOP_CENTER, LabelAnchor.TOP_RIGHT -> {
-                            imageTop + margin
-                        }
-
-                        LabelAnchor.MIDDLE_LEFT, LabelAnchor.MIDDLE_CENTER, LabelAnchor.MIDDLE_RIGHT -> {
-                            imageTop + (imageHeight - rectHeight) / 2
-                        }
-
-                        LabelAnchor.BOTTOM_LEFT, LabelAnchor.BOTTOM_CENTER, LabelAnchor.BOTTOM_RIGHT -> {
-                            imageTop + imageHeight - rectHeight - margin
-                        }
-                    }
-
-                if (config.labelBgEnabled) {
-                    val rf =
-                        android.graphics.RectF(
-                            rectLeft.toFloat(),
-                            rectTop.toFloat(),
-                            (rectLeft + rectWidth).toFloat(),
-                            (rectTop + rectHeight).toFloat(),
-                        )
-                    if (cornerPx > 0f) {
-                        canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
-                    } else {
-                        canvas.drawRect(rf, bgPaint)
-                    }
-                }
-                val textX = rectLeft + rectWidth / 2f
-                val textY = rectTop + rectHeight / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
-                canvas.drawText(text, textX, textY, textPaint)
+        private fun buildLabelBgPaint(config: CombineConfig): Paint {
+            val bgAlpha = (config.labelBgAlpha * ALPHA_MAX_FLOAT).toInt().coerceIn(0, OPAQUE_ALPHA)
+            return Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = config.effectiveLabelBgColor()
+                alpha = bgAlpha
+                style = Paint.Style.FILL
             }
         }
+
+        private fun buildLabelTextPaint(
+            config: CombineConfig,
+            fontSize: Float,
+        ): Paint =
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = config.labelTextColorArgb
+                alpha = OPAQUE_ALPHA
+                textSize = fontSize
+                textAlign = Paint.Align.CENTER
+            }
+
+        private fun fixedLabelRect(
+            labelPosition: LabelPosition,
+            imageLeft: Int,
+            imageTop: Int,
+            imageWidth: Int,
+            imageHeight: Int,
+            rectHeight: Int,
+        ): LabelRect {
+            val rectTop =
+                when (labelPosition) {
+                    LabelPosition.TOP -> imageTop
+                    LabelPosition.BOTTOM -> imageTop + imageHeight - rectHeight
+                }
+            return LabelRect(left = imageLeft, top = rectTop, width = imageWidth, height = rectHeight)
+        }
+
+        private fun anchoredLabelRect(
+            anchor: LabelAnchor,
+            text: String,
+            textPaint: Paint,
+            fontSize: Float,
+            imageLeft: Int,
+            imageTop: Int,
+            imageWidth: Int,
+            imageHeight: Int,
+            rectHeight: Int,
+        ): LabelRect {
+            val textBounds = Rect()
+            textPaint.getTextBounds(text, 0, text.length, textBounds)
+            val hPad = (fontSize * LABEL_HPAD_FACTOR).toInt()
+            val rectWidth = (textBounds.width() + hPad * 2).coerceAtLeast(rectHeight)
+            val margin = (fontSize * LABEL_MARGIN_FACTOR).toInt()
+
+            val rectLeft = anchoredLabelLeft(anchor, imageLeft, imageWidth, rectWidth, margin)
+            val rectTop = anchoredLabelTop(anchor, imageTop, imageHeight, rectHeight, margin)
+            return LabelRect(left = rectLeft, top = rectTop, width = rectWidth, height = rectHeight)
+        }
+
+        private fun anchoredLabelLeft(
+            anchor: LabelAnchor,
+            imageLeft: Int,
+            imageWidth: Int,
+            rectWidth: Int,
+            margin: Int,
+        ): Int =
+            when (anchor.horizontalAlignment()) {
+                HorizontalAlignment.LEFT -> imageLeft + margin
+                HorizontalAlignment.CENTER -> imageLeft + (imageWidth - rectWidth) / 2
+                HorizontalAlignment.RIGHT -> imageLeft + imageWidth - rectWidth - margin
+            }
+
+        private fun anchoredLabelTop(
+            anchor: LabelAnchor,
+            imageTop: Int,
+            imageHeight: Int,
+            rectHeight: Int,
+            margin: Int,
+        ): Int =
+            when (anchor.verticalAlignment()) {
+                VerticalAlignment.TOP -> imageTop + margin
+                VerticalAlignment.MIDDLE -> imageTop + (imageHeight - rectHeight) / 2
+                VerticalAlignment.BOTTOM -> imageTop + imageHeight - rectHeight - margin
+            }
+
+        private fun drawLabelBackgroundIfEnabled(
+            canvas: Canvas,
+            config: CombineConfig,
+            labelRect: LabelRect,
+            anchor: LabelAnchor?,
+            cornerPx: Float,
+            bgPaint: Paint,
+        ) {
+            if (!config.labelBgEnabled) return
+            val rf =
+                RectF(
+                    labelRect.left.toFloat(),
+                    labelRect.top.toFloat(),
+                    (labelRect.left + labelRect.width).toFloat(),
+                    (labelRect.top + labelRect.height).toFloat(),
+                )
+            if (anchor != null && cornerPx > 0f) {
+                canvas.drawRoundRect(rf, cornerPx, cornerPx, bgPaint)
+            } else {
+                canvas.drawRect(rf, bgPaint)
+            }
+        }
+
+        private fun drawLabelText(
+            canvas: Canvas,
+            text: String,
+            labelRect: LabelRect,
+            textPaint: Paint,
+        ) {
+            val textX = labelRect.left + labelRect.width / 2f
+            val textY = labelRect.top + labelRect.height / 2f - (textPaint.descent() + textPaint.ascent()) / 2f
+            canvas.drawText(text, textX, textY, textPaint)
+        }
+    }
+
+private enum class HorizontalAlignment { LEFT, CENTER, RIGHT }
+
+private enum class VerticalAlignment { TOP, MIDDLE, BOTTOM }
+
+private fun LabelAnchor.horizontalAlignment(): HorizontalAlignment =
+    when (this) {
+        LabelAnchor.TOP_LEFT, LabelAnchor.MIDDLE_LEFT, LabelAnchor.BOTTOM_LEFT -> HorizontalAlignment.LEFT
+        LabelAnchor.TOP_CENTER, LabelAnchor.MIDDLE_CENTER, LabelAnchor.BOTTOM_CENTER -> HorizontalAlignment.CENTER
+        LabelAnchor.TOP_RIGHT, LabelAnchor.MIDDLE_RIGHT, LabelAnchor.BOTTOM_RIGHT -> HorizontalAlignment.RIGHT
+    }
+
+private fun LabelAnchor.verticalAlignment(): VerticalAlignment =
+    when (this) {
+        LabelAnchor.TOP_LEFT, LabelAnchor.TOP_CENTER, LabelAnchor.TOP_RIGHT -> VerticalAlignment.TOP
+        LabelAnchor.MIDDLE_LEFT, LabelAnchor.MIDDLE_CENTER, LabelAnchor.MIDDLE_RIGHT -> VerticalAlignment.MIDDLE
+        LabelAnchor.BOTTOM_LEFT, LabelAnchor.BOTTOM_CENTER, LabelAnchor.BOTTOM_RIGHT -> VerticalAlignment.BOTTOM
     }

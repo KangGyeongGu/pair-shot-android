@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.ModalShape
 import com.pairshot.core.designsystem.PairShotSpacing
 
+private const val MENU_WIDTH_FRACTION = 0.48f
+
 @Composable
 fun PairShotTopMenu(
     expanded: Boolean,
@@ -28,7 +30,7 @@ fun PairShotTopMenu(
 ) {
     val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
     val menuWidth =
-        (screenWidthDp * 0.48f)
+        (screenWidthDp * MENU_WIDTH_FRACTION)
             .coerceAtLeast(PairShotSpacing.menuMinWidth)
             .coerceAtMost(PairShotSpacing.menuMaxWidth)
 

@@ -25,15 +25,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import com.pairshot.feature.pairpreview.R
 
-private const val MinZoomScale = 1f
-private const val MaxZoomScale = 4f
+private const val MIN_ZOOM_SCALE = 1f
+private const val MAX_ZOOM_SCALE = 4f
 
 @Composable
 fun PairPreviewCenter(
     livePreviewBitmap: Bitmap?,
     modifier: Modifier = Modifier,
 ) {
-    var scale by remember { mutableFloatStateOf(MinZoomScale) }
+    var scale by remember { mutableFloatStateOf(MIN_ZOOM_SCALE) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
     Box(
@@ -43,10 +43,10 @@ fun PairPreviewCenter(
                 .clipToBounds()
                 .pointerInput(Unit) {
                     detectTransformGestures { _, pan, zoom, _ ->
-                        val newScale = (scale * zoom).coerceIn(MinZoomScale, MaxZoomScale)
+                        val newScale = (scale * zoom).coerceIn(MIN_ZOOM_SCALE, MAX_ZOOM_SCALE)
                         scale = newScale
                         offset =
-                            if (newScale > MinZoomScale) {
+                            if (newScale > MIN_ZOOM_SCALE) {
                                 offset + pan
                             } else {
                                 Offset.Zero

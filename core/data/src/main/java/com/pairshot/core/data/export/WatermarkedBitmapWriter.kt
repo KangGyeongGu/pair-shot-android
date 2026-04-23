@@ -31,7 +31,10 @@ class WatermarkedBitmapWriter
             val watermarked =
                 try {
                     watermarkRenderer.apply(bitmap, config.copy(enabled = true))
-                } catch (e: Throwable) {
+                } catch (e: IllegalArgumentException) {
+                    if (!bitmap.isRecycled) bitmap.recycle()
+                    throw e
+                } catch (e: IllegalStateException) {
                     if (!bitmap.isRecycled) bitmap.recycle()
                     throw e
                 }

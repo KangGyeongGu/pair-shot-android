@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
+
 enum class HomeMode { PAIRS, ALBUMS }
 
 sealed interface HomeEvent {
@@ -88,7 +90,7 @@ class HomeViewModel
                 .observeAll()
                 .stateIn(
                     scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
+                    started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                     initialValue = emptyList(),
                 )
 
@@ -97,7 +99,7 @@ class HomeViewModel
                 .getAll()
                 .stateIn(
                     scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5_000),
+                    started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                     initialValue = emptyList(),
                 )
 

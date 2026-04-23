@@ -91,6 +91,26 @@ import dagger.hilt.android.EntryPointAccessors
 import kotlin.math.roundToInt
 import com.pairshot.core.ui.R as CoreR
 
+private const val LABEL_WEIGHT = 0.45f
+private const val INPUT_WEIGHT = 0.55f
+private const val RGB_CHANNEL_MASK = 0xFFFFFF
+private const val HUE_DEGREES_MAX = 360f
+private const val HSV_COMPONENT_COUNT = 3
+private const val HSV_GRAYSCALE_THRESHOLD = 0.15f
+private const val HSV_DARK_BRIGHTNESS_START = 0.15f
+private const val HSV_SWATCH_BRIGHTNESS = 0.9f
+private const val HSV_FULL_VALUE = 1f
+private const val BRIGHTNESS_DARK_DEFAULT = 0.05f
+private const val HUE_PRESET_RED = 0f
+private const val HUE_PRESET_ORANGE = 30f
+private const val HUE_PRESET_YELLOW = 60f
+private const val HUE_PRESET_GREEN = 120f
+private const val HUE_PRESET_CYAN = 210f
+private const val HUE_PRESET_BLUE = 240f
+private const val HUE_PRESET_PURPLE = 270f
+private const val ASPECT_RATIO_HORIZONTAL = 2f
+private const val ASPECT_RATIO_VERTICAL = 0.5f
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CombineSettingsScreen(
@@ -714,7 +734,7 @@ private fun LabelTextItem(
             text = labelName,
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(0.45f),
+            modifier = Modifier.weight(LABEL_WEIGHT),
         )
         BasicTextField(
             value = textFieldValue,
@@ -729,7 +749,7 @@ private fun LabelTextItem(
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier =
                 Modifier
-                    .weight(0.55f)
+                    .weight(INPUT_WEIGHT)
                     .onFocusChanged { isFocused = it.isFocused },
             decorationBox = { innerTextField ->
                 Column {
@@ -788,18 +808,29 @@ private fun ColorItem(
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "#%06X".format(colorArgb and 0xFFFFFF),
+            text = "#%06X".format(colorArgb and RGB_CHANNEL_MASK),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
-private val HUE_PRESETS: List<Float?> = listOf(null, -1f, 0f, 30f, 60f, 120f, 210f, 240f, 270f)
+private val HUE_PRESETS: List<Float?> =
+    listOf(
+        null,
+        -HSV_FULL_VALUE,
+        HUE_PRESET_RED,
+        HUE_PRESET_ORANGE,
+        HUE_PRESET_YELLOW,
+        HUE_PRESET_GREEN,
+        HUE_PRESET_CYAN,
+        HUE_PRESET_BLUE,
+        HUE_PRESET_PURPLE,
+    )
 
 private fun nearestPresetIdx(hsv: FloatArray): Int {
-    val isBlack = hsv[2] < 0.15f && hsv[1] < 0.15f
-    val isWhiteish = !isBlack && hsv[1] < 0.15f
+    val isBlack = hsv[2] < HSV_GRAYSCALE_THRESHOLD && hsv[1] < HSV_GRAYSCALE_THRESHOLD
+    val isWhiteish = !isBlack && hsv[1] < HSV_GRAYSCALE_THRESHOLD
     return when {
         isBlack -> {
             1
@@ -813,7 +844,7 @@ private fun nearestPresetIdx(hsv: FloatArray): Int {
             HUE_PRESETS.indices.drop(2).minByOrNull { idx ->
                 val hue = HUE_PRESETS[idx] ?: 0f
                 val diff = kotlin.math.abs(hue - hsv[0])
-                minOf(diff, 360f - diff)
+                minOf(diff, HUE_DEGREES_MAX - diff)
             } ?: 2
         }
     }
@@ -829,10 +860,10 @@ private fun ColorPickerContent(
     currentColor: Color,
 ) {
     val selectedHue = HUE_PRESETS[selectedIdx]
-    val isGrayscale = selectedHue == null || selectedHue == -1f
-    val gradientStart = if (isGrayscale) Color.Black else Color.hsv(selectedHue!!, 1f, 0.15f)
-    val gradientEnd = if (isGrayscale) Color.White else Color.hsv(selectedHue!!, 1f, 1f)
-    val sliderRange = if (isGrayscale) 0f..1f else 0.15f..1f
+    val isGrayscale = selectedHue == null || selectedHue == -HSV_FULL_VALUE
+    val gradientStart = if (isGrayscale) Color.Black else Color.hsv(selectedHue!!, HSV_FULL_VALUE, HSV_DARK_BRIGHTNESS_START)
+    val gradientEnd = if (isGrayscale) Color.White else Color.hsv(selectedHue!!, HSV_FULL_VALUE, HSV_FULL_VALUE)
+    val sliderRange = if (isGrayscale) 0f..HSV_FULL_VALUE else HSV_DARK_BRIGHTNESS_START..HSV_FULL_VALUE
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(
@@ -844,10 +875,10 @@ private fun ColorPickerContent(
                     when {
                         hue == null -> Color.White
                         hue == -1f -> Color.Black
-                        else -> Color.hsv(hue, 1f, 0.9f)
+                        else -> Color.hsv(hue, HSV_FULL_VALUE, HSV_SWATCH_BRIGHTNESS)
                     }
                 val isSelected = idx == selectedIdx
-                val needsOutline = hue == null || hue == -1f
+                val needsOutline = hue == null || hue == -HSV_FULL_VALUE
                 Box(
                     modifier =
                         Modifier
@@ -923,7 +954,7 @@ private fun ColorPickerContent(
                         .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small),
             )
             Text(
-                text = "#%06X".format(currentColor.toArgb() and 0xFFFFFF),
+                text = "#%06X".format(currentColor.toArgb() and RGB_CHANNEL_MASK),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -937,12 +968,12 @@ private fun ColorPickerDialog(
     onDismiss: () -> Unit,
     onConfirm: (Int) -> Unit,
 ) {
-    val initialHsv = remember { FloatArray(3).also { android.graphics.Color.colorToHSV(initialColor, it) } }
+    val initialHsv = remember { FloatArray(HSV_COMPONENT_COUNT).also { android.graphics.Color.colorToHSV(initialColor, it) } }
     var selectedIdx by remember { mutableStateOf(nearestPresetIdx(initialHsv)) }
     var brightness by remember { mutableStateOf(initialHsv[2].coerceIn(0f, 1f)) }
 
     val selectedHue = HUE_PRESETS[selectedIdx]
-    val isGrayscale = selectedHue == null || selectedHue == -1f
+    val isGrayscale = selectedHue == null || selectedHue == -HSV_FULL_VALUE
     val currentColor =
         if (isGrayscale) Color.hsv(0f, 0f, brightness) else Color.hsv(selectedHue!!, 1f, brightness)
 
@@ -955,7 +986,7 @@ private fun ColorPickerDialog(
                 onSelectedIdxChange = { idx ->
                     when (HUE_PRESETS[idx]) {
                         null -> brightness = 1.0f
-                        -1f -> brightness = 0.05f
+                        -HSV_FULL_VALUE -> brightness = BRIGHTNESS_DARK_DEFAULT
                         else -> Unit
                     }
                     selectedIdx = idx
@@ -989,12 +1020,12 @@ private fun LabelBgColorPickerDialog(
 ) {
     val haptic = LocalHapticFeedback.current
     var matchesBorder by remember { mutableStateOf(initialMatchesBorder) }
-    val initialHsv = remember { FloatArray(3).also { android.graphics.Color.colorToHSV(initialColor, it) } }
+    val initialHsv = remember { FloatArray(HSV_COMPONENT_COUNT).also { android.graphics.Color.colorToHSV(initialColor, it) } }
     var selectedIdx by remember { mutableStateOf(nearestPresetIdx(initialHsv)) }
     var brightness by remember { mutableStateOf(initialHsv[2].coerceIn(0f, 1f)) }
 
     val selectedHue = HUE_PRESETS[selectedIdx]
-    val isGrayscale = selectedHue == null || selectedHue == -1f
+    val isGrayscale = selectedHue == null || selectedHue == -HSV_FULL_VALUE
     val currentPickedColor =
         if (isGrayscale) Color.hsv(0f, 0f, brightness) else Color.hsv(selectedHue!!, 1f, brightness)
 
@@ -1043,7 +1074,7 @@ private fun LabelBgColorPickerDialog(
                                     .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small),
                         )
                         Text(
-                            text = "#%06X".format(borderColorArgb and 0xFFFFFF),
+                            text = "#%06X".format(borderColorArgb and RGB_CHANNEL_MASK),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -1054,7 +1085,7 @@ private fun LabelBgColorPickerDialog(
                         onSelectedIdxChange = { idx ->
                             when (HUE_PRESETS[idx]) {
                                 null -> brightness = 1.0f
-                                -1f -> brightness = 0.05f
+                                -HSV_FULL_VALUE -> brightness = BRIGHTNESS_DARK_DEFAULT
                                 else -> Unit
                             }
                             selectedIdx = idx
@@ -1104,8 +1135,8 @@ internal fun CombinePreviewSection(
 
     val aspectRatio =
         when (config.layout) {
-            CombineLayout.HORIZONTAL -> 2f
-            CombineLayout.VERTICAL -> 0.5f
+            CombineLayout.HORIZONTAL -> ASPECT_RATIO_HORIZONTAL
+            CombineLayout.VERTICAL -> ASPECT_RATIO_VERTICAL
         }
 
     val bmp = previewBitmap

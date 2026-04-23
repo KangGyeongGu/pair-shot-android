@@ -37,14 +37,11 @@ private fun buildShareIntent(
     action: ExportAction,
 ): Intent =
     when (action) {
-        is ExportAction.ShareImages -> buildSendMultipleIntent(context, action.uris)
+        is ExportAction.ShareImages -> buildSendMultipleIntent(action.uris)
         is ExportAction.ShareZip -> buildSendZipIntent(context, action.filePath)
     }
 
-private fun buildSendMultipleIntent(
-    context: Context,
-    uriStrings: List<String>,
-): Intent {
+private fun buildSendMultipleIntent(uriStrings: List<String>): Intent {
     require(uriStrings.isNotEmpty()) { "no URIs to share" }
     val uris = ArrayList(uriStrings.map { Uri.parse(it) })
     return Intent(Intent.ACTION_SEND_MULTIPLE).apply {

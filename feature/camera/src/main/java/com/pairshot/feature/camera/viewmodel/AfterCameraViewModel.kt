@@ -1,5 +1,6 @@
 package com.pairshot.feature.camera.viewmodel
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,6 +33,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -116,7 +118,7 @@ class AfterCameraViewModel
                 else -> {
                     photoPairRepository.countAll()
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), 0)
 
         init {
             if (isDateFilterActive) {
@@ -147,11 +149,11 @@ class AfterCameraViewModel
                     SortOrder.DESC -> filtered.sortedByDescending { it.beforeTimestamp }
                     SortOrder.ASC -> filtered.sortedBy { it.beforeTimestamp }
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), emptyList())
 
         val lastPairThumbnailUri: StateFlow<String?> =
             getLatestBeforeThumbnailUseCase()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
 
         private val _currentIndex = MutableStateFlow(0)
         val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
@@ -168,7 +170,7 @@ class AfterCameraViewModel
         private val _overlayEnabled = MutableStateFlow(true)
         val overlayEnabled: StateFlow<Boolean> = _overlayEnabled.asStateFlow()
 
-        private val _overlayAlpha = MutableStateFlow(0.35f)
+        private val _overlayAlpha = MutableStateFlow(DEFAULT_OVERLAY_ALPHA)
         val overlayAlpha: StateFlow<Float> = _overlayAlpha.asStateFlow()
 
         val overlayInputs: StateFlow<OverlayInputs> =
@@ -187,8 +189,8 @@ class AfterCameraViewModel
                 )
             }.stateIn(
                 viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                OverlayInputs(null, true, 0.35f, LensFacing.BACK),
+                SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS),
+                OverlayInputs(null, true, DEFAULT_OVERLAY_ALPHA, LensFacing.BACK),
             )
 
         val settingsState: StateFlow<CameraSettingsState> = cameraSettings.state
@@ -299,7 +301,15 @@ class AfterCameraViewModel
                         tempFileUri = tempUri,
                     )
                     _events.emit(AfterCameraEvent.AfterSaved(currentPair.id))
-                } catch (e: Exception) {
+                } catch (e: IOException) {
+                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: SecurityException) {
+                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: SQLiteException) {
+                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: IllegalStateException) {
+                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: IllegalArgumentException) {
                     _events.emit(AfterCameraEvent.SaveError(e.message ?: "save failed"))
                 } finally {
                     _isSaving.value = false
@@ -343,6 +353,11 @@ class AfterCameraViewModel
         fun toggleSettingsPanel() = cameraSettings.toggleSettingsPanel()
 
         fun dismissSettingsPanel() = cameraSettings.dismissSettingsPanel()
+
+        companion object {
+            private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+            private const val DEFAULT_OVERLAY_ALPHA = 0.35f
+        }
     }
 
 private fun Long.toLocalDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()

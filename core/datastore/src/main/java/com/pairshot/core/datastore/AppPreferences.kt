@@ -25,6 +25,11 @@ class AppPreferences
     constructor(
         @ApplicationContext private val context: Context,
     ) {
+        private companion object {
+            const val DEFAULT_JPEG_QUALITY = 95
+            const val DEFAULT_OVERLAY_ALPHA = 0.35f
+        }
+
         private object Keys {
             val JPEG_QUALITY = intPreferencesKey("jpeg_quality")
             val FILE_NAME_PREFIX = stringPreferencesKey("file_name_prefix")
@@ -47,7 +52,7 @@ class AppPreferences
 
         val jpegQuality: Flow<Int> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.JPEG_QUALITY] ?: 95
+                prefs[Keys.JPEG_QUALITY] ?: DEFAULT_JPEG_QUALITY
             }
 
         val fileNamePrefix: Flow<String> =
@@ -62,7 +67,7 @@ class AppPreferences
 
         val overlayAlpha: Flow<Float> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.OVERLAY_ALPHA] ?: 0.35f
+                prefs[Keys.OVERLAY_ALPHA] ?: DEFAULT_OVERLAY_ALPHA
             }
 
         suspend fun setJpegQuality(quality: Int) {

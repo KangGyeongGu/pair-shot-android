@@ -53,7 +53,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -62,6 +61,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.core.designsystem.PairShotGlassTokens
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.designsystem.PairShotSpacing
@@ -72,6 +72,8 @@ import com.pairshot.core.model.SortOrder
 import com.pairshot.feature.camera.R
 import com.pairshot.feature.camera.state.CameraSettingsState
 import kotlin.math.roundToInt
+
+private const val SETTINGS_ITEMS_PER_ROW = 3
 
 @Composable
 fun CameraSettingsSheet(
@@ -153,7 +155,7 @@ fun CameraSettingsSheet(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    settingItems.chunked(3).forEach { rowItems ->
+                    settingItems.chunked(SETTINGS_ITEMS_PER_ROW).forEach { rowItems ->
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -168,7 +170,7 @@ fun CameraSettingsSheet(
                                     modifier = Modifier.weight(1f),
                                 )
                             }
-                            repeat(3 - rowItems.size) {
+                            repeat(SETTINGS_ITEMS_PER_ROW - rowItems.size) {
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }

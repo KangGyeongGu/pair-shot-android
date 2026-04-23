@@ -18,15 +18,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.feature.camera.component.CameraOverlayLayer
 import com.pairshot.feature.camera.component.FocusExposureOverlay
 import com.pairshot.feature.camera.component.ZoomControls
 import com.pairshot.feature.camera.component.ZoomUiState
+
+private const val FALLBACK_ASPECT_WIDTH = 3f
+private const val FALLBACK_ASPECT_HEIGHT = 4f
 
 @Composable
 internal fun CameraPreviewPane(
@@ -97,7 +100,7 @@ internal fun CameraPreviewPane(
                 if (maxHeight.value > 0f) {
                     maxWidth.value / maxHeight.value
                 } else {
-                    3f / 4f
+                    FALLBACK_ASPECT_WIDTH / FALLBACK_ASPECT_HEIGHT
                 }
             val requestedRatioRaw =
                 surfaceRequest?.resolution?.let { size ->

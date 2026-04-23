@@ -1,6 +1,5 @@
 package com.pairshot.core.rendering
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -9,19 +8,22 @@ import android.graphics.Paint
 import com.pairshot.core.model.LogoPosition
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.WatermarkType
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.sqrt
 
+private const val DIAGONAL_WATERMARK_ANGLE_DEG = -45f
+private const val ALPHA_OPAQUE_BYTE = 255
+private const val ALPHA_TRANSPARENT_BYTE = 0
+private const val DIAGONAL_TEXT_MIN_GAP_PX = 16f
+private const val LOGO_PADDING_RATIO = 0.02f
+
 @Singleton
 class WatermarkRenderer
     @Inject
-    constructor(
-        @ApplicationContext private val context: Context,
-    ) {
+    constructor() {
         suspend fun applyTextWatermark(
             source: Bitmap,
             config: WatermarkConfig,
@@ -34,7 +36,10 @@ class WatermarkRenderer
                 val paint =
                     Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         color = Color.WHITE
-                        alpha = (config.alpha * 255).toInt().coerceIn(0, 255)
+                        alpha =
+                            (config.alpha * ALPHA_OPAQUE_BYTE)
+                                .toInt()
+                                .coerceIn(ALPHA_TRANSPARENT_BYTE, ALPHA_OPAQUE_BYTE)
                         textSize = source.width * config.textSizeRatio
                     }
 
@@ -48,10 +53,12 @@ class WatermarkRenderer
                 val lineSpacing = diagonal / config.diagonalCount
 
                 val textWidth = paint.measureText(config.text)
-                val textSpacing = (textWidth * (2f / config.repeatDensity)).coerceAtLeast(textWidth + 16f)
+                val textSpacing =
+                    (textWidth * (2f / config.repeatDensity))
+                        .coerceAtLeast(textWidth + DIAGONAL_TEXT_MIN_GAP_PX)
 
                 canvas.save()
-                canvas.rotate(-45f, centerX, centerY)
+                canvas.rotate(DIAGONAL_WATERMARK_ANGLE_DEG, centerX, centerY)
 
                 val startY = centerY - diagonal
                 val endY = centerY + diagonal
@@ -102,7 +109,7 @@ class WatermarkRenderer
                     return@withContext source
                 }
 
-                val padding = (source.width * 0.02f).toInt()
+                val padding = (source.width * LOGO_PADDING_RATIO).toInt()
                 val imgWidth = result.width
                 val imgHeight = result.height
 
@@ -147,7 +154,10 @@ class WatermarkRenderer
 
                 val paint =
                     Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        alpha = (config.logoAlpha * 255).toInt().coerceIn(0, 255)
+                        alpha =
+                            (config.logoAlpha * ALPHA_OPAQUE_BYTE)
+                                .toInt()
+                                .coerceIn(ALPHA_TRANSPARENT_BYTE, ALPHA_OPAQUE_BYTE)
                     }
 
                 canvas.drawBitmap(resizedLogo, x, y, paint)

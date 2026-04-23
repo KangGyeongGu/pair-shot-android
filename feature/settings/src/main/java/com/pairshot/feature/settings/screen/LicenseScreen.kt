@@ -28,13 +28,6 @@ import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.feature.settings.R
 import com.pairshot.core.ui.R as CoreR
 
-data class LicenseItem(
-    val name: String,
-    val author: String,
-    val license: String,
-    val url: String,
-)
-
 private val licenseItems =
     listOf(
         LicenseItem(

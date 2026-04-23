@@ -26,15 +26,65 @@ sealed class UiText {
     @Composable
     fun asString(): String =
         when (this) {
-            is Resource -> stringResource(resId, *args.toTypedArray())
-            is Plural -> pluralStringResource(resId, count, *args.toTypedArray())
+            is Resource -> resolveCompose(resId, args)
+            is Plural -> resolvePluralCompose(resId, count, args)
             is Dynamic -> value
         }
 
     fun asString(context: Context): String =
         when (this) {
-            is Resource -> context.getString(resId, *args.toTypedArray())
-            is Plural -> context.resources.getQuantityString(resId, count, *args.toTypedArray())
+            is Resource -> resolveContext(context, resId, args)
+            is Plural -> resolvePluralContext(context, resId, count, args)
             is Dynamic -> value
         }
 }
+
+@Composable
+private fun resolveCompose(
+    resId: Int,
+    args: List<Any>,
+): String =
+    when {
+        args.isEmpty() -> stringResource(resId)
+        args.size == 1 -> stringResource(resId, args[0])
+        args.size == 2 -> stringResource(resId, args[0], args[1])
+        else -> stringResource(resId, args[0], args[1], args[2])
+    }
+
+@Composable
+private fun resolvePluralCompose(
+    resId: Int,
+    count: Int,
+    args: List<Any>,
+): String =
+    when {
+        args.isEmpty() -> pluralStringResource(resId, count)
+        args.size == 1 -> pluralStringResource(resId, count, args[0])
+        args.size == 2 -> pluralStringResource(resId, count, args[0], args[1])
+        else -> pluralStringResource(resId, count, args[0], args[1], args[2])
+    }
+
+private fun resolveContext(
+    context: Context,
+    resId: Int,
+    args: List<Any>,
+): String =
+    when {
+        args.isEmpty() -> context.getString(resId)
+        args.size == 1 -> context.getString(resId, args[0])
+        args.size == 2 -> context.getString(resId, args[0], args[1])
+        else -> context.getString(resId, args[0], args[1], args[2])
+    }
+
+private fun resolvePluralContext(
+    context: Context,
+    resId: Int,
+    count: Int,
+    args: List<Any>,
+): String =
+    when {
+        args.isEmpty() -> context.resources.getQuantityString(resId, count)
+        args.size == 1 -> context.resources.getQuantityString(resId, count, args[0])
+        args.size == 2 -> context.resources.getQuantityString(resId, count, args[0], args[1])
+        else -> context.resources.getQuantityString(resId, count, args[0], args[1], args[2])
+    }

@@ -40,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -48,12 +47,19 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.feature.camera.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private val LensButtonSize = 36.dp
 private val LensButtonIconSize = 18.dp
+private const val ZOOM_DRAG_MIN_DELTA = 0.05f
+private const val ZOOM_DIAL_RANGE_SPAN_DP = 300f
+private const val ZOOM_RANGE_MIN_SPAN = 0.01f
+private const val ZOOM_TICKS_PER_UNIT = 10
+private const val ZOOM_TICKS_PER_UNIT_F = 10f
+private const val ZOOM_MAJOR_TICK_INTERVAL = 10
 
 @Composable
 fun ZoomControls(
@@ -71,13 +77,12 @@ fun ZoomControls(
     val latestOnZoomChanged by rememberUpdatedState(onZoomRatioChanged)
     val latestOnDragEnd by rememberUpdatedState(onDragEnd)
 
-    val rangeSpanDp = 300f
-    val rangeSpanPx = with(density) { rangeSpanDp.dp.toPx() }
-    val zoomRange = (zoomUiState.maxRatio - zoomUiState.minRatio).coerceAtLeast(0.01f)
+    val rangeSpanPx = with(density) { ZOOM_DIAL_RANGE_SPAN_DP.dp.toPx() }
+    val zoomRange = (zoomUiState.maxRatio - zoomUiState.minRatio).coerceAtLeast(ZOOM_RANGE_MIN_SPAN)
     val pxPerZoom = rangeSpanPx / zoomRange
 
     var dragAccumulator by remember { mutableFloatStateOf(0f) }
-    var lastTickIndex by remember { mutableIntStateOf((zoomUiState.currentRatio * 10).roundToInt()) }
+    var lastTickIndex by remember { mutableIntStateOf((zoomUiState.currentRatio * ZOOM_TICKS_PER_UNIT).roundToInt()) }
 
     Box(
         modifier =
@@ -87,7 +92,7 @@ fun ZoomControls(
                         onDragStart = {
                             isDragging = true
                             dragAccumulator = 0f
-                            lastTickIndex = (latestRatio * 10).roundToInt()
+                            lastTickIndex = (latestRatio * ZOOM_TICKS_PER_UNIT).roundToInt()
                         },
                         onDragEnd = {
                             isDragging = false
@@ -100,16 +105,16 @@ fun ZoomControls(
                     ) { _, dragAmount ->
                         dragAccumulator -= dragAmount
                         val deltaZoom = dragAccumulator / pxPerZoom
-                        if (abs(deltaZoom) >= 0.05f) {
+                        if (abs(deltaZoom) >= ZOOM_DRAG_MIN_DELTA) {
                             val newRatio =
                                 (latestRatio + deltaZoom)
                                     .coerceIn(zoomUiState.minRatio, zoomUiState.maxRatio)
                             latestOnZoomChanged(newRatio)
                             dragAccumulator = 0f
 
-                            val newTickIndex = (newRatio * 10).roundToInt()
+                            val newTickIndex = (newRatio * ZOOM_TICKS_PER_UNIT).roundToInt()
                             if (newTickIndex != lastTickIndex) {
-                                val isMajorTick = newTickIndex % 10 == 0
+                                val isMajorTick = newTickIndex % ZOOM_MAJOR_TICK_INTERVAL == 0
                                 if (isMajorTick) {
                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 } else {
@@ -285,15 +290,15 @@ private fun ZoomDialWithLabel(
                 (zoomUiState.currentRatio + visibleZoomSpan / 2)
                     .coerceAtMost(zoomUiState.maxRatio)
 
-            val startTick = (visibleMin * 10).toInt()
-            val endTick = ((visibleMax * 10).toInt()) + 1
+            val startTick = (visibleMin * ZOOM_TICKS_PER_UNIT).toInt()
+            val endTick = ((visibleMax * ZOOM_TICKS_PER_UNIT).toInt()) + 1
             for (i in startTick..endTick) {
-                val tick = i / 10f
+                val tick = i / ZOOM_TICKS_PER_UNIT_F
                 val offset = (tick - zoomUiState.currentRatio) * pxPerZoom
                 val x = centerX + offset
                 if (x < 0f || x > size.width) continue
 
-                val isMajor = i % 10 == 0
+                val isMajor = i % ZOOM_MAJOR_TICK_INTERVAL == 0
                 val tickHeightPx =
                     if (isMajor) with(density) { 12.dp.toPx() } else with(density) { 6.dp.toPx() }
                 val tickWidthPx =

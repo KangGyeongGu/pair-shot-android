@@ -33,7 +33,7 @@ class SensorSessionImpl
         override val deviceOrientation: StateFlow<Int> = _deviceOrientation.asStateFlow()
 
         private var smoothedRoll = 0f
-        private val remappedMatrix = FloatArray(9)
+        private val remappedMatrix = FloatArray(ROTATION_MATRIX_SIZE)
 
         private var isRegistered = false
         private var wasActiveBeforeStop = false
@@ -47,9 +47,9 @@ class SensorSessionImpl
                     if (orientation == ORIENTATION_UNKNOWN) return
                     val rotation =
                         when (orientation) {
-                            in 45..134 -> Surface.ROTATION_270
-                            in 135..224 -> Surface.ROTATION_180
-                            in 225..314 -> Surface.ROTATION_90
+                            in ORIENTATION_ROTATION_270_MIN..ORIENTATION_ROTATION_270_MAX -> Surface.ROTATION_270
+                            in ORIENTATION_ROTATION_180_MIN..ORIENTATION_ROTATION_180_MAX -> Surface.ROTATION_180
+                            in ORIENTATION_ROTATION_90_MIN..ORIENTATION_ROTATION_90_MAX -> Surface.ROTATION_90
                             else -> Surface.ROTATION_0
                         }
                     _deviceOrientation.value = rotation
@@ -59,7 +59,7 @@ class SensorSessionImpl
         private val sensorListener =
             object : SensorEventListener {
                 override fun onSensorChanged(event: SensorEvent) {
-                    val rotationMatrix = FloatArray(9)
+                    val rotationMatrix = FloatArray(ROTATION_MATRIX_SIZE)
                     SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                     SensorManager.remapCoordinateSystem(
                         rotationMatrix,
@@ -67,7 +67,7 @@ class SensorSessionImpl
                         SensorManager.AXIS_Z,
                         remappedMatrix,
                     )
-                    val orientation = FloatArray(3)
+                    val orientation = FloatArray(ORIENTATION_VECTOR_SIZE)
                     SensorManager.getOrientation(remappedMatrix, orientation)
                     val rawRoll = Math.toDegrees(orientation[2].toDouble()).toFloat()
 
@@ -87,6 +87,14 @@ class SensorSessionImpl
         companion object {
             private const val SMOOTHING_FACTOR = 0.04f
             private const val UPDATE_THRESHOLD = 0.3f
+            private const val ROTATION_MATRIX_SIZE = 9
+            private const val ORIENTATION_VECTOR_SIZE = 3
+            private const val ORIENTATION_ROTATION_270_MIN = 45
+            private const val ORIENTATION_ROTATION_270_MAX = 134
+            private const val ORIENTATION_ROTATION_180_MIN = 135
+            private const val ORIENTATION_ROTATION_180_MAX = 224
+            private const val ORIENTATION_ROTATION_90_MIN = 225
+            private const val ORIENTATION_ROTATION_90_MAX = 314
         }
 
         override fun bind(owner: LifecycleOwner) {

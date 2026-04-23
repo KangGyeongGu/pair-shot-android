@@ -37,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -48,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
 import com.pairshot.feature.camera.R
@@ -55,14 +55,18 @@ import kotlin.math.abs
 
 internal val BeforeStripHeight: Dp = 168.dp
 
-private val ActiveCardWidth = 100.dp
-private val ActiveCardHeight = 134.dp
-private val CardSpacing = 8.dp
-private val FallbackHorizontalPadding = 20.dp
-private val ProgressIndicatorHeight = 28.dp
-private const val InactiveScale = 0.85f
-private val InactiveBorderWidth = 1.dp
-private val ActiveBorderWidth = 3.dp
+private val ACTIVE_CARD_WIDTH = 100.dp
+private val ACTIVE_CARD_HEIGHT = 134.dp
+private val CARD_SPACING = 8.dp
+private val FALLBACK_HORIZONTAL_PADDING = 20.dp
+private val PROGRESS_INDICATOR_HEIGHT = 28.dp
+private const val INACTIVE_SCALE = 0.85f
+private val INACTIVE_BORDER_WIDTH = 1.dp
+private val ACTIVE_BORDER_WIDTH = 3.dp
+private const val TRANSFORM_ORIGIN_CENTER_X = 0.5f
+private const val TRANSFORM_ORIGIN_BOTTOM_Y = 1f
+private const val SCALE_ANIMATION_MS = 180
+private val CARD_CORNER_RADIUS = 10.dp
 
 data class StripProgress(
     val completed: Int,
@@ -137,7 +141,7 @@ fun BeforePreviewStrip(
                     Modifier
                         .align(Alignment.Center)
                         .fillMaxWidth()
-                        .padding(horizontal = FallbackHorizontalPadding),
+                        .padding(horizontal = FALLBACK_HORIZONTAL_PADDING),
             )
         } else {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -149,9 +153,9 @@ fun BeforePreviewStrip(
                 ) {
                     val horizontalPadding =
                         if (snapEnabled) {
-                            ((maxWidth - ActiveCardWidth) / 2).coerceAtLeast(FallbackHorizontalPadding)
+                            ((maxWidth - ACTIVE_CARD_WIDTH) / 2).coerceAtLeast(FALLBACK_HORIZONTAL_PADDING)
                         } else {
-                            FallbackHorizontalPadding
+                            FALLBACK_HORIZONTAL_PADDING
                         }
                     val flingBehavior =
                         if (snapEnabled) {
@@ -166,7 +170,7 @@ fun BeforePreviewStrip(
                         state = listState,
                         flingBehavior = flingBehavior,
                         contentPadding = PaddingValues(horizontal = horizontalPadding),
-                        horizontalArrangement = Arrangement.spacedBy(CardSpacing),
+                        horizontalArrangement = Arrangement.spacedBy(CARD_SPACING),
                         verticalAlignment = Alignment.Bottom,
                         modifier = Modifier.fillMaxSize(),
                     ) {
@@ -177,11 +181,11 @@ fun BeforePreviewStrip(
                             val isSelected = selectedIndex == index
                             val useActiveSize = allActiveSize || isSelected
                             val scale by animateFloatAsState(
-                                targetValue = if (useActiveSize) 1f else InactiveScale,
-                                animationSpec = tween(durationMillis = 180),
+                                targetValue = if (useActiveSize) 1f else INACTIVE_SCALE,
+                                animationSpec = tween(durationMillis = SCALE_ANIMATION_MS),
                                 label = "stripCardScale",
                             )
-                            val borderWidth = if (isSelected) ActiveBorderWidth else InactiveBorderWidth
+                            val borderWidth = if (isSelected) ACTIVE_BORDER_WIDTH else INACTIVE_BORDER_WIDTH
                             val borderColor =
                                 if (isSelected) {
                                     MaterialTheme.colorScheme.primary
@@ -200,16 +204,17 @@ fun BeforePreviewStrip(
                                 contentScale = ContentScale.Crop,
                                 modifier =
                                     Modifier
-                                        .size(width = ActiveCardWidth, height = ActiveCardHeight)
+                                        .size(width = ACTIVE_CARD_WIDTH, height = ACTIVE_CARD_HEIGHT)
                                         .graphicsLayer {
                                             scaleX = scale
                                             scaleY = scale
-                                            transformOrigin = TransformOrigin(0.5f, 1f)
-                                        }.clip(RoundedCornerShape(10.dp))
+                                            transformOrigin =
+                                                TransformOrigin(TRANSFORM_ORIGIN_CENTER_X, TRANSFORM_ORIGIN_BOTTOM_Y)
+                                        }.clip(RoundedCornerShape(CARD_CORNER_RADIUS))
                                         .border(
                                             width = borderWidth,
                                             color = borderColor,
-                                            shape = RoundedCornerShape(10.dp),
+                                            shape = RoundedCornerShape(CARD_CORNER_RADIUS),
                                         ).then(
                                             if (onSelectIndex != null) {
                                                 Modifier.clickable { onSelectIndex(index) }
@@ -242,7 +247,7 @@ private fun StripProgressIndicator(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(ProgressIndicatorHeight),
+                .height(PROGRESS_INDICATOR_HEIGHT),
         contentAlignment = Alignment.Center,
     ) {
         Text(

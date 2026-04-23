@@ -28,6 +28,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.pairshot.core.ui.R as CoreR
 
+private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
+
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
 
@@ -83,7 +85,7 @@ class SettingsViewModel
                 }
             }.stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                 initialValue = SettingsUiState.Loading,
             )
 
@@ -209,10 +211,14 @@ class SettingsViewModel
         }
     }
 
+private const val BYTES_PER_KB = 1_024L
+private const val BYTES_PER_MB = 1_048_576L
+private const val BYTES_PER_GB = 1_073_741_824L
+
 internal fun formatBytes(bytes: Long): String =
     when {
-        bytes >= 1_073_741_824L -> "%.1f GB".format(bytes / 1_073_741_824.0)
-        bytes >= 1_048_576L -> "%.1f MB".format(bytes / 1_048_576.0)
-        bytes >= 1_024L -> "%.1f KB".format(bytes / 1_024.0)
+        bytes >= BYTES_PER_GB -> "%.1f GB".format(bytes / BYTES_PER_GB.toDouble())
+        bytes >= BYTES_PER_MB -> "%.1f MB".format(bytes / BYTES_PER_MB.toDouble())
+        bytes >= BYTES_PER_KB -> "%.1f KB".format(bytes / BYTES_PER_KB.toDouble())
         else -> "$bytes B"
     }

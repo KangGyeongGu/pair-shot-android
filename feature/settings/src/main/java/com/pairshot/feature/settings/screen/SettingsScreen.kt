@@ -71,6 +71,13 @@ import com.pairshot.feature.settings.viewmodel.formatBytes
 import kotlin.math.roundToInt
 import com.pairshot.core.ui.R as CoreR
 
+private const val SWITCH_SCALE = 0.67f
+private const val DEFAULT_JPEG_QUALITY = 85
+private const val DEFAULT_OVERLAY_ALPHA = 0.35f
+private const val JPEG_QUALITY_LOW = 75
+private const val JPEG_QUALITY_HIGH = 85
+private const val JPEG_QUALITY_BEST = 95
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -117,9 +124,9 @@ fun SettingsScreen(
         )
     }
 
-    val currentQuality = (uiState as? SettingsUiState.Success)?.jpegQuality ?: 85
+    val currentQuality = (uiState as? SettingsUiState.Success)?.jpegQuality ?: DEFAULT_JPEG_QUALITY
     val currentPrefix = (uiState as? SettingsUiState.Success)?.fileNamePrefix ?: "PAIRSHOT"
-    val currentAlpha = (uiState as? SettingsUiState.Success)?.overlayAlpha ?: 0.35f
+    val currentAlpha = (uiState as? SettingsUiState.Success)?.overlayAlpha ?: DEFAULT_OVERLAY_ALPHA
 
     if (showClearCacheDialog) {
         ClearCacheDialog(
@@ -202,9 +209,21 @@ fun SettingsScreen(
                 is SettingsUiState.Success -> {
                     val qualityOptions =
                         listOf(
-                            Triple(stringResource(R.string.settings_quality_low), stringResource(R.string.settings_quality_low_desc), 75),
-                            Triple(stringResource(R.string.settings_quality_high), stringResource(R.string.settings_quality_high_desc), 85),
-                            Triple(stringResource(R.string.settings_quality_best), stringResource(R.string.settings_quality_best_desc), 95),
+                            Triple(
+                                stringResource(R.string.settings_quality_low),
+                                stringResource(R.string.settings_quality_low_desc),
+                                JPEG_QUALITY_LOW,
+                            ),
+                            Triple(
+                                stringResource(R.string.settings_quality_high),
+                                stringResource(R.string.settings_quality_high_desc),
+                                JPEG_QUALITY_HIGH,
+                            ),
+                            Triple(
+                                stringResource(R.string.settings_quality_best),
+                                stringResource(R.string.settings_quality_best_desc),
+                                JPEG_QUALITY_BEST,
+                            ),
                         )
                     val qualityLabel =
                         qualityOptions
@@ -271,7 +290,7 @@ fun SettingsScreen(
                                             modifier =
                                                 Modifier
                                                     .wrapContentHeight(unbounded = true)
-                                                    .scale(0.67f),
+                                                    .scale(SWITCH_SCALE),
                                         )
                                     }
                                     AnimatedVisibility(
@@ -347,7 +366,7 @@ fun SettingsScreen(
                                         modifier =
                                             Modifier
                                                 .wrapContentHeight(unbounded = true)
-                                                .scale(0.67f),
+                                                .scale(SWITCH_SCALE),
                                     )
                                 }
                                 AnimatedVisibility(

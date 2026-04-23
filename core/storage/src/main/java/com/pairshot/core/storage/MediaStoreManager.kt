@@ -7,8 +7,10 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -60,40 +62,71 @@ class MediaStoreManager
 
             val imageUri =
                 resolver.insert(imageCollection, imageDetails)
-                    ?: throw IllegalStateException("MediaStore insert failed")
+                    ?: error("MediaStore insert failed")
 
             try {
-                resolver.openInputStream(tempFileUri)?.use { input ->
-                    resolver.openOutputStream(imageUri)?.use { output ->
-                        input.copyTo(output)
-                    } ?: throw IllegalStateException("Failed to open output stream")
-                } ?: throw IllegalStateException("Failed to open input stream")
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val updateValues =
-                        ContentValues().apply {
-                            put(MediaStore.Images.Media.IS_PENDING, 0)
-                        }
-                    resolver.update(imageUri, updateValues, null, null)
-                }
-
+                copyUriToMediaStore(tempFileUri, imageUri)
+                finalizePendingUri(imageUri)
                 return imageUri
-            } catch (e: Exception) {
+            } catch (e: IOException) {
+                rollbackInsertedUri(imageUri)
+                throw e
+            } catch (e: SecurityException) {
                 rollbackInsertedUri(imageUri)
                 throw e
             }
         }
 
+        private fun copyUriToMediaStore(
+            sourceUri: Uri,
+            destUri: Uri,
+        ) {
+            val resolver = context.contentResolver
+            resolver.openInputStream(sourceUri)?.use { input ->
+                resolver.openOutputStream(destUri)?.use { output ->
+                    input.copyTo(output)
+                } ?: error("Failed to open output stream")
+            } ?: error("Failed to open input stream")
+        }
+
+        private fun finalizePendingUri(imageUri: Uri) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val updateValues =
+                    ContentValues().apply {
+                        put(MediaStore.Images.Media.IS_PENDING, 0)
+                    }
+                context.contentResolver.update(imageUri, updateValues, null, null)
+            }
+        }
+
         fun deleteFromGallery(contentUri: Uri): DeleteResult =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                deleteFromGalleryApi29(contentUri)
+            } else {
+                deleteFromGalleryLegacy(contentUri)
+            }
+
+        @RequiresApi(Build.VERSION_CODES.Q)
+        private fun deleteFromGalleryApi29(contentUri: Uri): DeleteResult =
             try {
                 val rows = context.contentResolver.delete(contentUri, null, null)
                 if (rows > 0) DeleteResult.Success else DeleteResult.NotFound
-            } catch (e: Exception) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
-                    DeleteResult.RecoverablePermission(e)
-                } else {
-                    DeleteResult.Failed(e)
-                }
+            } catch (e: RecoverableSecurityException) {
+                DeleteResult.RecoverablePermission(e)
+            } catch (e: SecurityException) {
+                DeleteResult.Failed(e)
+            } catch (e: IOException) {
+                DeleteResult.Failed(e)
+            }
+
+        private fun deleteFromGalleryLegacy(contentUri: Uri): DeleteResult =
+            try {
+                val rows = context.contentResolver.delete(contentUri, null, null)
+                if (rows > 0) DeleteResult.Success else DeleteResult.NotFound
+            } catch (e: SecurityException) {
+                DeleteResult.Failed(e)
+            } catch (e: IOException) {
+                DeleteResult.Failed(e)
             }
 
         fun saveBitmapToGallery(
@@ -125,23 +158,19 @@ class MediaStoreManager
 
             val imageUri =
                 resolver.insert(imageCollection, imageDetails)
-                    ?: throw IllegalStateException("MediaStore insert failed")
+                    ?: error("MediaStore insert failed")
 
             try {
                 resolver.openOutputStream(imageUri)?.use { output ->
                     bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)
-                } ?: throw IllegalStateException("Failed to open output stream")
+                } ?: error("Failed to open output stream")
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val updateValues =
-                        ContentValues().apply {
-                            put(MediaStore.Images.Media.IS_PENDING, 0)
-                        }
-                    resolver.update(imageUri, updateValues, null, null)
-                }
-
+                finalizePendingUri(imageUri)
                 return imageUri
-            } catch (e: Exception) {
+            } catch (e: IOException) {
+                rollbackInsertedUri(imageUri)
+                throw e
+            } catch (e: SecurityException) {
                 rollbackInsertedUri(imageUri)
                 throw e
             }
@@ -150,7 +179,9 @@ class MediaStoreManager
         private fun rollbackInsertedUri(uri: Uri) {
             try {
                 context.contentResolver.delete(uri, null, null)
-            } catch (rollbackError: Exception) {
+            } catch (rollbackError: SecurityException) {
+                Timber.w(rollbackError, "MediaStore rollback failed for $uri")
+            } catch (rollbackError: IOException) {
                 Timber.w(rollbackError, "MediaStore rollback failed for $uri")
             }
         }

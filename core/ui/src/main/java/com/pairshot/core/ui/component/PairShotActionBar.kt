@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
 
-private const val DisabledAlpha = 0.38f
+private const val DISABLED_ALPHA = 0.38f
 
 @Composable
 fun PairShotActionBar(content: @Composable RowScope.() -> Unit) {
@@ -58,8 +58,8 @@ fun PairShotActionBarItem(
 ) {
     val resolvedLabelColor =
         when {
-            !enabled && labelColor != Color.Unspecified -> labelColor.copy(alpha = DisabledAlpha)
-            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DisabledAlpha)
+            !enabled && labelColor != Color.Unspecified -> labelColor.copy(alpha = DISABLED_ALPHA)
+            !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
             else -> labelColor
         }
     Column(

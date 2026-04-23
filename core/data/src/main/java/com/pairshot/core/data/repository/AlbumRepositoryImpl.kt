@@ -2,7 +2,6 @@ package com.pairshot.core.data.repository
 
 import com.pairshot.core.database.dao.AlbumDao
 import com.pairshot.core.database.dao.PairAlbumCrossRefDao
-import com.pairshot.core.database.dao.PhotoPairDao
 import com.pairshot.core.database.entity.PairAlbumCrossRefEntity
 import com.pairshot.core.database.entity.toDomain
 import com.pairshot.core.database.entity.toEntity
@@ -20,7 +19,6 @@ class AlbumRepositoryImpl
     constructor(
         private val albumDao: AlbumDao,
         private val pairAlbumCrossRefDao: PairAlbumCrossRefDao,
-        private val photoPairDao: PhotoPairDao,
     ) : AlbumRepository {
         override fun getAll(): Flow<List<Album>> =
             albumDao.getAllByUpdated().map { entities ->

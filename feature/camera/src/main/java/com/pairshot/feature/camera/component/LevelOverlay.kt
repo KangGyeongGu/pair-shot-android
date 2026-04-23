@@ -12,18 +12,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import kotlin.math.abs
 import kotlin.math.roundToInt
+
+private const val LEVEL_THRESHOLD_DEGREES = 2f
+private const val LEVEL_LINE_WIDTH_FRACTION = 0.4f
 
 @Composable
 fun LevelOverlay(
     roll: Float,
     modifier: Modifier = Modifier,
 ) {
-    val isLevel = abs(roll) <= 2f
+    val isLevel = abs(roll) <= LEVEL_THRESHOLD_DEGREES
     val lineColor = if (isLevel) MaterialTheme.colorScheme.primary else PairShotCameraTokens.Foreground
     val strokeWidth = if (isLevel) 2.dp else 1.dp
     val angleText = if (isLevel) "0°" else "${roll.roundToInt()}°"
@@ -35,7 +38,7 @@ fun LevelOverlay(
         Canvas(
             modifier =
                 Modifier
-                    .fillMaxWidth(0.4f)
+                    .fillMaxWidth(LEVEL_LINE_WIDTH_FRACTION)
                     .height(2.dp),
         ) {
             rotate(degrees = roll) {

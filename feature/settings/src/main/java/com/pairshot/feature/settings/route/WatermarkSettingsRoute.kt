@@ -13,18 +13,7 @@ import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
 import com.pairshot.feature.settings.screen.WatermarkSettingsScreen
 import com.pairshot.feature.settings.viewmodel.SettingsViewModel
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
-
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-internal interface WatermarkSettingsRenderEntryPoint {
-    fun watermarkRenderer(): WatermarkRenderer
-
-    fun previewSampleProvider(): PreviewSampleProvider
-}
 
 @Composable
 fun WatermarkSettingsRoute(

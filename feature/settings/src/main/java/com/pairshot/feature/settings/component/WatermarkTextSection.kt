@@ -47,6 +47,9 @@ import com.pairshot.core.ui.component.SettingsSliderItem
 import com.pairshot.feature.settings.R
 import kotlin.math.roundToInt
 
+private const val LABEL_WEIGHT = 0.35f
+private const val INPUT_WEIGHT = 0.65f
+
 @Composable
 internal fun WatermarkTextSection(
     watermarkConfig: WatermarkConfig,
@@ -196,7 +199,7 @@ private fun WatermarkTextItem(
             text = stringResource(R.string.watermark_text_field),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(0.35f),
+            modifier = Modifier.weight(LABEL_WEIGHT),
         )
         BasicTextField(
             value = textFieldValue,
@@ -211,7 +214,7 @@ private fun WatermarkTextItem(
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier =
                 Modifier
-                    .weight(0.65f)
+                    .weight(INPUT_WEIGHT)
                     .focusRequester(focusRequester)
                     .onFocusChanged { isFocused = it.isFocused },
             decorationBox = { innerTextField ->

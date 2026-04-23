@@ -29,7 +29,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 
-private const val ModalEnterDurationMs = 220
+private const val MODAL_ENTER_DURATION_MS = 220
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -106,8 +106,8 @@ fun PairPreviewRoute(
             enter =
                 scaleIn(
                     initialScale = 0.94f,
-                    animationSpec = tween(durationMillis = ModalEnterDurationMs),
-                ) + fadeIn(animationSpec = tween(durationMillis = ModalEnterDurationMs)),
+                    animationSpec = tween(durationMillis = MODAL_ENTER_DURATION_MS),
+                ) + fadeIn(animationSpec = tween(durationMillis = MODAL_ENTER_DURATION_MS)),
         ) {
             when (val state = uiState) {
                 PairPreviewUiState.Loading -> {

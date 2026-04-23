@@ -23,6 +23,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 
+private const val GRID_CELL_COUNT = 9
+private const val GRID_ROW_COUNT = 3
+private val CheckIconSize = 14.dp
+
 @Composable
 internal fun <T> PositionPicker3x3Row(
     label: String,
@@ -31,7 +35,7 @@ internal fun <T> PositionPicker3x3Row(
     onPositionChange: (T) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    require(positions.size == 9) { "positions must contain exactly 9 entries" }
+    require(positions.size == GRID_CELL_COUNT) { "positions must contain exactly 9 entries" }
     Row(
         modifier =
             modifier
@@ -49,7 +53,7 @@ internal fun <T> PositionPicker3x3Row(
             modifier = Modifier.weight(1f),
         )
         Column(verticalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap)) {
-            positions.chunked(3).forEach { rowPositions ->
+            positions.chunked(GRID_ROW_COUNT).forEach { rowPositions ->
                 Row(horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap)) {
                     rowPositions.forEach { position ->
                         val isSelected = position == selectedPosition
@@ -73,7 +77,7 @@ internal fun <T> PositionPicker3x3Row(
                                     imageVector = Icons.Filled.Check,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(14.dp),
+                                    modifier = Modifier.size(CheckIconSize),
                                 )
                             }
                         }

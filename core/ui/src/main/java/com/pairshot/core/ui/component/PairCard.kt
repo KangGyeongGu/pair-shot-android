@@ -33,6 +33,7 @@ private val CombinedBadgeSize = 28.dp
 private val CombinedBadgeIconSize = 20.dp
 private val CombinedBadgeIconPadding = 4.dp
 private val BadgeEdgePadding = 8.dp
+private const val PAIR_CARD_ASPECT_RATIO = 1.5f
 
 @Composable
 fun PairCard(
@@ -58,7 +59,7 @@ fun PairCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .aspectRatio(1.5f)
+                .aspectRatio(PAIR_CARD_ASPECT_RATIO)
                 .clip(MaterialTheme.shapes.medium)
                 .then(borderModifier)
                 .combinedClickable(

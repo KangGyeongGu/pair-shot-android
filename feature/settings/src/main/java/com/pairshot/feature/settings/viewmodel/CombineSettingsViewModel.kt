@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
+
 @HiltViewModel
 class CombineSettingsViewModel
     @Inject
@@ -23,7 +25,7 @@ class CombineSettingsViewModel
         val combineConfig: StateFlow<CombineConfig> =
             combineSettingsRepository.configFlow.stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                 initialValue = CombineConfig(),
             )
 

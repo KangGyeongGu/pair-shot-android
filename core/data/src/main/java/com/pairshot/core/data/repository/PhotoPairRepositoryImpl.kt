@@ -1,5 +1,6 @@
 package com.pairshot.core.data.repository
 
+import android.database.sqlite.SQLiteException
 import android.net.Uri
 import com.pairshot.core.database.dao.PairAlbumCrossRefDao
 import com.pairshot.core.database.dao.PhotoPairDao
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
 
 class PhotoPairRepositoryImpl
@@ -104,7 +106,10 @@ class PhotoPairRepositoryImpl
                             )
                         }
                         pairId
-                    } catch (e: Exception) {
+                    } catch (e: SQLiteException) {
+                        deleteGalleryUriLogOnFailure(savedUri.toString(), "BEFORE rollback failed")
+                        throw e
+                    } catch (e: IllegalStateException) {
                         deleteGalleryUriLogOnFailure(savedUri.toString(), "BEFORE rollback failed")
                         throw e
                     }
@@ -144,7 +149,10 @@ class PhotoPairRepositoryImpl
                             status = PairStatus.PAIRED.name,
                         ),
                     )
-                } catch (e: Exception) {
+                } catch (e: SQLiteException) {
+                    deleteGalleryUriLogOnFailure(savedUri.toString(), "AFTER rollback failed")
+                    throw e
+                } catch (e: IllegalStateException) {
                     deleteGalleryUriLogOnFailure(savedUri.toString(), "AFTER rollback failed")
                     throw e
                 }
@@ -207,7 +215,9 @@ class PhotoPairRepositoryImpl
                         else -> null
                     }
                 if (path != null) java.io.File(path).delete()
-            } catch (e: Exception) {
+            } catch (e: SecurityException) {
+                Timber.d(e, "temp file delete failed: $tempFileUri")
+            } catch (e: IOException) {
                 Timber.d(e, "temp file delete failed: $tempFileUri")
             }
         }

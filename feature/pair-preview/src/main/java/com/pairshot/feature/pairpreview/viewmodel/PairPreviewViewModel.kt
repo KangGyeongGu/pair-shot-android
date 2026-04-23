@@ -27,6 +27,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
+
 data class LivePreviewInputs(
     val pair: PhotoPair,
     val config: CombineConfig,
@@ -65,14 +67,14 @@ class PairPreviewViewModel
         private val configFlow: StateFlow<CombineConfig> =
             combineSettingsRepository.configFlow.stateIn(
                 viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
+                SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                 CombineConfig(),
             )
 
         private val watermarkFlow: StateFlow<WatermarkConfig> =
             watermarkRepository.watermarkConfigFlow.stateIn(
                 viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
+                SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                 WatermarkConfig(),
             )
 
@@ -101,7 +103,7 @@ class PairPreviewViewModel
                 }
             }.stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
                 initialValue = PairPreviewUiState.Loading,
             )
 

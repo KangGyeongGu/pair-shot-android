@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.feature.camera.R
+
+private const val SHUTTER_DISABLED_ALPHA = 0.5f
 
 @Composable
 fun ShutterButton(
@@ -47,7 +49,7 @@ fun ShutterButton(
             modifier
                 .size(56.dp)
                 .scale(scale)
-                .alpha(if (enabled) 1f else 0.5f)
+                .alpha(if (enabled) 1f else SHUTTER_DISABLED_ALPHA)
                 .border(width = 3.dp, color = PairShotCameraTokens.Foreground, shape = CircleShape)
                 .semantics { contentDescription = shutterDesc }
                 .clickable(

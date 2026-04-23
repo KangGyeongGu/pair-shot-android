@@ -26,16 +26,23 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import kotlinx.coroutines.delay
 
-enum class SnackbarVariant { SUCCESS, INFO, WARNING, ERROR }
+private const val SNACKBAR_BG_ARGB = 0xF01C1C1EL
+private const val DOT_SUCCESS_ARGB = 0xFF30D158L
+private const val DOT_INFO_ARGB = 0xFF0A84FFL
+private const val DOT_WARNING_ARGB = 0xFFFF9F0AL
+private const val DOT_ERROR_ARGB = 0xFFFF453AL
+private const val WARNING_HAPTIC_GAP_MS = 120L
+private const val ERROR_HAPTIC_GAP_MS = 90L
+private const val SNACKBAR_CORNER_RADIUS_DP = 999
 
-internal val SnackbarBackground = Color(0xF01C1C1E)
+internal val SnackbarBackground = Color(SNACKBAR_BG_ARGB)
 
 private fun dotColor(variant: SnackbarVariant): Color =
     when (variant) {
-        SnackbarVariant.SUCCESS -> Color(0xFF30D158)
-        SnackbarVariant.INFO -> Color(0xFF0A84FF)
-        SnackbarVariant.WARNING -> Color(0xFFFF9F0A)
-        SnackbarVariant.ERROR -> Color(0xFFFF453A)
+        SnackbarVariant.SUCCESS -> Color(DOT_SUCCESS_ARGB)
+        SnackbarVariant.INFO -> Color(DOT_INFO_ARGB)
+        SnackbarVariant.WARNING -> Color(DOT_WARNING_ARGB)
+        SnackbarVariant.ERROR -> Color(DOT_ERROR_ARGB)
     }
 
 @Composable
@@ -52,7 +59,7 @@ fun PairShotSnackbar(
     }
 
     Surface(
-        shape = RoundedCornerShape(999.dp),
+        shape = RoundedCornerShape(SNACKBAR_CORNER_RADIUS_DP.dp),
         color = SnackbarBackground,
         shadowElevation = PairShotSpacing.snackbarElevation,
         modifier =
@@ -109,15 +116,15 @@ private suspend fun performSnackbarHaptic(
 
         SnackbarVariant.WARNING -> {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            delay(120)
+            delay(WARNING_HAPTIC_GAP_MS)
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
 
         SnackbarVariant.ERROR -> {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            delay(90)
+            delay(ERROR_HAPTIC_GAP_MS)
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            delay(90)
+            delay(ERROR_HAPTIC_GAP_MS)
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
     }

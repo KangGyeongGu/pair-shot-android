@@ -50,6 +50,9 @@ import com.pairshot.core.ui.R as CoreR
 
 private val InputFieldMinHeight = 40.dp
 private val InputErrorHeight = 20.dp
+private const val JPEG_QUALITY_LOW = 75
+private const val JPEG_QUALITY_HIGH = 85
+private const val JPEG_QUALITY_BEST = 95
 
 private data class QualityOption(
     val label: String,
@@ -60,9 +63,17 @@ private data class QualityOption(
 @Composable
 private fun qualityOptions(): List<QualityOption> =
     listOf(
-        QualityOption(stringResource(R.string.settings_quality_low), stringResource(R.string.settings_quality_low_desc), 75),
-        QualityOption(stringResource(R.string.settings_quality_high), stringResource(R.string.settings_quality_high_desc), 85),
-        QualityOption(stringResource(R.string.settings_quality_best), stringResource(R.string.settings_quality_best_desc), 95),
+        QualityOption(stringResource(R.string.settings_quality_low), stringResource(R.string.settings_quality_low_desc), JPEG_QUALITY_LOW),
+        QualityOption(
+            stringResource(R.string.settings_quality_high),
+            stringResource(R.string.settings_quality_high_desc),
+            JPEG_QUALITY_HIGH,
+        ),
+        QualityOption(
+            stringResource(R.string.settings_quality_best),
+            stringResource(R.string.settings_quality_best_desc),
+            JPEG_QUALITY_BEST,
+        ),
     )
 
 private val fileNameSafePattern = Regex("[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ_-]")

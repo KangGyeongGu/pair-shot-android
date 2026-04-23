@@ -35,6 +35,8 @@ import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
 import com.pairshot.feature.album.R
 
+private const val PAIR_CARD_ASPECT_RATIO = 1.5f
+
 @Composable
 fun PairPickerGridSection(
     pairs: List<PhotoPair>,
@@ -96,7 +98,7 @@ private fun PairPickerCard(
         modifier =
             modifier
                 .fillMaxWidth()
-                .aspectRatio(1.5f)
+                .aspectRatio(PAIR_CARD_ASPECT_RATIO)
                 .clip(shape)
                 .then(border)
                 .clickable(

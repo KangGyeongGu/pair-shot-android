@@ -35,12 +35,16 @@ internal class ShutterSoundPlayer(
         val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
         val ratio = if (max > 0) current.toFloat() / max else 0f
-        val vol = ratio * 0.10f
+        val vol = ratio * SHUTTER_VOLUME_SCALE
         p.setVolume(vol, vol)
         if (p.isPlaying) p.seekTo(0) else p.start()
     }
 
     fun release() {
         player?.release()
+    }
+
+    companion object {
+        private const val SHUTTER_VOLUME_SCALE = 0.10f
     }
 }

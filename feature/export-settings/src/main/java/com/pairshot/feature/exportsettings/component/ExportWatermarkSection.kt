@@ -25,6 +25,8 @@ import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.feature.exportsettings.R
 import com.pairshot.core.ui.R as CoreR
 
+private const val SWITCH_SCALE = 0.67f
+
 @Composable
 fun ExportWatermarkSection(
     applyWatermark: Boolean,
@@ -77,7 +79,7 @@ internal fun ExportSwitchWithGearItem(
             modifier =
                 Modifier
                     .wrapContentHeight(unbounded = true)
-                    .scale(0.67f),
+                    .scale(SWITCH_SCALE),
         )
         IconButton(onClick = onGearClick) {
             Icon(

@@ -1,5 +1,6 @@
 package com.pairshot.feature.camera.viewmodel
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 sealed interface CameraEvent {
@@ -72,7 +74,7 @@ class CameraViewModel
 
         val lastPairThumbnailUri: StateFlow<String?> =
             getLatestBeforeThumbnailUseCase()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), null)
 
         val settingsState: StateFlow<CameraSettingsState> = cameraSettings.state
 
@@ -132,7 +134,15 @@ class CameraViewModel
                             albumId = albumId,
                         )
                     _events.emit(CameraEvent.PhotoSaved(pairId))
-                } catch (e: Exception) {
+                } catch (e: IOException) {
+                    _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: SecurityException) {
+                    _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: SQLiteException) {
+                    _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: IllegalStateException) {
+                    _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
+                } catch (e: IllegalArgumentException) {
                     _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
                 } finally {
                     _isSaving.value = false
@@ -175,4 +185,8 @@ class CameraViewModel
         fun toggleSettingsPanel() = cameraSettings.toggleSettingsPanel()
 
         fun dismissSettingsPanel() = cameraSettings.dismissSettingsPanel()
+
+        companion object {
+            private const val SUBSCRIPTION_TIMEOUT_MS = 5_000L
+        }
     }

@@ -42,6 +42,10 @@ import com.pairshot.core.designsystem.LocalPairShotExtendedColors
 import com.pairshot.core.designsystem.PairShotSpacing
 import kotlin.math.abs
 
+private const val SWITCH_SCALE = 0.67f
+private const val SLIDER_TRACK_SCALE_Y = 0.3f
+private const val SLIDER_SYNC_THRESHOLD = 1e-4f
+
 @Composable
 fun SettingsSectionLabel(
     label: String,
@@ -195,7 +199,7 @@ fun SettingsSwitchItem(
             modifier =
                 Modifier
                     .wrapContentHeight(unbounded = true)
-                    .scale(0.67f),
+                    .scale(SWITCH_SCALE),
         )
     }
 }
@@ -217,7 +221,7 @@ fun SettingsSliderItem(
     val isDragged by interactionSource.collectIsDraggedAsState()
 
     LaunchedEffect(value) {
-        if (!isDragged && abs(sliderValue - value) > 1e-4f) sliderValue = value
+        if (!isDragged && abs(sliderValue - value) > SLIDER_SYNC_THRESHOLD) sliderValue = value
     }
 
     Column(
@@ -265,7 +269,7 @@ fun SettingsSliderItem(
             track = { sliderState ->
                 SliderDefaults.Track(
                     sliderState = sliderState,
-                    modifier = Modifier.graphicsLayer(scaleY = 0.3f),
+                    modifier = Modifier.graphicsLayer(scaleY = SLIDER_TRACK_SCALE_Y),
                     drawTick = { _, _ -> },
                     drawStopIndicator = null,
                 )

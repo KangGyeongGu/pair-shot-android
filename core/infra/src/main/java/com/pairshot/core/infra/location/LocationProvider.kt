@@ -65,7 +65,7 @@ class LocationProvider
                 }
             if (cached != null) return cached
 
-            return withTimeoutOrNull(8_000L) {
+            return withTimeoutOrNull(CURRENT_LOCATION_TIMEOUT_MS) {
                 suspendCancellableCoroutine { cont ->
                     val cancellationToken = CancellationTokenSource()
                     cont.invokeOnCancellation { cancellationToken.cancel() }
@@ -82,7 +82,7 @@ class LocationProvider
             longitude: Double,
         ): Pair<String, String>? =
             withContext(Dispatchers.IO) {
-                withTimeoutOrNull(5_000L) {
+                withTimeoutOrNull(REVERSE_GEOCODE_TIMEOUT_MS) {
                     try {
                         val geocoder = Geocoder(context, Locale.getDefault())
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -115,5 +115,10 @@ class LocationProvider
             val short = full
 
             return Pair(full, short)
+        }
+
+        companion object {
+            private const val CURRENT_LOCATION_TIMEOUT_MS = 8_000L
+            private const val REVERSE_GEOCODE_TIMEOUT_MS = 5_000L
         }
     }

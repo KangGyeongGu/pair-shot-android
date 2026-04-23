@@ -38,7 +38,7 @@ class WatermarkRepositoryImpl
                 val uri = Uri.parse(sourceUri)
                 val inputStream =
                     context.contentResolver.openInputStream(uri)
-                        ?: throw IllegalStateException("Cannot open input stream for logo: $sourceUri")
+                        ?: error("Cannot open input stream for logo: $sourceUri")
                 inputStream.use { input ->
                     destFile.outputStream().use { output ->
                         input.copyTo(output)

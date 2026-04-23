@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
+
 sealed interface AlbumDetailEvent {
     data object NavigateBack : AlbumDetailEvent
 
@@ -152,7 +154,7 @@ class AlbumDetailViewModel
                         )
                     }
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AlbumDetailUiState.Loading)
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS), AlbumDetailUiState.Loading)
 
         private val _events = MutableSharedFlow<AlbumDetailEvent>()
         val events: SharedFlow<AlbumDetailEvent> = _events.asSharedFlow()
