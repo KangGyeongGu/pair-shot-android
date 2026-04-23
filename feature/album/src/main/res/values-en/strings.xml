@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Album Detail -->
+    <plurals name="album_topbar_selection_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <string name="album_desc_deselect">Exit selection</string>
+    <string name="album_menu_rename">Rename album</string>
+    <string name="album_menu_delete">Delete album</string>
+
+    <!-- Album Empty -->
+    <string name="album_button_add_pair">Add pair</string>
+
+    <!-- Album Selection Bottom Bar -->
+    <string name="album_button_remove_from_album">Remove from album</string>
+    <string name="album_button_export_settings_long">Export settings</string>
+
+    <!-- Dialog: Delete Album -->
+    <string name="album_dialog_delete_title">Delete album</string>
+    <string name="album_dialog_delete_message">Delete this album? Pairs will be kept.</string>
+
+    <!-- Dialog: Rename Album -->
+    <string name="album_dialog_rename_title">Rename album</string>
+    <string name="album_dialog_rename_placeholder">Enter album name</string>
+
+    <!-- Dialog: Delete Pairs -->
+    <string name="album_dialog_delete_pairs_title">Remove pairs</string>
+    <plurals name="album_dialog_delete_pairs_confirm">
+        <item quantity="one">Remove %1$d pair from this album?</item>
+        <item quantity="other">Remove %1$d pairs from this album?</item>
+    </plurals>
+    <string name="album_dialog_delete_pairs_button">Remove</string>
+
+    <!-- Pair Picker -->
+    <plurals name="pair_picker_title_selected">
+        <item quantity="one">Select pair (%1$d)</item>
+        <item quantity="other">Select pairs (%1$d)</item>
+    </plurals>
+    <string name="pair_picker_title">Select pair</string>
+    <string name="pair_picker_desc_close">Close</string>
+    <string name="pair_picker_button_add">Add</string>
+    <string name="pair_picker_button_adding">Adding…</string>
+    <string name="pair_picker_empty">No pairs</string>
+    <string name="pair_picker_already_added">Already added</string>
+
+    <!-- Route -->
+    <string name="album_route_load_failed">Couldn\'t load the album.</string>
+
+</resources>

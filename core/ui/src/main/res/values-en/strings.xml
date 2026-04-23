@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Common Buttons -->
+    <string name="common_button_cancel">Cancel</string>
+    <string name="common_button_confirm">OK</string>
+    <string name="common_button_delete">Delete</string>
+    <string name="common_button_save">Save</string>
+    <string name="common_button_share">Share</string>
+    <string name="common_button_start_capture">Start capture</string>
+    <string name="common_button_save_to_device">Save to device</string>
+    <string name="common_button_export_settings">Export settings</string>
+
+    <!-- Common Accessibility (contentDescription) -->
+    <string name="common_desc_back">Back</string>
+    <string name="common_desc_settings">Settings</string>
+    <string name="common_desc_more">More</string>
+
+    <!-- Common Titles -->
+    <string name="common_title_settings">Settings</string>
+
+    <!-- PairCard -->
+    <string name="pair_card_desc_scheduled">Scheduled</string>
+    <string name="pair_card_desc_combined">Combined</string>
+
+    <!-- ProfiledAsyncImage -->
+    <string name="image_file_missing">No file</string>
+
+    <!-- Dialog: Delete Pair -->
+    <string name="dialog_delete_pair_method_title">Choose deletion type</string>
+    <plurals name="dialog_delete_pair_summary">
+        <item quantity="one">%1$d selected, %2$d combined.</item>
+        <item quantity="other">%1$d selected, %2$d combined.</item>
+    </plurals>
+    <string name="dialog_delete_pair_button_all">Delete all</string>
+    <string name="dialog_delete_pair_button_combined_only">Combined only</string>
+    <string name="dialog_delete_pair_title">Delete pair</string>
+    <plurals name="dialog_delete_pair_confirm">
+        <item quantity="one">Delete %1$d pair?</item>
+        <item quantity="other">Delete %1$d pairs?</item>
+    </plurals>
+
+    <!-- Snackbar: Success -->
+    <string name="snackbar_success_all_after_captured">All After photos captured</string>
+    <string name="snackbar_success_cache_cleared">Cache cleared</string>
+
+    <!-- Snackbar: Error -->
+    <string name="snackbar_error_capture_failed">Capture failed. Please try again</string>
+    <string name="snackbar_error_save_failed">Save failed. Please try again</string>
+    <string name="snackbar_error_unknown">An error occurred. Please try again</string>
+    <string name="snackbar_error_share_failed">Share preparation failed. Please try again</string>
+    <string name="snackbar_error_file_load_failed">Couldn\'t load the file</string>
+
+    <!-- Snackbar: Info -->
+    <string name="snackbar_info_combined_exists">Combined image already exists</string>
+    <string name="snackbar_info_select_zip_location">Please select a location to save the archive</string>
+    <string name="snackbar_info_save_cancelled">Save canceled</string>
+    <string name="snackbar_info_saved_to_device">Saved to device</string>
+    <string name="snackbar_info_saved_to_device_partial">Saved to device (some skipped)</string>
+
+</resources>

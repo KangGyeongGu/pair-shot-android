@@ -55,6 +55,9 @@ datastore-preferences = { group = "androidx.datastore", name = "datastore-prefer
 activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.10.1" }
 core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
 
+# AppCompat (per-app language)
+appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.7.0" }
+
 # Glide
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 

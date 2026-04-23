@@ -7,7 +7,15 @@
     <string name="settings_section_watermark">워터마크</string>
     <string name="settings_section_combine">합성</string>
     <string name="settings_section_storage">저장공간</string>
+    <string name="settings_section_general">일반</string>
     <string name="settings_section_app_info">앱 정보</string>
+
+    <!-- Language -->
+    <string name="settings_item_language">언어</string>
+    <string name="settings_dialog_language_title">언어 선택</string>
+    <string name="settings_language_system">시스템 기본값</string>
+    <string name="settings_language_korean">한국어</string>
+    <string name="settings_language_english">English</string>
 
     <string name="settings_item_image_quality">이미지 품질</string>
     <string name="settings_item_file_name_prefix">파일명 접두어</string>

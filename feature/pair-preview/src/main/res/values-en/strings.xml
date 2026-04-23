@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Accessibility -->
+    <string name="pair_preview_desc_saved_combined">Saved combined image</string>
+    <string name="pair_preview_desc_combined_preview">Combined preview</string>
+    <string name="pair_preview_desc_close">Close</string>
+
+    <!-- TopBar menu -->
+    <string name="pair_preview_menu_recapture">Recapture</string>
+
+</resources>

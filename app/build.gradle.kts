@@ -138,6 +138,9 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
 
+    // AppCompat (per-app language support)
+    implementation(libs.appcompat)
+
     // ExifInterface
     implementation(libs.exifinterface)
 

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- BottomBar Accessibility -->
+    <string name="camera_desc_last_thumbnail">Last capture thumbnail</string>
+    <string name="camera_desc_home">Go to home</string>
+    <string name="camera_desc_switch">Switch camera</string>
+    <string name="camera_desc_shutter">Shutter</string>
+
+    <!-- Strip -->
+    <string name="camera_strip_empty">No Before photos yet</string>
+    <string name="camera_strip_empty_after">No Before photos to shoot</string>
+    <string name="camera_strip_thumbnail_desc">Before thumbnail %1$d</string>
+    <string name="camera_strip_progress">%1$d / %2$d complete</string>
+
+    <!-- Permission -->
+    <string name="camera_permission_title">Camera permission required</string>
+    <string name="camera_permission_message">PairShot needs camera access to take photos.</string>
+    <string name="camera_permission_allow">Allow permission</string>
+    <string name="camera_permission_denied_title">Camera permission denied</string>
+    <string name="camera_permission_denied_message">Please allow PairShot\'s camera permission in the Settings app.</string>
+    <string name="camera_permission_go_settings">Open settings</string>
+
+    <!-- Settings Sheet -->
+    <string name="camera_settings_grid">Grid</string>
+    <string name="camera_settings_flash">Flash</string>
+    <string name="camera_settings_night_mode">Night mode</string>
+    <string name="camera_settings_overlay">Overlay</string>
+    <string name="camera_settings_level">Level</string>
+    <string name="camera_settings_overlay_opacity">Overlay opacity</string>
+    <string name="camera_settings_overlay_opacity_hint">75% or lower recommended</string>
+
+</resources>

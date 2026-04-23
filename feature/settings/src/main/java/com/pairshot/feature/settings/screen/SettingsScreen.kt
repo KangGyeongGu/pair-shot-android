@@ -61,6 +61,10 @@ import com.pairshot.feature.settings.R
 import com.pairshot.feature.settings.dialog.ClearCacheDialog
 import com.pairshot.feature.settings.dialog.FileNamePrefixDialog
 import com.pairshot.feature.settings.dialog.ImageQualityDialog
+import com.pairshot.feature.settings.dialog.LanguageDialog
+import com.pairshot.feature.settings.locale.AppLocale
+import com.pairshot.feature.settings.locale.apply
+import com.pairshot.feature.settings.locale.currentAppLocale
 import com.pairshot.feature.settings.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.viewmodel.formatBytes
 import kotlin.math.roundToInt
@@ -87,6 +91,19 @@ fun SettingsScreen(
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
     var showPrefixDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+    var currentLocale by remember { mutableStateOf(currentAppLocale()) }
+
+    if (showLanguageDialog) {
+        LanguageDialog(
+            current = currentLocale,
+            onSelect = { option ->
+                currentLocale = option
+                option.apply()
+            },
+            onDismiss = { showLanguageDialog = false },
+        )
+    }
 
     val currentQuality = (uiState as? SettingsUiState.Success)?.jpegQuality ?: 85
     val currentPrefix = (uiState as? SettingsUiState.Success)?.fileNamePrefix ?: "PAIRSHOT"
@@ -382,6 +399,31 @@ fun SettingsScreen(
                                     label = stringResource(R.string.settings_item_cache),
                                     trailing = formatBytes(uiState.cacheBytes),
                                     onClick = { showClearCacheDialog = true },
+                                )
+                            }
+                        }
+
+                        item(key = "gap_general") {
+                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                        }
+
+                        item(key = "label_general") {
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_general))
+                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                        }
+
+                        item(key = "card_general") {
+                            SettingsCard {
+                                val languageLabel =
+                                    when (currentLocale) {
+                                        AppLocale.SYSTEM -> stringResource(R.string.settings_language_system)
+                                        AppLocale.KOREAN -> stringResource(R.string.settings_language_korean)
+                                        AppLocale.ENGLISH -> stringResource(R.string.settings_language_english)
+                                    }
+                                SettingsItem(
+                                    label = stringResource(R.string.settings_item_language),
+                                    trailing = languageLabel,
+                                    onClick = { showLanguageDialog = true },
                                 )
                             }
                         }
