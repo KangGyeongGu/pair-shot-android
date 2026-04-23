@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.export.ExportAction
+import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.export.HasSavableSelectionUseCase
 import com.pairshot.core.domain.export.SaveSelectionToDeviceUseCase
+import com.pairshot.core.domain.export.SaveToDeviceResult
 import com.pairshot.core.domain.export.ShareSelectionUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.WatermarkRepository
@@ -42,6 +44,30 @@ sealed interface SelectionMessage {
     ) : SelectionMessage
 }
 
+data class SaveDocumentRequest(
+    val sourceFilePath: String,
+    val suggestedName: String,
+    val mimeType: String,
+)
+
+sealed interface SaveDocumentResult {
+    val sourceFilePath: String
+
+    data class Saved(
+        override val sourceFilePath: String,
+        val displayName: String,
+    ) : SaveDocumentResult
+
+    data class Cancelled(
+        override val sourceFilePath: String,
+    ) : SaveDocumentResult
+
+    data class Failed(
+        override val sourceFilePath: String,
+        val error: Throwable,
+    ) : SaveDocumentResult
+}
+
 @HiltViewModel
 class SelectionActionViewModel
     @Inject
@@ -49,12 +75,16 @@ class SelectionActionViewModel
         private val shareSelectionUseCase: ShareSelectionUseCase,
         private val saveSelectionToDeviceUseCase: SaveSelectionToDeviceUseCase,
         private val hasSavableSelectionUseCase: HasSavableSelectionUseCase,
+        private val exportRepository: ExportRepository,
         private val combineSettingsRepository: CombineSettingsRepository,
         private val watermarkRepository: WatermarkRepository,
         private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
         private val _exportAction = MutableSharedFlow<ExportAction>()
         val exportAction: SharedFlow<ExportAction> = _exportAction.asSharedFlow()
+
+        private val _saveDocumentRequests = MutableSharedFlow<SaveDocumentRequest>()
+        val saveDocumentRequests: SharedFlow<SaveDocumentRequest> = _saveDocumentRequests.asSharedFlow()
 
         private val _messages = MutableSharedFlow<SelectionMessage>()
         val messages: SharedFlow<SelectionMessage> = _messages.asSharedFlow()
@@ -113,7 +143,7 @@ class SelectionActionViewModel
                         _progress.value = Progress(saveLabel, current, total)
                     }
                 }.onSuccess { result ->
-                    _messages.emit(buildSaveMessage(result))
+                    handleSaveResult(result)
                 }.onFailure { error ->
                     Timber.e(error, "save to device failed")
                     _messages.emit(SelectionMessage.Error(UiText.Resource(R.string.snackbar_error_save_failed)))
@@ -122,12 +152,62 @@ class SelectionActionViewModel
             }
         }
 
-        private fun buildSaveMessage(savedCount: Int): SelectionMessage =
-            if (savedCount > 0) {
-                SelectionMessage.Success(UiText.Resource(R.string.snackbar_success_saved_to_device))
-            } else {
-                SelectionMessage.Warning(UiText.Resource(R.string.snackbar_warning_nothing_to_save))
+        private suspend fun handleSaveResult(result: SaveToDeviceResult) {
+            when (result) {
+                is SaveToDeviceResult.SavedImagesToGallery -> {
+                    _messages.emit(
+                        SelectionMessage.Success(UiText.Resource(R.string.snackbar_success_saved_to_device)),
+                    )
+                }
+
+                is SaveToDeviceResult.ZipReadyForSave -> {
+                    _saveDocumentRequests.emit(
+                        SaveDocumentRequest(
+                            sourceFilePath = result.filePath,
+                            suggestedName = result.suggestedName,
+                            mimeType = "application/zip",
+                        ),
+                    )
+                }
+
+                SaveToDeviceResult.Nothing -> {
+                    _messages.emit(
+                        SelectionMessage.Warning(UiText.Resource(R.string.snackbar_warning_nothing_to_save)),
+                    )
+                }
             }
+        }
+
+        fun onSaveDocumentResult(result: SaveDocumentResult) {
+            viewModelScope.launch {
+                when (result) {
+                    is SaveDocumentResult.Saved -> {
+                        _messages.emit(
+                            SelectionMessage.Success(
+                                UiText.Resource(
+                                    R.string.snackbar_success_saved_zip,
+                                    listOf(result.displayName),
+                                ),
+                            ),
+                        )
+                    }
+
+                    is SaveDocumentResult.Cancelled -> {
+                        _messages.emit(
+                            SelectionMessage.Warning(UiText.Resource(R.string.snackbar_info_save_cancelled)),
+                        )
+                    }
+
+                    is SaveDocumentResult.Failed -> {
+                        Timber.e(result.error, "zip save failed")
+                        _messages.emit(
+                            SelectionMessage.Error(UiText.Resource(R.string.snackbar_error_save_failed)),
+                        )
+                    }
+                }
+                exportRepository.discardPreparedZip(result.sourceFilePath)
+            }
+        }
 
         private suspend fun loadConfig(): Triple<ExportPreset, CombineConfig, WatermarkConfig?> {
             val preset = appSettingsRepository.getLastExportPreset()

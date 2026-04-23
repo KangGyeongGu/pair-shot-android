@@ -8,6 +8,7 @@ import com.pairshot.core.database.entity.PhotoPairEntity
 import com.pairshot.core.domain.combine.ExportHistoryRepository
 import com.pairshot.core.domain.export.ExportAction
 import com.pairshot.core.domain.export.ExportRepository
+import com.pairshot.core.domain.export.PreparedZip
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.ExportFormat
@@ -21,8 +22,16 @@ import com.pairshot.core.storage.ZipImageEntry
 import com.pairshot.core.storage.ZipManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
+
+private const val ZIP_FILENAME_PATTERN = "yyyyMMdd_HHmmss"
+private const val ZIP_FILENAME_PREFIX = "PairShot"
+private const val ZIP_FILENAME_SUFFIX = ".zip"
 
 class ExportRepositoryImpl
     @Inject
@@ -65,7 +74,7 @@ class ExportRepositoryImpl
                             val savedUri =
                                 mediaStoreManager.saveToGallery(
                                     tempFileUri = Uri.fromFile(tempFile),
-                                    subfolder = "Combined",
+                                    subfolder = "",
                                     displayName = displayName,
                                 )
                             exportHistoryRepository.insert(
@@ -134,6 +143,77 @@ class ExportRepositoryImpl
                 }
                 savedCount
             }
+
+        override suspend fun prepareZipForSave(
+            pairIds: List<Long>,
+            preset: ExportPreset,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig?,
+            onProgress: (current: Int, total: Int) -> Unit,
+        ): PreparedZip? =
+            withContext(Dispatchers.IO) {
+                val jpegQuality = appSettingsRepository.getCurrent().jpegQuality
+                val pairs = photoPairDao.getByIds(pairIds)
+                val outputDir = shareImagePreparer.prepareTempDir("save_zip")
+                val staging = shareImagePreparer.prepareTempDir("save_zip_staging")
+                val suggestedName = buildZipFileName()
+                val zipFile = File(outputDir, suggestedName)
+                var success = false
+                try {
+                    val zipEntries = ArrayList<ZipImageEntry>()
+                    pairs.forEachIndexed { index, pair ->
+                        materializePairForShare(
+                            pair = pair,
+                            seq = index + 1,
+                            preset = preset,
+                            combineConfig = combineConfig,
+                            watermarkConfig = watermarkConfig,
+                            jpegQuality = jpegQuality,
+                            destDir = staging,
+                        ) { destFile, subdir ->
+                            zipEntries.add(
+                                ZipImageEntry(
+                                    uri = Uri.fromFile(destFile),
+                                    entryPath = "$subdir/${destFile.name}",
+                                ),
+                            )
+                        }
+                        onProgress(index + 1, pairs.size)
+                    }
+
+                    if (zipEntries.isEmpty()) return@withContext null
+
+                    zipManager.createZipToFile(
+                        entries = zipEntries,
+                        outputFile = zipFile,
+                        onProgress = { _, _ -> },
+                    )
+                    success = true
+                    PreparedZip(
+                        filePath = zipFile.absolutePath,
+                        suggestedName = suggestedName,
+                    )
+                } finally {
+                    staging.deleteRecursively()
+                    if (!success) outputDir.deleteRecursively()
+                }
+            }
+
+        override suspend fun discardPreparedZip(filePath: String) {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val file = File(filePath)
+                    if (file.exists()) file.parentFile?.deleteRecursively()
+                }.onFailure { error ->
+                    Timber.w(error, "failed to discard prepared zip $filePath")
+                }
+            }
+        }
+
+        private fun buildZipFileName(): String {
+            val stamp = SimpleDateFormat(ZIP_FILENAME_PATTERN, Locale.US).format(Date())
+            return "${ZIP_FILENAME_PREFIX}_$stamp$ZIP_FILENAME_SUFFIX"
+        }
 
         override suspend fun buildShareablePayload(
             pairIds: List<Long>,
@@ -295,7 +375,7 @@ class ExportRepositoryImpl
             val savedUri =
                 mediaStoreManager.saveToGallery(
                     tempFileUri = Uri.fromFile(tempFile),
-                    subfolder = "Watermarked",
+                    subfolder = "",
                     displayName = displayName,
                 )
             exportHistoryRepository.insert(

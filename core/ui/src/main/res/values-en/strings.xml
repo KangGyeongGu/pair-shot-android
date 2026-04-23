@@ -48,6 +48,8 @@
     <string name="snackbar_success_all_after_captured">All After photos captured</string>
     <string name="snackbar_success_cache_cleared">Cache cleared</string>
     <string name="snackbar_success_saved_to_device">Saved to device</string>
+    <string name="snackbar_success_saved_zip">Saved %1$s</string>
+    <string name="snackbar_info_save_cancelled">Save cancelled</string>
 
     <!-- Snackbar: Warning -->
     <string name="snackbar_warning_nothing_to_save">No new images to save</string>

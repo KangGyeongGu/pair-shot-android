@@ -46,6 +46,8 @@
     <string name="snackbar_success_all_after_captured">모든 After 촬영이 완료되었습니다</string>
     <string name="snackbar_success_cache_cleared">캐시를 정리했습니다</string>
     <string name="snackbar_success_saved_to_device">기기에 저장했습니다</string>
+    <string name="snackbar_success_saved_zip">%1$s 저장 완료</string>
+    <string name="snackbar_info_save_cancelled">저장이 취소되었습니다</string>
 
     <!-- Snackbar: Warning -->
     <string name="snackbar_warning_nothing_to_save">저장할 새 이미지가 없습니다</string>
