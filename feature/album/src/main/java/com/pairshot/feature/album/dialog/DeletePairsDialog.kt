@@ -5,7 +5,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.PairShotDialog
+import com.pairshot.feature.album.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun DeletePairsDialog(
@@ -19,25 +23,30 @@ fun DeletePairsDialog(
         modifier = modifier,
         title = {
             Text(
-                text = "페어 제거",
+                text = stringResource(R.string.album_dialog_delete_pairs_title),
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Text(
-                text = "${count}개 페어를 앨범에서 제거하시겠습니까?",
+                text =
+                    pluralStringResource(
+                        R.plurals.album_dialog_delete_pairs_confirm,
+                        count,
+                        count,
+                    ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text(text = "제거")
+                Text(text = stringResource(R.string.album_dialog_delete_pairs_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "취소")
+                Text(text = stringResource(CoreR.string.common_button_cancel))
             }
         },
     )

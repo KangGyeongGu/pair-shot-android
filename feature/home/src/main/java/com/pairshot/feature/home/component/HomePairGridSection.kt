@@ -14,9 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.component.PairCard
+import com.pairshot.feature.home.R
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -28,14 +30,15 @@ private val DateFormatter: DateTimeFormatter =
 
 private fun Long.toLocalDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 
+@Composable
 private fun formatDateLabel(
     date: LocalDate,
     today: LocalDate,
 ): String {
     val base = date.format(DateFormatter)
     return when (date) {
-        today -> "$base · 오늘"
-        today.minusDays(1) -> "$base · 어제"
+        today -> stringResource(R.string.home_date_suffix_today, base)
+        today.minusDays(1) -> stringResource(R.string.home_date_suffix_yesterday, base)
         else -> base
     }
 }

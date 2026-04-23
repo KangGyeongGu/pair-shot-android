@@ -41,7 +41,7 @@ class ShareImagePreparer
             val uri = Uri.parse(sourceUri)
             (
                 context.contentResolver.openInputStream(uri)
-                    ?: throw IOException("원본 파일을 읽을 수 없습니다: $sourceUri")
+                    ?: throw IOException("cannot read source file: $sourceUri")
             ).use { input ->
                 destFile.outputStream().use { output -> input.copyTo(output) }
             }

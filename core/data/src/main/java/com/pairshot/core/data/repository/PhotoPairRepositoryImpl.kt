@@ -100,7 +100,7 @@ class PhotoPairRepositoryImpl
                         }
                         pairId
                     } catch (e: Exception) {
-                        deleteGalleryUriLogOnFailure(savedUri.toString(), "BEFORE rollback 실패")
+                        deleteGalleryUriLogOnFailure(savedUri.toString(), "BEFORE rollback failed")
                         throw e
                     }
                 } finally {
@@ -117,7 +117,7 @@ class PhotoPairRepositoryImpl
                     photoPairDao.getById(pairId)
                         ?: throw IllegalArgumentException("PhotoPair not found: $pairId")
 
-                entity.afterPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "이전 After 사진 삭제 실패") }
+                entity.afterPhotoUri?.let { deleteGalleryUriLogOnFailure(it, "previous After photo delete failed") }
 
                 val sequenceNumber = extractSequenceNumber(entity.beforePhotoUri)
                 val prefix = appSettingsRepository.getCurrent().fileNamePrefix
@@ -140,7 +140,7 @@ class PhotoPairRepositoryImpl
                         ),
                     )
                 } catch (e: Exception) {
-                    deleteGalleryUriLogOnFailure(savedUri.toString(), "AFTER rollback 실패")
+                    deleteGalleryUriLogOnFailure(savedUri.toString(), "AFTER rollback failed")
                     throw e
                 }
             } finally {
@@ -156,12 +156,12 @@ class PhotoPairRepositoryImpl
                 }
 
                 is DeleteResult.Failed -> {
-                    Timber.w(result.exception, "MediaStore 삭제 실패: $uriString")
+                    Timber.w(result.exception, "MediaStore delete failed: $uriString")
                     throw DeleteException(result)
                 }
 
                 is DeleteResult.RecoverablePermission -> {
-                    Timber.w(result.exception, "MediaStore 삭제 권한 필요: $uriString")
+                    Timber.w(result.exception, "MediaStore delete permission required: $uriString")
                     throw DeleteException(result)
                 }
             }
@@ -182,7 +182,7 @@ class PhotoPairRepositoryImpl
                 }
 
                 is DeleteResult.RecoverablePermission -> {
-                    Timber.w(result.exception, "$failureLogMessage (권한 필요): $uriString")
+                    Timber.w(result.exception, "$failureLogMessage (permission required): $uriString")
                 }
             }
         }
@@ -203,7 +203,7 @@ class PhotoPairRepositoryImpl
                     }
                 if (path != null) java.io.File(path).delete()
             } catch (e: Exception) {
-                Timber.d(e, "임시 파일 삭제 실패: $tempFileUri")
+                Timber.d(e, "temp file delete failed: $tempFileUri")
             }
         }
     }

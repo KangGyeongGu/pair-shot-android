@@ -19,9 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.pairshot.feature.camera.R
 
 @Composable
 fun ShutterButton(
@@ -37,6 +39,7 @@ fun ShutterButton(
         animationSpec = tween(durationMillis = 100),
         label = "shutter_scale",
     )
+    val shutterDesc = stringResource(R.string.camera_desc_shutter)
 
     Box(
         modifier =
@@ -45,7 +48,7 @@ fun ShutterButton(
                 .scale(scale)
                 .alpha(if (enabled) 1f else 0.5f)
                 .border(width = 3.dp, color = Color.White, shape = CircleShape)
-                .semantics { contentDescription = "촬영" }
+                .semantics { contentDescription = shutterDesc }
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,

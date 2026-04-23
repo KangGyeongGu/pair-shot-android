@@ -177,7 +177,7 @@ class CameraViewModel
                         )
                     _events.emit(CameraEvent.PhotoSaved(pairId))
                 } catch (e: Exception) {
-                    _events.emit(CameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
+                    _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
                 } finally {
                     _isSaving.value = false
                 }

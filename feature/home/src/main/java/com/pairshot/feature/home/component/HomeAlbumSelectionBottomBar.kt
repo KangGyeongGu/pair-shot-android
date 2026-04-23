@@ -7,8 +7,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.PairShotActionBar
 import com.pairshot.core.ui.component.PairShotActionBarItem
+import com.pairshot.feature.home.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun HomeAlbumSelectionBottomBar(
@@ -19,25 +22,25 @@ fun HomeAlbumSelectionBottomBar(
 ) {
     PairShotActionBar {
         PairShotActionBarItem(
-            label = "이름 수정",
+            label = stringResource(R.string.home_button_album_rename),
             onClick = onRename,
             enabled = selectedCount == 1,
             icon = {
                 Icon(
                     imageVector = Icons.Filled.Edit,
-                    contentDescription = "이름 수정",
+                    contentDescription = stringResource(R.string.home_button_album_rename),
                 )
             },
         )
         PairShotActionBarItem(
-            label = "삭제",
+            label = stringResource(CoreR.string.common_button_delete),
             onClick = onDelete,
             enabled = selectedCount >= 1,
             labelColor = MaterialTheme.colorScheme.error,
             icon = {
                 Icon(
                     imageVector = Icons.Filled.Delete,
-                    contentDescription = "삭제",
+                    contentDescription = stringResource(CoreR.string.common_button_delete),
                     tint = MaterialTheme.colorScheme.error,
                 )
             },

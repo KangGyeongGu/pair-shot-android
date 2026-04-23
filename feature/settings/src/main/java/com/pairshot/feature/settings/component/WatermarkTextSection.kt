@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -43,6 +44,7 @@ import com.pairshot.core.model.WatermarkType
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSliderItem
+import com.pairshot.feature.settings.R
 import kotlin.math.roundToInt
 
 @Composable
@@ -59,7 +61,7 @@ internal fun WatermarkTextSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "투명도",
+            label = stringResource(R.string.watermark_field_opacity),
             value = watermarkConfig.alpha,
             valueRange = 0f..1f,
             valueLabel = { "${(it * 100).roundToInt()}%" },
@@ -68,7 +70,7 @@ internal fun WatermarkTextSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "줄 수",
+            label = stringResource(R.string.watermark_field_lines),
             value = watermarkConfig.diagonalCount.toFloat(),
             valueRange = 0f..20f,
             steps = 19,
@@ -78,7 +80,7 @@ internal fun WatermarkTextSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "반복수",
+            label = stringResource(R.string.watermark_field_repeat),
             value = watermarkConfig.repeatDensity,
             valueRange = 0f..3.0f,
             valueLabel = { "%.1f".format(it) },
@@ -104,7 +106,7 @@ internal fun WatermarkTypeItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "워터마크 유형",
+            text = stringResource(R.string.watermark_type_label),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -132,8 +134,8 @@ internal fun WatermarkTypeItem(
                     Text(
                         text =
                             when (type) {
-                                WatermarkType.TEXT -> "텍스트"
-                                WatermarkType.LOGO -> "로고"
+                                WatermarkType.TEXT -> stringResource(R.string.watermark_type_text)
+                                WatermarkType.LOGO -> stringResource(R.string.watermark_type_logo)
                             },
                         style =
                             MaterialTheme.typography.bodySmall.copy(
@@ -191,7 +193,7 @@ private fun WatermarkTextItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "텍스트",
+            text = stringResource(R.string.watermark_text_field),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(0.35f),
@@ -220,7 +222,7 @@ private fun WatermarkTextItem(
                     ) {
                         if (textFieldValue.text.isEmpty()) {
                             Text(
-                                text = "텍스트 입력",
+                                text = stringResource(R.string.watermark_text_input_hint),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = hintColor,
                                 modifier = Modifier.fillMaxWidth(),

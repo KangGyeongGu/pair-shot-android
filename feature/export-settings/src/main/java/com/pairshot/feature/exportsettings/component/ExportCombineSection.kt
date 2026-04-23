@@ -1,7 +1,9 @@
 package com.pairshot.feature.exportsettings.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.feature.exportsettings.R
 
 @Composable
 fun ExportCombineSection(
@@ -11,7 +13,7 @@ fun ExportCombineSection(
 ) {
     SettingsCard {
         ExportSwitchWithGearItem(
-            label = "합성 옵션 적용",
+            label = stringResource(R.string.export_combine_apply),
             checked = applyCombineConfig,
             onCheckedChange = onApplyCombineConfigChange,
             onGearClick = onNavigateToCombineSettings,

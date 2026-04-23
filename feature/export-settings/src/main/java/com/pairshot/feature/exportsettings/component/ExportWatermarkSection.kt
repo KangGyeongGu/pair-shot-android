@@ -19,8 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.SettingsCard
+import com.pairshot.feature.exportsettings.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun ExportWatermarkSection(
@@ -30,7 +33,7 @@ fun ExportWatermarkSection(
 ) {
     SettingsCard {
         ExportSwitchWithGearItem(
-            label = "워터마크 옵션 적용",
+            label = stringResource(R.string.export_watermark_apply),
             checked = applyWatermark,
             onCheckedChange = onApplyWatermarkChange,
             onGearClick = onNavigateToWatermarkSettings,
@@ -79,7 +82,7 @@ internal fun ExportSwitchWithGearItem(
         IconButton(onClick = onGearClick) {
             Icon(
                 imageVector = Icons.Filled.Settings,
-                contentDescription = "설정",
+                contentDescription = stringResource(CoreR.string.common_desc_settings),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

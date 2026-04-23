@@ -21,10 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.Album
+import com.pairshot.feature.home.R
 
 @Composable
 fun AlbumCard(
@@ -113,7 +115,7 @@ fun AlbumCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.LocationOn,
-                        contentDescription = "위치",
+                        contentDescription = stringResource(R.string.home_desc_location),
                         modifier = Modifier.size(12.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -137,7 +139,7 @@ fun AlbumCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.CameraAlt,
-                        contentDescription = "페어 수",
+                        contentDescription = stringResource(R.string.home_desc_pair_count),
                         modifier = Modifier.size(12.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

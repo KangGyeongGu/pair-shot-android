@@ -19,14 +19,14 @@ class SaveSelectionToDeviceUseCase
             outputUri: String?,
             onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         ) {
-            require(pairIds.isNotEmpty()) { "내보낼 페어가 없습니다" }
+            require(pairIds.isNotEmpty()) { "no pairs to export" }
             require(preset.includeBefore || preset.includeAfter || preset.includeCombined) {
-                "최소 하나의 항목을 포함해야 합니다"
+                "at least one include option is required"
             }
 
             when (preset.format) {
                 ExportFormat.ZIP -> {
-                    requireNotNull(outputUri) { "ZIP 저장 시 outputUri가 필요합니다" }
+                    requireNotNull(outputUri) { "outputUri is required for ZIP export" }
                     exportRepository.exportZipToDevice(
                         pairIds = pairIds,
                         outputUri = outputUri,

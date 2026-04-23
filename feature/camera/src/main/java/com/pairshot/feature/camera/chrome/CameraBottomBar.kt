@@ -21,11 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
+import com.pairshot.feature.camera.R
 import com.pairshot.feature.camera.component.ShutterButton
+import com.pairshot.core.ui.R as CoreR
 
 private val ThumbnailSize = 56.dp
 private val ThumbnailCornerRadius = 8.dp
@@ -60,7 +63,7 @@ internal fun CameraBottomBar(
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "설정",
+                contentDescription = stringResource(CoreR.string.common_desc_settings),
                 tint = Color.White,
                 modifier = Modifier.size(28.dp),
             )
@@ -97,14 +100,14 @@ private fun ThumbnailOrHomeButton(
             ProfiledAsyncImage(
                 data = thumbnailUri,
                 profile = ImageProfile.THUMBNAIL,
-                contentDescription = "마지막 촬영 썸네일",
+                contentDescription = stringResource(R.string.camera_desc_last_thumbnail),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(ThumbnailSize),
             )
         } else {
             Icon(
                 imageVector = Icons.Default.Home,
-                contentDescription = "홈으로 이동",
+                contentDescription = stringResource(R.string.camera_desc_home),
                 tint = Color.White,
                 modifier = Modifier.size(28.dp),
             )

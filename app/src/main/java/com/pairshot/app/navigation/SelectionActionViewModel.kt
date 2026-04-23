@@ -13,6 +13,8 @@ import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.ExportFormat
 import com.pairshot.core.model.ExportPreset
 import com.pairshot.core.model.WatermarkConfig
+import com.pairshot.core.ui.R
+import com.pairshot.core.ui.text.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,12 +28,14 @@ import timber.log.Timber
 import javax.inject.Inject
 
 sealed interface SelectionMessage {
+    val text: UiText
+
     data class Info(
-        val text: String,
+        override val text: UiText,
     ) : SelectionMessage
 
     data class Error(
-        val text: String,
+        override val text: UiText,
     ) : SelectionMessage
 }
 
@@ -61,17 +65,17 @@ class SelectionActionViewModel
         fun shareSelection(ids: Set<Long>) {
             if (ids.isEmpty()) return
             viewModelScope.launch {
-                _progress.value = Progress("공유 준비 중", 0, ids.size)
+                _progress.value = Progress(UiText.Resource(com.pairshot.R.string.progress_sharing), 0, ids.size)
                 runCatching {
                     val (preset, combine, watermark) = loadConfig()
                     val action =
                         shareSelectionUseCase(ids.toList(), preset, watermark, combine) { current, total ->
-                            _progress.value = Progress("공유 준비 중", current, total)
+                            _progress.value = Progress(UiText.Resource(com.pairshot.R.string.progress_sharing), current, total)
                         }
                     _exportAction.emit(action)
                 }.onFailure { error ->
-                    Timber.e(error, "공유 실패")
-                    _messages.emit(SelectionMessage.Error("공유 준비 실패"))
+                    Timber.e(error, "share failed")
+                    _messages.emit(SelectionMessage.Error(UiText.Resource(R.string.snackbar_error_share_failed)))
                 }
                 _progress.value = null
             }
@@ -83,14 +87,14 @@ class SelectionActionViewModel
                 val (preset, combine, watermark) = loadConfig()
                 if (shouldSkipEntirely(ids, preset)) {
                     _messages.emit(
-                        SelectionMessage.Info("선택한 ${ids.size}개 페어 모두 합성본이 이미 있습니다"),
+                        SelectionMessage.Info(UiText.Resource(R.string.snackbar_info_combined_exists)),
                     )
                     return@launch
                 }
 
                 if (preset.format == ExportFormat.ZIP) {
                     _pendingZipSave.value = PendingZipSave(ids.toList(), preset, combine, watermark)
-                    _messages.emit(SelectionMessage.Info("ZIP 저장 위치를 선택하세요"))
+                    _messages.emit(SelectionMessage.Info(UiText.Resource(R.string.snackbar_info_select_zip_location)))
                 } else {
                     runSave(ids.toList(), preset, combine, watermark, outputUri = null)
                 }
@@ -101,7 +105,9 @@ class SelectionActionViewModel
             val pending = _pendingZipSave.value ?: return
             _pendingZipSave.value = null
             if (outputUri == null) {
-                viewModelScope.launch { _messages.emit(SelectionMessage.Info("저장 취소됨")) }
+                viewModelScope.launch {
+                    _messages.emit(SelectionMessage.Info(UiText.Resource(R.string.snackbar_info_save_cancelled)))
+                }
                 return
             }
             viewModelScope.launch {
@@ -131,21 +137,21 @@ class SelectionActionViewModel
                 } else {
                     0
                 }
-            _progress.value = Progress("기기 저장 중", 0, pairIds.size)
+            _progress.value = Progress(UiText.Resource(com.pairshot.R.string.progress_saving), 0, pairIds.size)
             runCatching {
                 saveSelectionToDeviceUseCase(pairIds, preset, watermark, combine, outputUri) { current, total ->
-                    _progress.value = Progress("기기 저장 중", current, total)
+                    _progress.value = Progress(UiText.Resource(com.pairshot.R.string.progress_saving), current, total)
                 }
                 val message =
                     if (skippedCombined > 0) {
-                        "저장 완료 · 합성본 ${skippedCombined}개는 이미 있어 건너뜀"
+                        UiText.Resource(R.string.snackbar_info_saved_to_device_partial)
                     } else {
-                        "저장 완료"
+                        UiText.Resource(R.string.snackbar_info_saved_to_device)
                     }
                 _messages.emit(SelectionMessage.Info(message))
             }.onFailure { error ->
-                Timber.e(error, "기기저장 실패")
-                _messages.emit(SelectionMessage.Error("저장 실패"))
+                Timber.e(error, "save to device failed")
+                _messages.emit(SelectionMessage.Error(UiText.Resource(R.string.snackbar_error_save_failed)))
             }
             _progress.value = null
         }
@@ -169,7 +175,7 @@ data class PendingZipSave(
 )
 
 data class Progress(
-    val label: String,
+    val label: UiText,
     val current: Int,
     val total: Int,
 )

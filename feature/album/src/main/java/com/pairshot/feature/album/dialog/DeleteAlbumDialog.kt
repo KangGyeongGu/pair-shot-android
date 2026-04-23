@@ -5,7 +5,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.PairShotDialog
+import com.pairshot.feature.album.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun DeleteAlbumDialog(
@@ -18,13 +21,13 @@ fun DeleteAlbumDialog(
         modifier = modifier,
         title = {
             Text(
-                text = "앨범 삭제",
+                text = stringResource(R.string.album_dialog_delete_title),
                 style = MaterialTheme.typography.titleMedium,
             )
         },
         text = {
             Text(
-                text = "앨범을 삭제하시겠습니까? 페어는 유지됩니다.",
+                text = stringResource(R.string.album_dialog_delete_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -32,14 +35,14 @@ fun DeleteAlbumDialog(
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(
-                    text = "삭제",
+                    text = stringResource(CoreR.string.common_button_delete),
                     color = MaterialTheme.colorScheme.error,
                 )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "취소")
+                Text(text = stringResource(CoreR.string.common_button_cancel))
             }
         },
     )

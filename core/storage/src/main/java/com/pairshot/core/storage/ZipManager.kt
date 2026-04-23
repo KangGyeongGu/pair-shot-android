@@ -38,7 +38,7 @@ class ZipManager
                         onProgress(index + 1, entries.size)
                     }
                 }
-            } ?: throw IllegalStateException("SAF 출력 스트림을 열 수 없습니다: $outputUri")
+            } ?: throw IllegalStateException("cannot open SAF output stream: $outputUri")
         }
 
         suspend fun createZipToFile(

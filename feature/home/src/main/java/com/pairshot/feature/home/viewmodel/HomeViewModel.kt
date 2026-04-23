@@ -15,6 +15,8 @@ import com.pairshot.core.infra.location.LocationProvider
 import com.pairshot.core.infra.location.LocationResult
 import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.ui.text.UiText
+import com.pairshot.feature.home.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +59,7 @@ sealed interface HomeEvent {
     data object DeleteCompleted : HomeEvent
 
     data class ShowError(
-        val message: String,
+        val message: UiText,
     ) : HomeEvent
 }
 
@@ -232,7 +234,12 @@ class HomeViewModel
                 exitSelectionMode()
                 if (result.failed > 0) {
                     _events.emit(
-                        HomeEvent.ShowError("${result.deleted}개 삭제 · ${result.failed}개 실패"),
+                        HomeEvent.ShowError(
+                            UiText.Resource(
+                                R.string.home_event_delete_result,
+                                listOf(result.deleted, result.failed),
+                            ),
+                        ),
                     )
                 }
                 _events.emit(HomeEvent.DeleteCompleted)
@@ -289,8 +296,10 @@ class HomeViewModel
                 try {
                     val albumId = createAlbumUseCase(name, address, latitude, longitude)
                     _events.emit(HomeEvent.NavigateToAlbumDetail(albumId))
-                } catch (e: Exception) {
-                    _events.emit(HomeEvent.ShowError(e.message ?: "앨범 생성에 실패했습니다"))
+                } catch (_: Exception) {
+                    _events.emit(
+                        HomeEvent.ShowError(UiText.Resource(R.string.home_event_album_create_failed)),
+                    )
                 }
             }
         }

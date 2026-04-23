@@ -19,9 +19,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.feature.settings.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -74,7 +76,7 @@ internal fun WatermarkPreviewSection(
         if (bmp != null) {
             Image(
                 bitmap = bmp.asImageBitmap(),
-                contentDescription = "워터마크 미리보기",
+                contentDescription = stringResource(R.string.watermark_preview_desc),
                 contentScale = ContentScale.Fit,
                 modifier =
                     Modifier

@@ -16,12 +16,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.infra.location.LocationResult
 import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
 import com.pairshot.core.ui.component.PairShotDialog
+import com.pairshot.feature.home.R
 import com.pairshot.feature.home.component.HomeAlbumGridSection
 import com.pairshot.feature.home.component.HomeAlbumSelectionBottomBar
 import com.pairshot.feature.home.component.HomeEmptyAction
@@ -32,6 +35,7 @@ import com.pairshot.feature.home.component.HomeSelectionBottomBar
 import com.pairshot.feature.home.component.HomeTopBar
 import com.pairshot.feature.home.dialog.CreateAlbumDialog
 import com.pairshot.feature.home.viewmodel.HomeMode
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun HomeScreen(
@@ -74,7 +78,12 @@ fun HomeScreen(
 
     val inSelectionMode = selectionMode || albumSelectionMode
     val listIsEmpty = if (mode == HomeMode.PAIRS) pairs.isEmpty() else albums.isEmpty()
-    val primaryLabel = if (mode == HomeMode.PAIRS) "촬영 시작" else "앨범 생성"
+    val primaryLabel =
+        if (mode == HomeMode.PAIRS) {
+            stringResource(CoreR.string.common_button_start_capture)
+        } else {
+            stringResource(R.string.home_button_create_album)
+        }
     val primaryAction: () -> Unit =
         if (mode == HomeMode.PAIRS) onNavigateToCamera else onCreateAlbumClick
     val currentTotalCount = if (albumSelectionMode) albums.size else pairs.size
@@ -215,13 +224,18 @@ fun HomeScreen(
             onDismissRequest = { showAlbumDeleteDialog = false },
             title = {
                 Text(
-                    text = "앨범 삭제",
+                    text = stringResource(R.string.home_dialog_album_delete_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             text = {
                 Text(
-                    text = "${selectedAlbumIds.size}개 앨범을 삭제하시겠어요?\n앨범 내 모든 페어와 합성본도 함께 삭제됩니다.",
+                    text =
+                        pluralStringResource(
+                            R.plurals.home_dialog_album_delete_confirm,
+                            selectedAlbumIds.size,
+                            selectedAlbumIds.size,
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -234,7 +248,7 @@ fun HomeScreen(
                     },
                 ) {
                     Text(
-                        text = "삭제",
+                        text = stringResource(CoreR.string.common_button_delete),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.error,
                     )
@@ -243,7 +257,7 @@ fun HomeScreen(
             dismissButton = {
                 TextButton(onClick = { showAlbumDeleteDialog = false }) {
                     Text(
-                        text = "취소",
+                        text = stringResource(CoreR.string.common_button_cancel),
                         style = MaterialTheme.typography.labelLarge,
                     )
                 }

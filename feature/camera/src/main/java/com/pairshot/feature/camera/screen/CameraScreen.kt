@@ -33,10 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.core.ui.component.PairShotSnackbar
+import com.pairshot.core.ui.R
+import com.pairshot.core.ui.component.PairShotSnackbarContent
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
+import com.pairshot.core.ui.text.UiText
 import com.pairshot.feature.camera.chrome.CameraBottomBar
 import com.pairshot.feature.camera.component.BeforePreviewStrip
 import com.pairshot.feature.camera.component.BeforeStripHeight
@@ -117,13 +119,19 @@ internal fun CameraScreen(
 
                 is CameraEvent.CaptureError -> {
                     snackbarController.show(
-                        SnackbarEvent("촬영에 실패했습니다. 다시 시도해주세요.", SnackbarVariant.ERROR),
+                        SnackbarEvent(
+                            UiText.Resource(R.string.snackbar_error_capture_failed),
+                            SnackbarVariant.ERROR,
+                        ),
                     )
                 }
 
                 is CameraEvent.SaveError -> {
                     snackbarController.show(
-                        SnackbarEvent("오류", SnackbarVariant.ERROR),
+                        SnackbarEvent(
+                            UiText.Resource(R.string.snackbar_error_unknown),
+                            SnackbarVariant.ERROR,
+                        ),
                     )
                 }
             }
@@ -228,7 +236,7 @@ internal fun CameraScreen(
                             val tempUri = captureResult.getOrNull()
                             if (captureResult.isFailure || tempUri == null) {
                                 viewModel.emitCaptureError(
-                                    captureResult.exceptionOrNull()?.message ?: "촬영 실패",
+                                    captureResult.exceptionOrNull()?.message ?: "capture failed",
                                 )
                                 viewModel.finishCapturing()
                                 return@launch
@@ -277,12 +285,7 @@ internal fun CameraScreen(
                         .statusBarsPadding()
                         .padding(top = 8.dp),
                 snackbar = { data ->
-                    PairShotSnackbar(
-                        message = data.visuals.message,
-                        variant = snackbarController.currentVariant,
-                        actionLabel = data.visuals.actionLabel,
-                        onAction = { data.performAction() },
-                    )
+                    PairShotSnackbarContent(data, snackbarController.currentVariant)
                 },
             )
         }

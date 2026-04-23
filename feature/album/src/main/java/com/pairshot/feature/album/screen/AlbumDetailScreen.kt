@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.feature.album.component.AlbumDetailTopBar
 import com.pairshot.feature.album.component.AlbumEmptyActions
@@ -17,6 +18,7 @@ import com.pairshot.feature.album.dialog.DeleteAlbumDialog
 import com.pairshot.feature.album.dialog.DeletePairsDialog
 import com.pairshot.feature.album.dialog.RenameAlbumDialog
 import com.pairshot.feature.album.viewmodel.AlbumDetailUiState
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun AlbumDetailScreen(
@@ -69,7 +71,7 @@ fun AlbumDetailScreen(
 
                 !pairsEmpty -> {
                     AlbumPrimaryActionBar(
-                        label = "촬영 시작",
+                        label = stringResource(CoreR.string.common_button_start_capture),
                         onClick = onCaptureBeforeClick,
                     )
                 }

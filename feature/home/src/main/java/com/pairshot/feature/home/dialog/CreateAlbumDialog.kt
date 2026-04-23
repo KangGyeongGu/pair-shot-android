@@ -20,9 +20,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.infra.location.LocationResult
 import com.pairshot.core.ui.component.PairShotDialog
+import com.pairshot.feature.home.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun CreateAlbumDialog(
@@ -66,7 +69,7 @@ fun CreateAlbumDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "앨범 생성",
+                text = stringResource(R.string.home_dialog_album_create_title),
                 style = MaterialTheme.typography.titleMedium,
             )
         },
@@ -74,7 +77,7 @@ fun CreateAlbumDialog(
             val locationAddress = currentLocation?.address
             Column(modifier = Modifier.imePadding()) {
                 Text(
-                    text = "앨범 이름을 입력하세요.",
+                    text = stringResource(R.string.home_dialog_album_create_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -85,7 +88,7 @@ fun CreateAlbumDialog(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = {
                         Text(
-                            text = "앨범 이름",
+                            text = stringResource(R.string.home_dialog_album_create_placeholder),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -120,7 +123,7 @@ fun CreateAlbumDialog(
                 enabled = albumName.isNotBlank(),
             ) {
                 Text(
-                    text = "확인",
+                    text = stringResource(CoreR.string.common_button_confirm),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -128,7 +131,7 @@ fun CreateAlbumDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "취소",
+                    text = stringResource(CoreR.string.common_button_cancel),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }

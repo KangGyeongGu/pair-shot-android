@@ -11,7 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.pairshot.feature.album.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun AlbumEmptyActions(
@@ -37,7 +40,7 @@ fun AlbumEmptyActions(
                     ),
             ) {
                 Text(
-                    text = "촬영 시작",
+                    text = stringResource(CoreR.string.common_button_start_capture),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
@@ -46,7 +49,7 @@ fun AlbumEmptyActions(
                 shape = MaterialTheme.shapes.medium,
             ) {
                 Text(
-                    text = "페어 추가",
+                    text = stringResource(R.string.album_button_add_pair),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                 )

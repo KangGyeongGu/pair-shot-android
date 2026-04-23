@@ -6,6 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.pairshot.core.ui.R
 
 @Composable
 fun DeletePairConfirmDialog(
@@ -22,13 +25,19 @@ fun DeletePairConfirmDialog(
             modifier = modifier,
             title = {
                 Text(
-                    text = "삭제 방식 선택",
+                    text = stringResource(R.string.dialog_delete_pair_method_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             text = {
                 Text(
-                    text = "${pairCount}개 선택됨, ${combinedCount}개 합성본.",
+                    text =
+                        pluralStringResource(
+                            R.plurals.dialog_delete_pair_summary,
+                            pairCount,
+                            pairCount,
+                            combinedCount,
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
@@ -36,18 +45,18 @@ fun DeletePairConfirmDialog(
                 Row {
                     TextButton(onClick = onDeleteAll) {
                         Text(
-                            text = "일괄 삭제",
+                            text = stringResource(R.string.dialog_delete_pair_button_all),
                             color = MaterialTheme.colorScheme.error,
                         )
                     }
                     TextButton(onClick = onDeleteCombinedOnly) {
                         Text(
-                            text = "합성본만",
+                            text = stringResource(R.string.dialog_delete_pair_button_combined_only),
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
                     TextButton(onClick = onDismiss) {
-                        Text(text = "취소")
+                        Text(text = stringResource(R.string.common_button_cancel))
                     }
                 }
             },
@@ -58,27 +67,32 @@ fun DeletePairConfirmDialog(
             modifier = modifier,
             title = {
                 Text(
-                    text = "페어 삭제",
+                    text = stringResource(R.string.dialog_delete_pair_title),
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             text = {
                 Text(
-                    text = "${pairCount}개 페어를 삭제하시겠어요?",
+                    text =
+                        pluralStringResource(
+                            R.plurals.dialog_delete_pair_confirm,
+                            pairCount,
+                            pairCount,
+                        ),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
                 TextButton(onClick = onDeleteAll) {
                     Text(
-                        text = "삭제",
+                        text = stringResource(R.string.common_button_delete),
                         color = MaterialTheme.colorScheme.error,
                     )
                 }
             },
             dismissButton = {
                 TextButton(onClick = onDismiss) {
-                    Text(text = "취소")
+                    Text(text = stringResource(R.string.common_button_cancel))
                 }
             },
         )

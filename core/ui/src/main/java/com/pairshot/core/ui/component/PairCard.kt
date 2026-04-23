@@ -22,9 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.model.PairStatus
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.ui.R
 
 private val SelectionBorderWidth = 2.dp
 private val CombinedBadgeSize = 28.dp
@@ -91,7 +93,7 @@ fun PairCard(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.CameraAlt,
-                        contentDescription = "촬영 예정",
+                        contentDescription = stringResource(R.string.pair_card_desc_scheduled),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                     )
                 }
@@ -130,7 +132,7 @@ private fun CombinedStatusBadge(modifier: Modifier = Modifier) {
     ) {
         Icon(
             imageVector = Icons.Filled.JoinRight,
-            contentDescription = "합성 완료",
+            contentDescription = stringResource(R.string.pair_card_desc_combined),
             modifier = Modifier.padding(CombinedBadgeIconPadding).size(CombinedBadgeIconSize),
         )
     }

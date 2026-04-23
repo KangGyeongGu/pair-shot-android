@@ -23,7 +23,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.settings.R
+import com.pairshot.core.ui.R as CoreR
 
 data class LicenseItem(
     val name: String,
@@ -137,7 +140,7 @@ fun LicenseScreen(onNavigateBack: () -> Unit) {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "라이선스",
+                        text = stringResource(R.string.license_title),
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },
@@ -145,7 +148,7 @@ fun LicenseScreen(onNavigateBack: () -> Unit) {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "뒤로가기",
+                            contentDescription = stringResource(CoreR.string.common_desc_back),
                         )
                     }
                 },

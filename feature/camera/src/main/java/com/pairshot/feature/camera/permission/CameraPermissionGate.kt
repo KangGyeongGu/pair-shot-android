@@ -29,9 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.camera.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun CameraPermissionGate(
@@ -131,23 +134,26 @@ private fun PermissionRationaleContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "카메라 권한 필요",
+            text = stringResource(R.string.camera_permission_title),
             color = Color.White,
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.itemGap))
         Text(
-            text = "PairShot은 사진 촬영을 위해 카메라 접근 권한이 필요합니다.",
+            text = stringResource(R.string.camera_permission_message),
             color = Color.White.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
         Button(onClick = onRequestPermission) {
-            Text(text = "권한 허용")
+            Text(text = stringResource(R.string.camera_permission_allow))
         }
         Spacer(modifier = Modifier.height(PairShotSpacing.itemGap))
         TextButton(onClick = onNavigateBack) {
-            Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
+            Text(
+                text = stringResource(CoreR.string.common_button_cancel),
+                color = Color.White.copy(alpha = 0.6f),
+            )
         }
     }
 }
@@ -167,23 +173,26 @@ private fun PermissionDeniedContent(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "카메라 권한이 거부되었습니다",
+            text = stringResource(R.string.camera_permission_denied_title),
             color = Color.White,
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.itemGap))
         Text(
-            text = "설정 앱에서 PairShot의 카메라 권한을 직접 허용해 주세요.",
+            text = stringResource(R.string.camera_permission_denied_message),
             color = Color.White.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
         Button(onClick = onOpenSettings) {
-            Text(text = "설정으로 이동")
+            Text(text = stringResource(R.string.camera_permission_go_settings))
         }
         Spacer(modifier = Modifier.height(PairShotSpacing.itemGap))
         TextButton(onClick = onNavigateBack) {
-            Text(text = "취소", color = Color.White.copy(alpha = 0.6f))
+            Text(
+                text = stringResource(CoreR.string.common_button_cancel),
+                color = Color.White.copy(alpha = 0.6f),
+            )
         }
     }
 }

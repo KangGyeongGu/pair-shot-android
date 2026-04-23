@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Settings Screen -->
+    <string name="settings_error_load_failed">설정을 불러올 수 없습니다</string>
+    <string name="settings_section_shooting_files">촬영 및 파일</string>
+    <string name="settings_section_watermark">워터마크</string>
+    <string name="settings_section_combine">합성</string>
+    <string name="settings_section_storage">저장공간</string>
+    <string name="settings_section_app_info">앱 정보</string>
+
+    <string name="settings_item_image_quality">이미지 품질</string>
+    <string name="settings_item_file_name_prefix">파일명 접두어</string>
+    <string name="settings_item_overlay_opacity">오버레이 투명도</string>
+    <string name="settings_item_watermark_use">워터마크 사용</string>
+    <string name="settings_item_user_settings">사용자 설정</string>
+    <string name="settings_item_photo_storage">사진 용량</string>
+    <string name="settings_item_cache">캐시</string>
+    <string name="settings_item_app_version">앱 버전</string>
+    <string name="settings_item_license">라이선스</string>
+
+    <string name="settings_file_name_prefix_none">없음</string>
+    <string name="settings_file_name_prefix_with_underscore">%1$s_</string>
+    <string name="settings_warning_required">설정 필요</string>
+    <string name="settings_warning_opacity_high">75% 이하 권장</string>
+
+    <!-- Quality options -->
+    <string name="settings_quality_low">낮음 (75%)</string>
+    <string name="settings_quality_low_desc">파일 크기 작음</string>
+    <string name="settings_quality_high">높음 (85%)</string>
+    <string name="settings_quality_high_desc">기본값, 균형</string>
+    <string name="settings_quality_best">최상 (95%)</string>
+    <string name="settings_quality_best_desc">최대 품질</string>
+
+    <!-- License Screen -->
+    <string name="license_title">라이선스</string>
+
+    <!-- Watermark Settings Screen -->
+    <string name="watermark_settings_title">워터마크 설정</string>
+    <string name="watermark_section_basic">기본 설정</string>
+    <string name="watermark_section_preview">미리보기</string>
+    <string name="watermark_item_text_settings">텍스트 설정</string>
+    <string name="watermark_item_logo_settings">로고 설정</string>
+
+    <string name="watermark_logo_label">로고</string>
+    <string name="watermark_logo_choose">선택</string>
+    <string name="watermark_field_position">위치</string>
+    <string name="watermark_field_size">크기</string>
+    <string name="watermark_field_opacity">투명도</string>
+    <string name="watermark_field_lines">줄 수</string>
+    <string name="watermark_field_repeat">반복수</string>
+    <string name="watermark_type_label">워터마크 유형</string>
+    <string name="watermark_type_text">텍스트</string>
+    <string name="watermark_type_logo">로고</string>
+    <string name="watermark_text_field">텍스트</string>
+    <string name="watermark_text_input_hint">텍스트 입력</string>
+    <string name="watermark_preview_desc">워터마크 미리보기</string>
+
+    <!-- Combine Settings Screen -->
+    <string name="combine_settings_title">합성 설정</string>
+    <string name="combine_section_alignment">정렬</string>
+    <string name="combine_section_border">테두리</string>
+    <string name="combine_section_label">레이블</string>
+    <string name="combine_section_label_mode">레이블 방식</string>
+    <string name="combine_section_label_background">레이블 배경</string>
+    <string name="combine_section_preview">미리보기</string>
+
+    <string name="combine_item_border_use">테두리 사용</string>
+    <string name="combine_item_border_thickness">두께</string>
+    <string name="combine_item_color">색상</string>
+    <string name="combine_item_label_use">레이블 사용</string>
+    <string name="combine_item_label_before">BEFORE 텍스트</string>
+    <string name="combine_item_label_after">AFTER 텍스트</string>
+    <string name="combine_item_text_size">텍스트 크기</string>
+    <string name="combine_item_text_color">텍스트 색상</string>
+    <string name="combine_item_position_before">BEFORE 위치</string>
+    <string name="combine_item_position_after">AFTER 위치</string>
+    <string name="combine_item_background_use">배경 사용</string>
+    <string name="combine_item_opacity">투명도</string>
+    <string name="combine_item_curvature">곡률</string>
+
+    <string name="combine_direction_label">방향</string>
+    <string name="combine_direction_horizontal">좌우</string>
+    <string name="combine_direction_vertical">상하</string>
+    <string name="combine_label_position_label">레이블 위치</string>
+    <string name="combine_label_position_top">위</string>
+    <string name="combine_label_position_bottom">아래</string>
+    <string name="combine_label_mode_label">방식</string>
+    <string name="combine_label_mode_full_width">전체 너비</string>
+    <string name="combine_label_mode_free">자유 위치</string>
+
+    <string name="combine_text_input_hint">텍스트 입력</string>
+    <string name="combine_preview_desc">합성 미리보기</string>
+
+    <string name="combine_dialog_color_title">색상 선택</string>
+    <string name="combine_dialog_bg_color_title">배경 색상</string>
+    <string name="combine_dialog_match_border_color">테두리색상과 일치</string>
+
+    <!-- Settings Dialogs -->
+    <string name="settings_dialog_overlay_opacity_title">오버레이 기본 투명도</string>
+    <string name="settings_dialog_cache_clear_title">캐시 초기화</string>
+    <string name="settings_dialog_cache_clear_message">캐시를 초기화하시겠습니까?\n썸네일이 삭제되며, 다시 생성됩니다.</string>
+    <string name="settings_dialog_cache_clear_button">초기화</string>
+    <string name="settings_dialog_image_quality_title">이미지 품질</string>
+    <string name="settings_dialog_apply">적용</string>
+    <string name="settings_dialog_file_name_prefix_title">파일명 접두어</string>
+    <string name="settings_dialog_prefix_hint">접두어 입력 (예: 현장A)_</string>
+    <string name="settings_dialog_prefix_required">접두어를 입력해주세요</string>
+    <string name="settings_dialog_reset_default">기본값으로 초기화</string>
+
+</resources>

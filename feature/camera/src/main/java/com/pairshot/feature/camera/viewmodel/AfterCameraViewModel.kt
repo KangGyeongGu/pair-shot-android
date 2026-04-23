@@ -259,7 +259,7 @@ class AfterCameraViewModel
                     )
                     _events.emit(AfterCameraEvent.AfterSaved(currentPair.id))
                 } catch (e: Exception) {
-                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "저장에 실패했습니다."))
+                    _events.emit(AfterCameraEvent.SaveError(e.message ?: "save failed"))
                 } finally {
                     _isSaving.value = false
                 }

@@ -15,7 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.home.R
 import com.pairshot.feature.home.viewmodel.HomeMode
 
 @Composable
@@ -41,8 +43,8 @@ fun HomeFilterRow(
             HomeMode.entries.forEach { mode ->
                 val label =
                     when (mode) {
-                        HomeMode.PAIRS -> "전체"
-                        HomeMode.ALBUMS -> "앨범"
+                        HomeMode.PAIRS -> stringResource(R.string.home_filter_all)
+                        HomeMode.ALBUMS -> stringResource(R.string.home_filter_album)
                     }
                 FilterChip(
                     selected = selectedMode == mode,
@@ -75,7 +77,7 @@ fun HomeFilterRow(
             IconButton(onClick = onEnterSelectionMode) {
                 Icon(
                     imageVector = Icons.Outlined.CheckCircle,
-                    contentDescription = "선택 모드",
+                    contentDescription = stringResource(R.string.home_desc_selection_mode),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }

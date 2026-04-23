@@ -27,11 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.model.PairStatus
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
+import com.pairshot.feature.album.R
 
 @Composable
 fun PairPickerGridSection(
@@ -48,7 +50,7 @@ fun PairPickerGridSection(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "페어가 없습니다",
+                text = stringResource(R.string.pair_picker_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -148,7 +150,7 @@ private fun PairPickerCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "이미 추가됨",
+                        text = stringResource(R.string.pair_picker_already_added),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )

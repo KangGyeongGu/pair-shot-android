@@ -44,8 +44,10 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.pairshot.feature.camera.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -175,7 +177,7 @@ fun ZoomControls(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FlipCameraAndroid,
-                        contentDescription = "카메라 전환",
+                        contentDescription = stringResource(R.string.camera_desc_switch),
                         tint = Color.White,
                         modifier = Modifier.size(LensButtonIconSize),
                     )

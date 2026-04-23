@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Accessibility -->
+    <string name="pair_preview_desc_saved_combined">저장된 합성 이미지</string>
+    <string name="pair_preview_desc_combined_preview">합성 미리보기</string>
+    <string name="pair_preview_desc_close">닫기</string>
+
+    <!-- TopBar menu -->
+    <string name="pair_preview_menu_recapture">재촬영</string>
+
+</resources>

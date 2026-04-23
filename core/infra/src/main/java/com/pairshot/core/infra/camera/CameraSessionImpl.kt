@@ -387,7 +387,7 @@ class CameraSessionImpl
                     }
                 }
             }.onFailure { error ->
-                Timber.w(error, "Overlay 준비 실패: $beforePhotoUri")
+                Timber.w(error, "Overlay preparation failed: $beforePhotoUri")
             }.getOrNull()
 
         override fun playShutterSound() {

@@ -10,8 +10,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.feature.album.R
 import com.pairshot.feature.album.screen.AlbumDetailScreen
 import com.pairshot.feature.album.viewmodel.AlbumDetailEvent
 import com.pairshot.feature.album.viewmodel.AlbumDetailUiState
@@ -54,7 +56,7 @@ fun AlbumDetailRoute(
         AlbumDetailUiState.Error -> {
             Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "앨범을 불러오지 못했습니다.",
+                    text = stringResource(R.string.album_route_load_failed),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

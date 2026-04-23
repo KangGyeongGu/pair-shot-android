@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.pairshot.core.ui.R
 
 enum class ImageProfile {
     THUMBNAIL,
@@ -97,7 +99,7 @@ private fun ErrorContent() {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "파일 없음",
+            text = stringResource(R.string.image_file_missing),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
         )

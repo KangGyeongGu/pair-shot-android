@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PairShot</string>
+
+    <!-- Selection progress labels -->
+    <string name="progress_sharing">공유 준비 중</string>
+    <string name="progress_saving">기기 저장 중</string>
+    <plurals name="progress_label_with_count">
+        <item quantity="other">%1$s · %2$d개</item>
+    </plurals>
 </resources>

@@ -9,6 +9,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.PairShotActionBar
 import com.pairshot.core.ui.component.PairShotActionBarItem
 
@@ -25,13 +27,13 @@ fun HomeSelectionBottomBar(
 
     PairShotActionBar {
         PairShotActionBarItem(
-            label = "공유",
+            label = stringResource(R.string.common_button_share),
             onClick = onShare,
             enabled = hasSelection,
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Share,
-                    contentDescription = "공유",
+                    contentDescription = stringResource(R.string.common_button_share),
                     tint =
                         if (hasSelection) {
                             MaterialTheme.colorScheme.onSurface
@@ -42,13 +44,13 @@ fun HomeSelectionBottomBar(
             },
         )
         PairShotActionBarItem(
-            label = "기기저장",
+            label = stringResource(R.string.common_button_save_to_device),
             onClick = onSaveToDevice,
             enabled = hasSelection,
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.FileDownload,
-                    contentDescription = "기기저장",
+                    contentDescription = stringResource(R.string.common_button_save_to_device),
                     tint =
                         if (hasSelection) {
                             MaterialTheme.colorScheme.onSurface
@@ -59,14 +61,14 @@ fun HomeSelectionBottomBar(
             },
         )
         PairShotActionBarItem(
-            label = "삭제",
+            label = stringResource(R.string.common_button_delete),
             onClick = onDelete,
             enabled = hasSelection,
             labelColor = MaterialTheme.colorScheme.error,
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    contentDescription = "삭제",
+                    contentDescription = stringResource(R.string.common_button_delete),
                     tint =
                         if (hasSelection) {
                             MaterialTheme.colorScheme.error
@@ -77,13 +79,13 @@ fun HomeSelectionBottomBar(
             },
         )
         PairShotActionBarItem(
-            label = "내보내기설정",
+            label = stringResource(R.string.common_button_export_settings),
             onClick = onExportSettings,
             enabled = hasSelection,
             icon = {
                 Icon(
                     imageVector = Icons.Outlined.Tune,
-                    contentDescription = "내보내기설정",
+                    contentDescription = stringResource(R.string.common_button_export_settings),
                     tint =
                         if (hasSelection) {
                             MaterialTheme.colorScheme.onSurface

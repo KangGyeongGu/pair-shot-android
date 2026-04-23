@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -103,7 +104,13 @@ class MainActivity : ComponentActivity() {
 
                         progress?.let { p ->
                             TopProgressPill(
-                                label = "${p.label} · ${p.total}개",
+                                label =
+                                    pluralStringResource(
+                                        R.plurals.progress_label_with_count,
+                                        p.total,
+                                        p.label.asString(),
+                                        p.total,
+                                    ),
                                 progress = if (p.total > 0) p.current.toFloat() / p.total else 0f,
                                 progressText = "${p.current}/${p.total}",
                                 modifier =
@@ -115,13 +122,13 @@ class MainActivity : ComponentActivity() {
                         }
 
                         selectionMessage?.let { msg ->
-                            val (text, variant) =
+                            val variant =
                                 when (msg) {
-                                    is SelectionMessage.Info -> msg.text to SnackbarVariant.INFO
-                                    is SelectionMessage.Error -> msg.text to SnackbarVariant.ERROR
+                                    is SelectionMessage.Info -> SnackbarVariant.INFO
+                                    is SelectionMessage.Error -> SnackbarVariant.ERROR
                                 }
                             PairShotSnackbar(
-                                message = text,
+                                message = msg.text.asString(),
                                 variant = variant,
                                 modifier =
                                     Modifier

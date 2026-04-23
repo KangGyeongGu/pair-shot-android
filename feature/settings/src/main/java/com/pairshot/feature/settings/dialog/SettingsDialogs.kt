@@ -33,6 +33,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.OffsetMapping
@@ -43,7 +44,9 @@ import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotBottomSheet
 import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.core.ui.component.SettingsSliderItem
+import com.pairshot.feature.settings.R
 import kotlin.math.roundToInt
+import com.pairshot.core.ui.R as CoreR
 
 private val InputFieldMinHeight = 40.dp
 private val InputErrorHeight = 20.dp
@@ -54,11 +57,12 @@ private data class QualityOption(
     val value: Int,
 )
 
-private val qualityOptions =
+@Composable
+private fun qualityOptions(): List<QualityOption> =
     listOf(
-        QualityOption("낮음 (75%)", "파일 크기 작음", 75),
-        QualityOption("높음 (85%)", "기본값, 균형", 85),
-        QualityOption("최상 (95%)", "최대 품질", 95),
+        QualityOption(stringResource(R.string.settings_quality_low), stringResource(R.string.settings_quality_low_desc), 75),
+        QualityOption(stringResource(R.string.settings_quality_high), stringResource(R.string.settings_quality_high_desc), 85),
+        QualityOption(stringResource(R.string.settings_quality_best), stringResource(R.string.settings_quality_best_desc), 95),
     )
 
 private val fileNameSafePattern = Regex("[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ_-]")
@@ -71,7 +75,7 @@ internal fun OverlayAlphaDialog(
 ) {
     PairShotBottomSheet(onDismissRequest = onDismiss) {
         Text(
-            text = "오버레이 기본 투명도",
+            text = stringResource(R.string.settings_dialog_overlay_opacity_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -90,7 +94,7 @@ internal fun OverlayAlphaDialog(
             horizontalArrangement = Arrangement.End,
         ) {
             TextButton(onClick = onDismiss) {
-                Text("확인")
+                Text(stringResource(CoreR.string.common_button_confirm))
             }
         }
     }
@@ -103,8 +107,8 @@ internal fun ClearCacheDialog(
 ) {
     PairShotDialog(
         onDismissRequest = onDismiss,
-        title = { Text("캐시 초기화") },
-        text = { Text("캐시를 초기화하시겠습니까?\n썸네일이 삭제되며, 다시 생성됩니다.") },
+        title = { Text(stringResource(R.string.settings_dialog_cache_clear_title)) },
+        text = { Text(stringResource(R.string.settings_dialog_cache_clear_message)) },
         confirmButton = {
             TextButton(
                 onClick = {
@@ -112,12 +116,12 @@ internal fun ClearCacheDialog(
                     onConfirm()
                 },
             ) {
-                Text("초기화")
+                Text(stringResource(R.string.settings_dialog_cache_clear_button))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("취소")
+                Text(stringResource(CoreR.string.common_button_cancel))
             }
         },
     )
@@ -133,12 +137,12 @@ internal fun ImageQualityDialog(
 
     PairShotBottomSheet(onDismissRequest = onDismiss) {
         Text(
-            text = "이미지 품질",
+            text = stringResource(R.string.settings_dialog_image_quality_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(modifier = Modifier.height(12.dp))
-        qualityOptions.forEach { option ->
+        qualityOptions().forEach { option ->
             Row(
                 modifier =
                     Modifier
@@ -175,7 +179,7 @@ internal fun ImageQualityDialog(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(onClick = onDismiss) { Text("취소") }
+            TextButton(onClick = onDismiss) { Text(stringResource(CoreR.string.common_button_cancel)) }
             Spacer(modifier = Modifier.width(8.dp))
             TextButton(
                 onClick = {
@@ -183,7 +187,7 @@ internal fun ImageQualityDialog(
                     onDismiss()
                 },
             ) {
-                Text("적용", color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.settings_dialog_apply), color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -223,7 +227,7 @@ internal fun FileNamePrefixDialog(
 
     PairShotBottomSheet(onDismissRequest = onDismiss) {
         Text(
-            text = "파일명 접두어",
+            text = stringResource(R.string.settings_dialog_file_name_prefix_title),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -263,7 +267,7 @@ internal fun FileNamePrefixDialog(
                     ) {
                         if (prefixInput.isEmpty()) {
                             Text(
-                                text = "접두어 입력 (예: 현장A)_",
+                                text = stringResource(R.string.settings_dialog_prefix_hint),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = onSurfaceVariantColor,
                             )
@@ -276,7 +280,7 @@ internal fun FileNamePrefixDialog(
         Box(modifier = Modifier.height(InputErrorHeight)) {
             if (isError) {
                 Text(
-                    text = "접두어를 입력해주세요",
+                    text = stringResource(R.string.settings_dialog_prefix_required),
                     style = MaterialTheme.typography.bodySmall,
                     color = errorColor,
                 )
@@ -287,7 +291,7 @@ internal fun FileNamePrefixDialog(
                 onClick = { prefixInput = "PAIRSHOT" },
                 modifier = Modifier.align(Alignment.End),
             ) {
-                Text("기본값으로 초기화")
+                Text(stringResource(R.string.settings_dialog_reset_default))
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -295,7 +299,7 @@ internal fun FileNamePrefixDialog(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
-            TextButton(onClick = onDismiss) { Text("취소") }
+            TextButton(onClick = onDismiss) { Text(stringResource(CoreR.string.common_button_cancel)) }
             Spacer(modifier = Modifier.width(8.dp))
             TextButton(
                 onClick = {
@@ -304,7 +308,7 @@ internal fun FileNamePrefixDialog(
                 },
                 enabled = prefixInput.isNotBlank(),
             ) {
-                Text("저장", color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(CoreR.string.common_button_save), color = MaterialTheme.colorScheme.primary)
             }
         }
     }

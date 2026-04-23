@@ -26,7 +26,7 @@ fun ExportShareEffect(actions: Flow<ExportAction>) {
                     }
                 context.startActivity(chooser)
             }.onFailure { error ->
-                Timber.e(error, "공유 Intent 실행 실패")
+                Timber.e(error, "share intent failed")
             }
         }
     }
@@ -45,7 +45,7 @@ private fun buildSendMultipleIntent(
     context: Context,
     uriStrings: List<String>,
 ): Intent {
-    require(uriStrings.isNotEmpty()) { "공유할 URI가 없습니다" }
+    require(uriStrings.isNotEmpty()) { "no URIs to share" }
     val uris = ArrayList(uriStrings.map { Uri.parse(it) })
     return Intent(Intent.ACTION_SEND_MULTIPLE).apply {
         type = "image/*"

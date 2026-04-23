@@ -10,8 +10,10 @@ import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.rendering.PreviewSampleProvider
 import com.pairshot.core.rendering.WatermarkRenderer
+import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
+import com.pairshot.core.ui.text.UiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -126,8 +128,13 @@ class SettingsViewModel
 
         fun clearCache() {
             viewModelScope.launch {
-                val freed = clearCacheUseCase()
-                _snackbarMessage.emit(SnackbarEvent("캐시 ${formatBytes(freed)} 정리됨", SnackbarVariant.SUCCESS))
+                clearCacheUseCase()
+                _snackbarMessage.emit(
+                    SnackbarEvent(
+                        UiText.Resource(R.string.snackbar_success_cache_cleared),
+                        SnackbarVariant.SUCCESS,
+                    ),
+                )
                 loadStorageInfo()
             }
         }
@@ -145,7 +152,12 @@ class SettingsViewModel
                     val current = watermarkConfig.value
                     watermarkRepository.saveConfig(current.copy(logoPath = path))
                 } catch (_: Exception) {
-                    _snackbarMessage.emit(SnackbarEvent("로고 파일을 불러올 수 없습니다", SnackbarVariant.ERROR))
+                    _snackbarMessage.emit(
+                        SnackbarEvent(
+                            UiText.Resource(R.string.snackbar_error_file_load_failed),
+                            SnackbarVariant.ERROR,
+                        ),
+                    )
                 }
             }
         }

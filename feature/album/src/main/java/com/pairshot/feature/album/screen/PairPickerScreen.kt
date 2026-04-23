@@ -18,7 +18,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.pairshot.feature.album.R
 import com.pairshot.feature.album.component.PairPickerGridSection
 import com.pairshot.feature.album.viewmodel.PairPickerUiState
 
@@ -38,9 +41,13 @@ fun PairPickerScreen(
                 title = {
                     val countLabel =
                         if (uiState.selectedIds.isNotEmpty()) {
-                            "페어 선택 (${uiState.selectedIds.size})"
+                            pluralStringResource(
+                                R.plurals.pair_picker_title_selected,
+                                uiState.selectedIds.size,
+                                uiState.selectedIds.size,
+                            )
                         } else {
-                            "페어 선택"
+                            stringResource(R.string.pair_picker_title)
                         }
                     Text(
                         text = countLabel,
@@ -51,7 +58,7 @@ fun PairPickerScreen(
                     IconButton(onClick = onClose) {
                         Icon(
                             imageVector = Icons.Filled.Close,
-                            contentDescription = "닫기",
+                            contentDescription = stringResource(R.string.pair_picker_desc_close),
                         )
                     }
                 },
@@ -77,7 +84,12 @@ fun PairPickerScreen(
                             .navigationBarsPadding()
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                 ) {
-                    Text(text = if (uiState.isConfirming) "추가 중…" else "추가")
+                    Text(
+                        text =
+                            stringResource(
+                                if (uiState.isConfirming) R.string.pair_picker_button_adding else R.string.pair_picker_button_add,
+                            ),
+                    )
                 }
             }
         },

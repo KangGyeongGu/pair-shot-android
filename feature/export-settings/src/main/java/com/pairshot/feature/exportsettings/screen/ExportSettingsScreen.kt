@@ -18,13 +18,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.ExportFormat
 import com.pairshot.core.ui.component.SettingsSectionLabel
+import com.pairshot.feature.exportsettings.R
 import com.pairshot.feature.exportsettings.component.ExportCombineSection
 import com.pairshot.feature.exportsettings.component.ExportFormatSection
 import com.pairshot.feature.exportsettings.component.ExportIncludeSection
 import com.pairshot.feature.exportsettings.component.ExportWatermarkSection
+import com.pairshot.core.ui.R as CoreR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +54,7 @@ fun ExportSettingsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "내보내기 설정",
+                        text = stringResource(R.string.export_settings_title),
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },
@@ -59,7 +62,7 @@ fun ExportSettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "뒤로가기",
+                            contentDescription = stringResource(CoreR.string.common_desc_back),
                         )
                     }
                 },
@@ -82,7 +85,7 @@ fun ExportSettingsScreen(
                 ),
         ) {
             item(key = "label_include") {
-                SettingsSectionLabel(label = "포함 항목")
+                SettingsSectionLabel(label = stringResource(R.string.export_section_include))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
             item(key = "section_include") {
@@ -98,7 +101,7 @@ fun ExportSettingsScreen(
 
             item(key = "label_format") {
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                SettingsSectionLabel(label = "저장 형식")
+                SettingsSectionLabel(label = stringResource(R.string.export_section_format))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
             item(key = "section_format") {
@@ -110,7 +113,7 @@ fun ExportSettingsScreen(
 
             item(key = "label_watermark") {
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                SettingsSectionLabel(label = "워터마크")
+                SettingsSectionLabel(label = stringResource(R.string.export_section_watermark))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
             item(key = "section_watermark") {
@@ -123,7 +126,7 @@ fun ExportSettingsScreen(
 
             item(key = "label_combine") {
                 Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                SettingsSectionLabel(label = "합성")
+                SettingsSectionLabel(label = stringResource(R.string.export_section_combine))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
             item(key = "section_combine") {

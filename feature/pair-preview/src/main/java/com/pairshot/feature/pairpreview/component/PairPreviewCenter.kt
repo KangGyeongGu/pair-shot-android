@@ -22,9 +22,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.model.CombineHistory
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
+import com.pairshot.feature.pairpreview.R
 
 private const val MinZoomScale = 1f
 private const val MaxZoomScale = 4f
@@ -71,7 +73,7 @@ fun PairPreviewCenter(
             ProfiledAsyncImage(
                 data = combined.mediaStoreUri,
                 profile = ImageProfile.DETAIL,
-                contentDescription = "저장된 합성 이미지",
+                contentDescription = stringResource(R.string.pair_preview_desc_saved_combined),
                 contentScale = ContentScale.Fit,
                 modifier = zoomModifier,
             )
@@ -92,7 +94,7 @@ private fun LivePreviewContent(
     if (bitmap != null && !bitmap.isRecycled) {
         Image(
             bitmap = bitmap.asImageBitmap(),
-            contentDescription = "합성 미리보기",
+            contentDescription = stringResource(R.string.pair_preview_desc_combined_preview),
             contentScale = ContentScale.Fit,
             filterQuality = FilterQuality.High,
             modifier = modifier,

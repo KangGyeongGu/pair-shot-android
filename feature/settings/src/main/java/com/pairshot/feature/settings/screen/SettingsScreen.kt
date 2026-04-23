@@ -44,11 +44,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.isContentMissing
-import com.pairshot.core.ui.component.PairShotSnackbar
+import com.pairshot.core.ui.component.PairShotSnackbarContent
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
@@ -56,12 +57,14 @@ import com.pairshot.core.ui.component.SettingsItem
 import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.SettingsSliderItem
 import com.pairshot.core.ui.component.WarningBadge
+import com.pairshot.feature.settings.R
 import com.pairshot.feature.settings.dialog.ClearCacheDialog
 import com.pairshot.feature.settings.dialog.FileNamePrefixDialog
 import com.pairshot.feature.settings.dialog.ImageQualityDialog
 import com.pairshot.feature.settings.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.viewmodel.formatBytes
 import kotlin.math.roundToInt
+import com.pairshot.core.ui.R as CoreR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,7 +122,7 @@ fun SettingsScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = "설정",
+                            text = stringResource(CoreR.string.common_title_settings),
                             style = MaterialTheme.typography.titleMedium,
                         )
                     },
@@ -127,7 +130,7 @@ fun SettingsScreen(
                         IconButton(onClick = onNavigateBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "뒤로가기",
+                                contentDescription = stringResource(CoreR.string.common_desc_back),
                             )
                         }
                     },
@@ -160,7 +163,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "설정을 불러올 수 없습니다",
+                            text = stringResource(R.string.settings_error_load_failed),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -170,9 +173,9 @@ fun SettingsScreen(
                 is SettingsUiState.Success -> {
                     val qualityOptions =
                         listOf(
-                            Triple("낮음 (75%)", "파일 크기 작음", 75),
-                            Triple("높음 (85%)", "기본값, 균형", 85),
-                            Triple("최상 (95%)", "최대 품질", 95),
+                            Triple(stringResource(R.string.settings_quality_low), stringResource(R.string.settings_quality_low_desc), 75),
+                            Triple(stringResource(R.string.settings_quality_high), stringResource(R.string.settings_quality_high_desc), 85),
+                            Triple(stringResource(R.string.settings_quality_best), stringResource(R.string.settings_quality_best_desc), 95),
                         )
                     val qualityLabel =
                         qualityOptions
@@ -180,7 +183,11 @@ fun SettingsScreen(
                             ?.first
                             ?: "${uiState.jpegQuality}%"
                     val prefixDisplay =
-                        if (uiState.fileNamePrefix.isEmpty()) "없음" else "${uiState.fileNamePrefix}_"
+                        if (uiState.fileNamePrefix.isEmpty()) {
+                            stringResource(R.string.settings_file_name_prefix_none)
+                        } else {
+                            stringResource(R.string.settings_file_name_prefix_with_underscore, uiState.fileNamePrefix)
+                        }
 
                     LazyColumn(
                         modifier =
@@ -194,14 +201,14 @@ fun SettingsScreen(
                             ),
                     ) {
                         item(key = "label_capture") {
-                            SettingsSectionLabel(label = "촬영 및 파일")
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_shooting_files))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
 
                         item(key = "card_capture") {
                             SettingsCard {
                                 SettingsItem(
-                                    label = "이미지 품질",
+                                    label = stringResource(R.string.settings_item_image_quality),
                                     trailing = qualityLabel,
                                     onClick = { showQualityDialog = true },
                                 )
@@ -216,7 +223,7 @@ fun SettingsScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
-                                            text = "오버레이 투명도",
+                                            text = stringResource(R.string.settings_item_overlay_opacity),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier.weight(1f),
@@ -261,7 +268,7 @@ fun SettingsScreen(
                                                         horizontalArrangement = Arrangement.End,
                                                         verticalAlignment = Alignment.CenterVertically,
                                                     ) {
-                                                        WarningBadge(text = "75% 이하 권장")
+                                                        WarningBadge(text = stringResource(R.string.settings_warning_opacity_high))
                                                     }
                                                 }
                                             },
@@ -270,7 +277,7 @@ fun SettingsScreen(
                                 }
                                 SettingsDivider()
                                 SettingsItem(
-                                    label = "파일명 접두어",
+                                    label = stringResource(R.string.settings_item_file_name_prefix),
                                     trailing = prefixDisplay,
                                     onClick = { showPrefixDialog = true },
                                 )
@@ -282,7 +289,7 @@ fun SettingsScreen(
                         }
 
                         item(key = "label_watermark") {
-                            SettingsSectionLabel(label = "워터마크")
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_watermark))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
 
@@ -297,7 +304,7 @@ fun SettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Text(
-                                        text = "워터마크 사용",
+                                        text = stringResource(R.string.settings_item_watermark_use),
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurface,
                                         modifier = Modifier.weight(1f),
@@ -322,9 +329,13 @@ fun SettingsScreen(
                                     Column {
                                         SettingsDivider()
                                         SettingsItem(
-                                            label = "사용자 설정",
+                                            label = stringResource(R.string.settings_item_user_settings),
                                             trailing =
-                                                if (watermarkConfig.isContentMissing()) "설정 필요" else null,
+                                                if (watermarkConfig.isContentMissing()) {
+                                                    stringResource(R.string.settings_warning_required)
+                                                } else {
+                                                    null
+                                                },
                                             trailingIsError = watermarkConfig.isContentMissing(),
                                             onClick = onWatermarkSettingsClick,
                                         )
@@ -338,14 +349,14 @@ fun SettingsScreen(
                         }
 
                         item(key = "label_combine") {
-                            SettingsSectionLabel(label = "합성")
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_combine))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
 
                         item(key = "card_combine") {
                             SettingsCard {
                                 SettingsItem(
-                                    label = "사용자 설정",
+                                    label = stringResource(R.string.settings_item_user_settings),
                                     onClick = onCombineSettingsClick,
                                 )
                             }
@@ -356,19 +367,19 @@ fun SettingsScreen(
                         }
 
                         item(key = "label_storage") {
-                            SettingsSectionLabel(label = "저장공간")
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_storage))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
 
                         item(key = "card_storage") {
                             SettingsCard {
                                 SettingsItem(
-                                    label = "사진 용량",
+                                    label = stringResource(R.string.settings_item_photo_storage),
                                     trailing = formatBytes(uiState.usedStorageBytes),
                                 )
                                 SettingsDivider()
                                 SettingsItem(
-                                    label = "캐시",
+                                    label = stringResource(R.string.settings_item_cache),
                                     trailing = formatBytes(uiState.cacheBytes),
                                     onClick = { showClearCacheDialog = true },
                                 )
@@ -380,19 +391,19 @@ fun SettingsScreen(
                         }
 
                         item(key = "label_info") {
-                            SettingsSectionLabel(label = "앱 정보")
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_app_info))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
 
                         item(key = "card_info") {
                             SettingsCard {
                                 SettingsItem(
-                                    label = "앱 버전",
+                                    label = stringResource(R.string.settings_item_app_version),
                                     trailing = uiState.appVersion,
                                 )
                                 SettingsDivider()
                                 SettingsItem(
-                                    label = "라이선스",
+                                    label = stringResource(R.string.settings_item_license),
                                     onClick = onLicenseClick,
                                 )
                             }
@@ -410,12 +421,7 @@ fun SettingsScreen(
                     .statusBarsPadding()
                     .padding(top = 8.dp),
             snackbar = { data ->
-                PairShotSnackbar(
-                    message = data.visuals.message,
-                    variant = snackbarController.currentVariant,
-                    actionLabel = data.visuals.actionLabel,
-                    onAction = { data.performAction() },
-                )
+                PairShotSnackbarContent(data, snackbarController.currentVariant)
             },
         )
     }

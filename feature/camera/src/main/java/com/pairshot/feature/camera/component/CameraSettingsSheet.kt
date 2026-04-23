@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
@@ -65,6 +66,7 @@ import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTypographyTokens
 import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
+import com.pairshot.feature.camera.R
 import com.pairshot.feature.camera.state.CameraSettingsState
 import kotlin.math.roundToInt
 
@@ -175,6 +177,7 @@ private data class SettingItem(
     val onClick: () -> Unit,
 )
 
+@Composable
 private fun buildSettingItems(
     state: CameraSettingsState,
     capabilities: CameraCapabilities,
@@ -191,7 +194,7 @@ private fun buildSettingItems(
     items.add(
         SettingItem(
             icon = Icons.Outlined.Grid3x3,
-            label = "격자",
+            label = stringResource(R.string.camera_settings_grid),
             isActive = state.gridEnabled,
             onClick = onToggleGrid,
         ),
@@ -208,7 +211,7 @@ private fun buildSettingItems(
         items.add(
             SettingItem(
                 icon = flashIcon,
-                label = "플래시",
+                label = stringResource(R.string.camera_settings_flash),
                 isActive = state.flashMode != FlashMode.OFF,
                 onClick = onCycleFlash,
             ),
@@ -219,7 +222,7 @@ private fun buildSettingItems(
         items.add(
             SettingItem(
                 icon = Icons.Outlined.NightsStay,
-                label = "야간모드",
+                label = stringResource(R.string.camera_settings_night_mode),
                 isActive = state.nightModeEnabled,
                 onClick = onToggleNightMode,
             ),
@@ -241,7 +244,7 @@ private fun buildSettingItems(
         items.add(
             SettingItem(
                 icon = Icons.Outlined.Layers,
-                label = "오버레이",
+                label = stringResource(R.string.camera_settings_overlay),
                 isActive = overlayEnabled,
                 onClick = onToggleOverlay,
             ),
@@ -251,7 +254,7 @@ private fun buildSettingItems(
     items.add(
         SettingItem(
             icon = Icons.Outlined.Straighten,
-            label = "수평계",
+            label = stringResource(R.string.camera_settings_level),
             isActive = state.levelEnabled,
             onClick = onToggleLevel,
         ),
@@ -347,7 +350,7 @@ private fun OverlayAlphaSlider(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "오버레이 투명도",
+                text = stringResource(R.string.camera_settings_overlay_opacity),
                 style = MaterialTheme.typography.labelSmall,
                 color = contentColor,
             )
@@ -400,7 +403,7 @@ private fun OverlayAlphaSlider(
                     tint = warningColor,
                 )
                 Text(
-                    text = "75% 이하 권장",
+                    text = stringResource(R.string.camera_settings_overlay_opacity_hint),
                     style = PairShotTypographyTokens.labelExtraSmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold),
                     color = warningColor,
                 )

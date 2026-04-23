@@ -39,12 +39,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.ui.component.ImageProfile
 import com.pairshot.core.ui.component.ProfiledAsyncImage
+import com.pairshot.feature.camera.R
 import kotlin.math.abs
 
 internal val BeforeStripHeight: Dp = 168.dp
@@ -70,7 +72,7 @@ fun BeforePreviewStrip(
     selectedIndex: Int? = null,
     onSelectIndex: ((Int) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
-    emptyMessage: String = "아직 촬영된 Before가 없습니다",
+    emptyMessage: String = stringResource(R.string.camera_strip_empty),
     stripHeight: Dp = BeforeStripHeight,
     allActiveSize: Boolean = false,
     progress: StripProgress? = null,
@@ -169,7 +171,11 @@ fun BeforePreviewStrip(
                             ProfiledAsyncImage(
                                 data = beforeUri,
                                 profile = ImageProfile.THUMBNAIL,
-                                contentDescription = "Before 썸네일 ${index + 1}",
+                                contentDescription =
+                                    stringResource(
+                                        R.string.camera_strip_thumbnail_desc,
+                                        index + 1,
+                                    ),
                                 contentScale = ContentScale.Crop,
                                 modifier =
                                     Modifier
@@ -219,7 +225,7 @@ private fun StripProgressIndicator(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "$completed / $total 완료",
+            text = stringResource(R.string.camera_strip_progress, completed, total),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
             color = Color.White,

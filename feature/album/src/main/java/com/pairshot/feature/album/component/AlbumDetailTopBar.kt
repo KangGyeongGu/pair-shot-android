@@ -17,11 +17,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.pairshot.core.ui.component.PairShotTopMenu
 import com.pairshot.core.ui.component.PairShotTopMenuDivider
 import com.pairshot.core.ui.component.PairShotTopMenuItem
 import com.pairshot.core.ui.component.PairShotTopMenuItemText
+import com.pairshot.feature.album.R
+import com.pairshot.core.ui.R as CoreR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +45,16 @@ fun AlbumDetailTopBar(
         modifier = modifier,
         title = {
             Text(
-                text = if (isSelectionMode) "${selectedCount}개 선택됨" else title,
+                text =
+                    if (isSelectionMode) {
+                        pluralStringResource(
+                            R.plurals.album_topbar_selection_count,
+                            selectedCount,
+                            selectedCount,
+                        )
+                    } else {
+                        title
+                    },
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -52,14 +65,14 @@ fun AlbumDetailTopBar(
                 IconButton(onClick = onExitSelection) {
                     Icon(
                         imageVector = Icons.Filled.Close,
-                        contentDescription = "선택 취소",
+                        contentDescription = stringResource(R.string.album_desc_deselect),
                     )
                 }
             } else {
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "뒤로가기",
+                        contentDescription = stringResource(CoreR.string.common_desc_back),
                     )
                 }
             }
@@ -69,7 +82,7 @@ fun AlbumDetailTopBar(
                 IconButton(onClick = { menuExpanded = true }) {
                     Icon(
                         imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "더보기",
+                        contentDescription = stringResource(CoreR.string.common_desc_more),
                     )
                 }
                 PairShotTopMenu(
@@ -77,7 +90,9 @@ fun AlbumDetailTopBar(
                     onDismissRequest = { menuExpanded = false },
                 ) {
                     PairShotTopMenuItem(
-                        text = { PairShotTopMenuItemText(title = "앨범 이름 수정") },
+                        text = {
+                            PairShotTopMenuItemText(title = stringResource(R.string.album_menu_rename))
+                        },
                         onClick = {
                             menuExpanded = false
                             onRenameClick()
@@ -87,7 +102,7 @@ fun AlbumDetailTopBar(
                     PairShotTopMenuItem(
                         text = {
                             PairShotTopMenuItemText(
-                                title = "앨범 삭제",
+                                title = stringResource(R.string.album_menu_delete),
                                 titleColor = MaterialTheme.colorScheme.error,
                             )
                         },

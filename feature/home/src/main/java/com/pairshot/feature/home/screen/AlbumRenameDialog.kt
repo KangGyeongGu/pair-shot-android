@@ -9,7 +9,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.PairShotDialog
+import com.pairshot.feature.home.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun AlbumRenameDialog(
@@ -23,7 +26,7 @@ fun AlbumRenameDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "앨범 이름 수정",
+                text = stringResource(R.string.home_dialog_album_rename_title),
                 style = MaterialTheme.typography.titleMedium,
             )
         },
@@ -32,7 +35,7 @@ fun AlbumRenameDialog(
                 value = text,
                 onValueChange = { text = it },
                 singleLine = true,
-                label = { Text("앨범 이름") },
+                label = { Text(stringResource(R.string.home_dialog_album_rename_placeholder)) },
             )
         },
         confirmButton = {
@@ -40,12 +43,18 @@ fun AlbumRenameDialog(
                 onClick = { onConfirm(text) },
                 enabled = text.isNotBlank() && text != currentName,
             ) {
-                Text(text = "저장", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = stringResource(CoreR.string.common_button_save),
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "취소", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    text = stringResource(CoreR.string.common_button_cancel),
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
         },
     )

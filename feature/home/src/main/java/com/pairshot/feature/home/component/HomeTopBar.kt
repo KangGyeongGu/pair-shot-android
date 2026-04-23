@@ -13,6 +13,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import com.pairshot.feature.home.R
+import com.pairshot.core.ui.R as CoreR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +32,16 @@ fun HomeTopBar(
     TopAppBar(
         title = {
             Text(
-                text = if (selectionMode) "${selectedCount}개 선택됨" else "PairShot",
+                text =
+                    if (selectionMode) {
+                        pluralStringResource(
+                            R.plurals.home_topbar_selection_count,
+                            selectedCount,
+                            selectedCount,
+                        )
+                    } else {
+                        stringResource(R.string.home_topbar_title)
+                    },
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -38,7 +51,7 @@ fun HomeTopBar(
                 IconButton(onClick = onExitSelectionMode) {
                     Icon(
                         imageVector = Icons.Filled.Close,
-                        contentDescription = "선택 해제",
+                        contentDescription = stringResource(R.string.home_desc_deselect),
                         tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
@@ -48,7 +61,10 @@ fun HomeTopBar(
             if (selectionMode) {
                 TextButton(onClick = onToggleSelectAll) {
                     Text(
-                        text = if (allSelected) "전체해제" else "전체선택",
+                        text =
+                            stringResource(
+                                if (allSelected) R.string.home_button_deselect_all else R.string.home_button_select_all,
+                            ),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -57,7 +73,7 @@ fun HomeTopBar(
                 IconButton(onClick = onNavigateToSettings) {
                     Icon(
                         imageVector = Icons.Outlined.Settings,
-                        contentDescription = "설정",
+                        contentDescription = stringResource(CoreR.string.common_desc_settings),
                         tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }

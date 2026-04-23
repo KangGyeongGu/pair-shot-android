@@ -61,6 +61,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -84,9 +85,11 @@ import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.SettingsSliderItem
 import com.pairshot.core.ui.component.SettingsSwitchItem
+import com.pairshot.feature.settings.R
 import com.pairshot.feature.settings.component.PositionPicker3x3Row
 import dagger.hilt.android.EntryPointAccessors
 import kotlin.math.roundToInt
+import com.pairshot.core.ui.R as CoreR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -147,7 +150,7 @@ fun CombineSettingsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "합성 설정",
+                        text = stringResource(R.string.combine_settings_title),
                         style = MaterialTheme.typography.titleMedium,
                     )
                 },
@@ -155,7 +158,7 @@ fun CombineSettingsScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "뒤로가기",
+                            contentDescription = stringResource(CoreR.string.common_desc_back),
                         )
                     }
                 },
@@ -178,7 +181,7 @@ fun CombineSettingsScreen(
                 ),
         ) {
             item(key = "label_layout") {
-                SettingsSectionLabel(label = "정렬")
+                SettingsSectionLabel(label = stringResource(R.string.combine_section_alignment))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
@@ -198,14 +201,14 @@ fun CombineSettingsScreen(
             }
 
             item(key = "label_border") {
-                SettingsSectionLabel(label = "테두리")
+                SettingsSectionLabel(label = stringResource(R.string.combine_section_border))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
             item(key = "card_border") {
                 SettingsCard {
                     SettingsSwitchItem(
-                        label = "테두리 사용",
+                        label = stringResource(R.string.combine_item_border_use),
                         checked = combineConfig.borderEnabled,
                         onCheckedChange = { checked ->
                             onCombineConfigChange(combineConfig.copy(borderEnabled = checked))
@@ -219,7 +222,7 @@ fun CombineSettingsScreen(
                         Column {
                             SettingsDivider()
                             SettingsSliderItem(
-                                label = "두께",
+                                label = stringResource(R.string.combine_item_border_thickness),
                                 value = combineConfig.borderThicknessDp.toFloat(),
                                 valueRange = 0f..32f,
                                 steps = 31,
@@ -233,7 +236,7 @@ fun CombineSettingsScreen(
                             )
                             SettingsDivider()
                             ColorItem(
-                                label = "색상",
+                                label = stringResource(R.string.combine_item_color),
                                 colorArgb = combineConfig.borderColorArgb,
                                 onClick = { borderColorPickerVisible = true },
                             )
@@ -247,14 +250,14 @@ fun CombineSettingsScreen(
             }
 
             item(key = "label_label") {
-                SettingsSectionLabel(label = "레이블")
+                SettingsSectionLabel(label = stringResource(R.string.combine_section_label))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
             item(key = "card_label_text") {
                 SettingsCard {
                     SettingsSwitchItem(
-                        label = "레이블 사용",
+                        label = stringResource(R.string.combine_item_label_use),
                         checked = combineConfig.labelEnabled,
                         onCheckedChange = { checked ->
                             onCombineConfigChange(combineConfig.copy(labelEnabled = checked))
@@ -268,7 +271,7 @@ fun CombineSettingsScreen(
                         Column {
                             SettingsDivider()
                             LabelTextItem(
-                                labelName = "BEFORE 텍스트",
+                                labelName = stringResource(R.string.combine_item_label_before),
                                 text = combineConfig.beforeLabel,
                                 onTextChange = { text ->
                                     onCombineConfigChange(combineConfig.copy(beforeLabel = text))
@@ -276,7 +279,7 @@ fun CombineSettingsScreen(
                             )
                             SettingsDivider()
                             LabelTextItem(
-                                labelName = "AFTER 텍스트",
+                                labelName = stringResource(R.string.combine_item_label_after),
                                 text = combineConfig.afterLabel,
                                 onTextChange = { text ->
                                     onCombineConfigChange(combineConfig.copy(afterLabel = text))
@@ -284,7 +287,7 @@ fun CombineSettingsScreen(
                             )
                             SettingsDivider()
                             SettingsSliderItem(
-                                label = "텍스트 크기",
+                                label = stringResource(R.string.combine_item_text_size),
                                 value = combineConfig.labelSizeRatio,
                                 valueRange = 0f..0.10f,
                                 steps = 9,
@@ -298,7 +301,7 @@ fun CombineSettingsScreen(
                             )
                             SettingsDivider()
                             ColorItem(
-                                label = "텍스트 색상",
+                                label = stringResource(R.string.combine_item_text_color),
                                 colorArgb = combineConfig.labelTextColorArgb,
                                 onClick = { labelTextColorPickerVisible = true },
                             )
@@ -315,7 +318,7 @@ fun CombineSettingsScreen(
                 ) {
                     Column {
                         Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                        SettingsSectionLabel(label = "레이블 방식")
+                        SettingsSectionLabel(label = stringResource(R.string.combine_section_label_mode))
                         Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     }
                 }
@@ -346,7 +349,7 @@ fun CombineSettingsScreen(
                             } else {
                                 SettingsDivider()
                                 PositionPicker3x3Row(
-                                    label = "BEFORE 위치",
+                                    label = stringResource(R.string.combine_item_position_before),
                                     positions = labelAnchorOrder,
                                     selectedPosition = combineConfig.beforeLabelAnchor,
                                     onPositionChange = { anchor ->
@@ -355,7 +358,7 @@ fun CombineSettingsScreen(
                                 )
                                 SettingsDivider()
                                 PositionPicker3x3Row(
-                                    label = "AFTER 위치",
+                                    label = stringResource(R.string.combine_item_position_after),
                                     positions = labelAnchorOrder,
                                     selectedPosition = combineConfig.afterLabelAnchor,
                                     onPositionChange = { anchor ->
@@ -376,7 +379,7 @@ fun CombineSettingsScreen(
                 ) {
                     Column {
                         Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                        SettingsSectionLabel(label = "레이블 배경")
+                        SettingsSectionLabel(label = stringResource(R.string.combine_section_label_background))
                         Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                     }
                 }
@@ -391,7 +394,7 @@ fun CombineSettingsScreen(
                     Column {
                         SettingsCard {
                             SettingsSwitchItem(
-                                label = "배경 사용",
+                                label = stringResource(R.string.combine_item_background_use),
                                 checked = combineConfig.labelBgEnabled,
                                 onCheckedChange = { checked ->
                                     onCombineConfigChange(combineConfig.copy(labelBgEnabled = checked))
@@ -405,13 +408,13 @@ fun CombineSettingsScreen(
                                 Column {
                                     SettingsDivider()
                                     ColorItem(
-                                        label = "색상",
+                                        label = stringResource(R.string.combine_item_color),
                                         colorArgb = combineConfig.labelBgColorArgb,
                                         onClick = { labelBgColorPickerVisible = true },
                                     )
                                     SettingsDivider()
                                     SettingsSliderItem(
-                                        label = "투명도",
+                                        label = stringResource(R.string.combine_item_opacity),
                                         value = combineConfig.labelBgAlpha,
                                         valueRange = 0f..1f,
                                         valueLabel = { "${(it * 100).roundToInt()}%" },
@@ -425,7 +428,7 @@ fun CombineSettingsScreen(
                                     if (combineConfig.labelPositionMode == LabelPositionMode.FREE) {
                                         SettingsDivider()
                                         SettingsSliderItem(
-                                            label = "곡률",
+                                            label = stringResource(R.string.combine_item_curvature),
                                             value = combineConfig.labelBgCornerDp.toFloat(),
                                             valueRange = 0f..50f,
                                             steps = 49,
@@ -450,7 +453,7 @@ fun CombineSettingsScreen(
             }
 
             item(key = "label_preview") {
-                SettingsSectionLabel(label = "미리보기")
+                SettingsSectionLabel(label = stringResource(R.string.combine_section_preview))
                 Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
             }
 
@@ -481,7 +484,7 @@ private fun CombineLayoutItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "방향",
+            text = stringResource(R.string.combine_direction_label),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -509,8 +512,8 @@ private fun CombineLayoutItem(
                     Text(
                         text =
                             when (layout) {
-                                CombineLayout.HORIZONTAL -> "좌우"
-                                CombineLayout.VERTICAL -> "상하"
+                                CombineLayout.HORIZONTAL -> stringResource(R.string.combine_direction_horizontal)
+                                CombineLayout.VERTICAL -> stringResource(R.string.combine_direction_vertical)
                             },
                         style =
                             MaterialTheme.typography.bodySmall.copy(
@@ -545,7 +548,7 @@ private fun LabelPositionItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "레이블 위치",
+            text = stringResource(R.string.combine_label_position_label),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -573,8 +576,8 @@ private fun LabelPositionItem(
                     Text(
                         text =
                             when (position) {
-                                LabelPosition.TOP -> "위"
-                                LabelPosition.BOTTOM -> "아래"
+                                LabelPosition.TOP -> stringResource(R.string.combine_label_position_top)
+                                LabelPosition.BOTTOM -> stringResource(R.string.combine_label_position_bottom)
                             },
                         style =
                             MaterialTheme.typography.bodySmall.copy(
@@ -609,7 +612,7 @@ private fun LabelPositionModeItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "방식",
+            text = stringResource(R.string.combine_label_mode_label),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
@@ -637,8 +640,8 @@ private fun LabelPositionModeItem(
                     Text(
                         text =
                             when (mode) {
-                                LabelPositionMode.FULL_WIDTH -> "전체 너비"
-                                LabelPositionMode.FREE -> "자유 위치"
+                                LabelPositionMode.FULL_WIDTH -> stringResource(R.string.combine_label_mode_full_width)
+                                LabelPositionMode.FREE -> stringResource(R.string.combine_label_mode_free)
                             },
                         style =
                             MaterialTheme.typography.bodySmall.copy(
@@ -736,7 +739,7 @@ private fun LabelTextItem(
                     ) {
                         if (textFieldValue.text.isEmpty()) {
                             Text(
-                                text = "텍스트 입력",
+                                text = stringResource(R.string.combine_text_input_hint),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = hintColor,
                                 modifier = Modifier.fillMaxWidth(),
@@ -945,7 +948,7 @@ private fun ColorPickerDialog(
 
     PairShotDialog(
         onDismissRequest = onDismiss,
-        title = { Text("색상 선택") },
+        title = { Text(stringResource(R.string.combine_dialog_color_title)) },
         text = {
             ColorPickerContent(
                 selectedIdx = selectedIdx,
@@ -964,12 +967,12 @@ private fun ColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(currentColor.toArgb()) }) {
-                Text("확인")
+                Text(stringResource(CoreR.string.common_button_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("취소")
+                Text(stringResource(CoreR.string.common_button_cancel))
             }
         },
     )
@@ -997,7 +1000,7 @@ private fun LabelBgColorPickerDialog(
 
     PairShotDialog(
         onDismissRequest = onDismiss,
-        title = { Text("배경 색상") },
+        title = { Text(stringResource(R.string.combine_dialog_bg_color_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Row(
@@ -1005,7 +1008,7 @@ private fun LabelBgColorPickerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "테두리색상과 일치",
+                        text = stringResource(R.string.combine_dialog_match_border_color),
                         style = MaterialTheme.typography.bodyMedium,
                         color =
                             if (borderEnabled) {
@@ -1065,12 +1068,12 @@ private fun LabelBgColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(currentPickedColor.toArgb(), matchesBorder) }) {
-                Text("확인")
+                Text(stringResource(CoreR.string.common_button_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("취소")
+                Text(stringResource(CoreR.string.common_button_cancel))
             }
         },
     )
@@ -1109,7 +1112,7 @@ internal fun CombinePreviewSection(
     if (bmp != null) {
         Image(
             bitmap = bmp.asImageBitmap(),
-            contentDescription = "합성 미리보기",
+            contentDescription = stringResource(R.string.combine_preview_desc),
             contentScale = ContentScale.Fit,
             filterQuality = FilterQuality.High,
             modifier =

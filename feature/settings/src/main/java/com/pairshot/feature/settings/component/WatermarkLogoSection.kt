@@ -1,12 +1,14 @@
 package com.pairshot.feature.settings.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.model.LogoPosition
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsItem
 import com.pairshot.core.ui.component.SettingsSliderItem
+import com.pairshot.feature.settings.R
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -31,18 +33,18 @@ internal fun WatermarkLogoSection(
 ) {
     SettingsCard {
         SettingsItem(
-            label = "로고",
+            label = stringResource(R.string.watermark_logo_label),
             trailing =
                 if (watermarkConfig.logoPath.isNotEmpty()) {
                     File(watermarkConfig.logoPath).name
                 } else {
-                    "선택"
+                    stringResource(R.string.watermark_logo_choose)
                 },
             onClick = onSelectLogo,
         )
         SettingsDivider()
         PositionPicker3x3Row(
-            label = "위치",
+            label = stringResource(R.string.watermark_field_position),
             positions = logoPositionOrder,
             selectedPosition = watermarkConfig.logoPosition,
             onPositionChange = { position ->
@@ -51,7 +53,7 @@ internal fun WatermarkLogoSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "크기",
+            label = stringResource(R.string.watermark_field_size),
             value = watermarkConfig.logoSizeRatio,
             valueRange = 0f..1.0f,
             valueLabel = { "${(it * 100).roundToInt()}%" },
@@ -60,7 +62,7 @@ internal fun WatermarkLogoSection(
         )
         SettingsDivider()
         SettingsSliderItem(
-            label = "투명도",
+            label = stringResource(R.string.watermark_field_opacity),
             value = watermarkConfig.logoAlpha,
             valueRange = 0f..1f,
             valueLabel = { "${(it * 100).roundToInt()}%" },

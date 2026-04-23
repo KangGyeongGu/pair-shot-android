@@ -28,9 +28,9 @@ class ShareSelectionUseCase
             combineConfig: CombineConfig,
             onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
         ): ExportAction {
-            require(pairIds.isNotEmpty()) { "공유할 페어가 없습니다" }
+            require(pairIds.isNotEmpty()) { "no pairs to share" }
             require(preset.includeBefore || preset.includeAfter || preset.includeCombined) {
-                "최소 하나의 항목을 포함해야 합니다"
+                "at least one include option is required"
             }
 
             return when (preset.format) {

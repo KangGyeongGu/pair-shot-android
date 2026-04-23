@@ -1,9 +1,11 @@
 package com.pairshot.feature.exportsettings.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsSwitchItem
+import com.pairshot.feature.exportsettings.R
 
 @Composable
 fun ExportIncludeSection(
@@ -16,19 +18,19 @@ fun ExportIncludeSection(
 ) {
     SettingsCard {
         SettingsSwitchItem(
-            label = "합성본만",
+            label = stringResource(R.string.export_include_combined_only),
             checked = includeCombined,
             onCheckedChange = onIncludeCombinedChange,
         )
         SettingsDivider()
         SettingsSwitchItem(
-            label = "Before만",
+            label = stringResource(R.string.export_include_before_only),
             checked = includeBefore,
             onCheckedChange = onIncludeBeforeChange,
         )
         SettingsDivider()
         SettingsSwitchItem(
-            label = "After만",
+            label = stringResource(R.string.export_include_after_only),
             checked = includeAfter,
             onCheckedChange = onIncludeAfterChange,
         )

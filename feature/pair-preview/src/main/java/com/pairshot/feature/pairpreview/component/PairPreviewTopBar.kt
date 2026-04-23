@@ -21,7 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.feature.pairpreview.R
+import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun PairPreviewTopBar(
@@ -44,7 +47,7 @@ fun PairPreviewTopBar(
         IconButton(onClick = onClose) {
             Icon(
                 imageVector = Icons.Filled.Close,
-                contentDescription = "닫기",
+                contentDescription = stringResource(R.string.pair_preview_desc_close),
                 tint = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -55,7 +58,7 @@ fun PairPreviewTopBar(
             IconButton(onClick = { menuExpanded = true }) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
-                    contentDescription = "더 보기",
+                    contentDescription = stringResource(CoreR.string.common_desc_more),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
@@ -67,7 +70,7 @@ fun PairPreviewTopBar(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "공유",
+                            text = stringResource(CoreR.string.common_button_share),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     },
@@ -79,7 +82,7 @@ fun PairPreviewTopBar(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "재촬영",
+                            text = stringResource(R.string.pair_preview_menu_recapture),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     },
@@ -91,7 +94,7 @@ fun PairPreviewTopBar(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "삭제",
+                            text = stringResource(CoreR.string.common_button_delete),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
                         )

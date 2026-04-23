@@ -11,10 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.ExportFormat
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
+import com.pairshot.feature.exportsettings.R
 
 @Composable
 fun ExportFormatSection(
@@ -23,13 +25,13 @@ fun ExportFormatSection(
 ) {
     SettingsCard {
         ExportFormatRadioItem(
-            label = "이미지로 전송/저장",
+            label = stringResource(R.string.export_format_image),
             selected = format == ExportFormat.INDIVIDUAL,
             onClick = { onFormatChange(ExportFormat.INDIVIDUAL) },
         )
         SettingsDivider()
         ExportFormatRadioItem(
-            label = "zip 파일 전송/저장",
+            label = stringResource(R.string.export_format_zip),
             selected = format == ExportFormat.ZIP,
             onClick = { onFormatChange(ExportFormat.ZIP) },
         )
