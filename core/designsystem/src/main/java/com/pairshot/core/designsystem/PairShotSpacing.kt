@@ -19,4 +19,14 @@ object PairShotSpacing {
     val appBar = 64.dp
     val actionBar = 72.dp
     val fabOffset = 96.dp
+
+    val snackbarHorizontalPadding = 16.dp
+    val snackbarVerticalPadding = 14.dp
+    val snackbarInnerGap = 10.dp
+    val snackbarDotSize = 10.dp
+    val snackbarElevation = 12.dp
+    val snackbarMinHeight = 56.dp
+    val snackbarMaxWidth = 480.dp
+    val snackbarTopOffset = 12.dp
+    val progressPillMaxWidth = 260.dp
 }

@@ -2,7 +2,6 @@
 <resources>
 
     <!-- Accessibility -->
-    <string name="pair_preview_desc_saved_combined">Saved combined image</string>
     <string name="pair_preview_desc_combined_preview">Combined preview</string>
     <string name="pair_preview_desc_close">Close</string>
 

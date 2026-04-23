@@ -39,6 +39,9 @@ class AppPreferences
             val EXPORT_INCLUDE_BEFORE = booleanPreferencesKey("export_include_before")
             val EXPORT_INCLUDE_AFTER = booleanPreferencesKey("export_include_after")
             val EXPORT_INCLUDE_COMBINED = booleanPreferencesKey("export_include_combined")
+            val EXPORT_APPLY_COMBINE_CONFIG = booleanPreferencesKey("export_apply_combine_config")
+            val HOME_SORT_ORDER = stringPreferencesKey("home_sort_order")
+            val ALBUM_SORT_ORDER = stringPreferencesKey("album_sort_order")
         }
 
         val jpegQuality: Flow<Int> =
@@ -142,22 +145,27 @@ class AppPreferences
 
         val exportFormat: Flow<String> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.EXPORT_FORMAT] ?: "ZIP"
+                prefs[Keys.EXPORT_FORMAT] ?: "INDIVIDUAL"
             }
 
         val exportIncludeBefore: Flow<Boolean> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.EXPORT_INCLUDE_BEFORE] ?: true
+                prefs[Keys.EXPORT_INCLUDE_BEFORE] ?: false
             }
 
         val exportIncludeAfter: Flow<Boolean> =
             context.appDataStore.data.map { prefs ->
-                prefs[Keys.EXPORT_INCLUDE_AFTER] ?: true
+                prefs[Keys.EXPORT_INCLUDE_AFTER] ?: false
             }
 
         val exportIncludeCombined: Flow<Boolean> =
             context.appDataStore.data.map { prefs ->
                 prefs[Keys.EXPORT_INCLUDE_COMBINED] ?: true
+            }
+
+        val exportApplyCombineConfig: Flow<Boolean> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.EXPORT_APPLY_COMBINE_CONFIG] ?: true
             }
 
         suspend fun setExportFormat(format: String) {
@@ -189,12 +197,36 @@ class AppPreferences
             includeBefore: Boolean,
             includeAfter: Boolean,
             includeCombined: Boolean,
+            applyCombineConfig: Boolean,
         ) {
             context.appDataStore.edit { prefs ->
                 prefs[Keys.EXPORT_FORMAT] = format
                 prefs[Keys.EXPORT_INCLUDE_BEFORE] = includeBefore
                 prefs[Keys.EXPORT_INCLUDE_AFTER] = includeAfter
                 prefs[Keys.EXPORT_INCLUDE_COMBINED] = includeCombined
+                prefs[Keys.EXPORT_APPLY_COMBINE_CONFIG] = applyCombineConfig
+            }
+        }
+
+        val homeSortOrder: Flow<String> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.HOME_SORT_ORDER] ?: "DESC"
+            }
+
+        val albumSortOrder: Flow<String> =
+            context.appDataStore.data.map { prefs ->
+                prefs[Keys.ALBUM_SORT_ORDER] ?: "DESC"
+            }
+
+        suspend fun setHomeSortOrder(value: String) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.HOME_SORT_ORDER] = value
+            }
+        }
+
+        suspend fun setAlbumSortOrder(value: String) {
+            context.appDataStore.edit { prefs ->
+                prefs[Keys.ALBUM_SORT_ORDER] = value
             }
         }
     }

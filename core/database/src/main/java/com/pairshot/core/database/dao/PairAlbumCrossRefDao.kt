@@ -27,7 +27,7 @@ interface PairAlbumCrossRefDao {
         """
         SELECT
             pp.*,
-            EXISTS(SELECT 1 FROM combine_history ch WHERE ch.pairId = pp.id) AS hasCombined
+            EXISTS(SELECT 1 FROM export_history eh WHERE eh.pairId = pp.id AND eh.kind = 'COMBINED') AS hasCombined
         FROM photo_pairs pp
         INNER JOIN pair_album_cross_ref ref ON pp.id = ref.pairId
         WHERE ref.albumId = :albumId
@@ -42,7 +42,7 @@ interface PairAlbumCrossRefDao {
         FROM photo_pairs pp
         INNER JOIN pair_album_cross_ref ref ON pp.id = ref.pairId
         WHERE ref.albumId = :albumId AND pp.status = 'BEFORE_ONLY'
-        ORDER BY pp.beforeTimestamp ASC
+        ORDER BY pp.beforeTimestamp DESC
         """,
     )
     fun getUnpairedByAlbum(albumId: Long): Flow<List<PhotoPairEntity>>

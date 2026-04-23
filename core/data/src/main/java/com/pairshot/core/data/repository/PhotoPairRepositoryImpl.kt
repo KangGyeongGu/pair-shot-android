@@ -52,6 +52,11 @@ class PhotoPairRepositoryImpl
                 photoPairDao.getById(id)?.toDomain()
             }
 
+        override suspend fun getByIds(ids: List<Long>): List<PhotoPair> =
+            withContext(Dispatchers.IO) {
+                if (ids.isEmpty()) emptyList() else photoPairDao.getByIds(ids).map { it.toDomain() }
+            }
+
         override suspend fun delete(pair: PhotoPair) {
             withContext(Dispatchers.IO) {
                 deleteGalleryUriOrThrow(pair.beforePhotoUri)

@@ -1,7 +1,7 @@
 package com.pairshot.core.domain.export
 
+import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.model.CombineConfig
-import com.pairshot.core.model.ExportFormat
 import com.pairshot.core.model.ExportPreset
 import com.pairshot.core.model.WatermarkConfig
 import javax.inject.Inject
@@ -10,42 +10,60 @@ class SaveSelectionToDeviceUseCase
     @Inject
     constructor(
         private val exportRepository: ExportRepository,
+        private val photoPairRepository: PhotoPairRepository,
     ) {
+        suspend fun hasSavableVariants(
+            pairIds: List<Long>,
+            preset: ExportPreset,
+            watermarkConfig: WatermarkConfig?,
+        ): Boolean {
+            if (pairIds.isEmpty()) return false
+            val pairs = photoPairRepository.getByIds(pairIds)
+            return pairs.any { pair ->
+                val beforeValid = pair.beforePhotoUri.isNotBlank()
+                val afterValid = !pair.afterPhotoUri.isNullOrBlank()
+                val canCombined = preset.includeCombined && beforeValid && afterValid
+                val canWatermarkBefore = watermarkConfig != null && preset.includeBefore && beforeValid
+                val canWatermarkAfter = watermarkConfig != null && preset.includeAfter && afterValid
+                canCombined || canWatermarkBefore || canWatermarkAfter
+            }
+        }
+
         suspend operator fun invoke(
             pairIds: List<Long>,
             preset: ExportPreset,
             watermarkConfig: WatermarkConfig?,
             combineConfig: CombineConfig,
-            outputUri: String?,
             onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
-        ) {
+        ): Int {
             require(pairIds.isNotEmpty()) { "no pairs to export" }
-            require(preset.includeBefore || preset.includeAfter || preset.includeCombined) {
-                "at least one include option is required"
-            }
 
-            when (preset.format) {
-                ExportFormat.ZIP -> {
-                    requireNotNull(outputUri) { "outputUri is required for ZIP export" }
-                    exportRepository.exportZipToDevice(
+            val effectiveCombine = if (preset.applyCombineConfig) combineConfig else CombineConfig()
+
+            val combinedCount =
+                if (preset.includeCombined) {
+                    exportRepository.composeCombinedForGallery(
                         pairIds = pairIds,
-                        outputUri = outputUri,
-                        preset = preset,
-                        combineConfig = combineConfig,
+                        combineConfig = effectiveCombine,
                         watermarkConfig = watermarkConfig,
                         onProgress = onProgress,
                     )
+                } else {
+                    0
                 }
 
-                ExportFormat.INDIVIDUAL -> {
-                    exportRepository.saveImagesToGallery(
+            val watermarkedCount =
+                if (watermarkConfig != null && (preset.includeBefore || preset.includeAfter)) {
+                    exportRepository.saveWatermarkedOriginals(
                         pairIds = pairIds,
                         preset = preset,
-                        combineConfig = combineConfig,
                         watermarkConfig = watermarkConfig,
                         onProgress = onProgress,
                     )
+                } else {
+                    0
                 }
-            }
+
+            return combinedCount + watermarkedCount
         }
     }

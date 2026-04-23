@@ -10,4 +10,5 @@ data class ExportPreset(
     val includeBefore: Boolean = false,
     val includeAfter: Boolean = false,
     val includeCombined: Boolean = true,
+    val applyCombineConfig: Boolean = true,
 )

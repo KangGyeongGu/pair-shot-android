@@ -1,15 +1,16 @@
 package com.pairshot.core.domain.combine
 
+import com.pairshot.core.model.ExportHistoryKind
 import javax.inject.Inject
 
 class DeleteCombinedPhotosUseCase
     @Inject
     constructor(
-        private val combineHistoryRepository: CombineHistoryRepository,
+        private val exportHistoryRepository: ExportHistoryRepository,
     ) {
         suspend operator fun invoke(pairIds: List<Long>) {
-            pairIds.forEach { pairId ->
-                runCatching { combineHistoryRepository.deleteCombinedPhoto(pairId) }
+            runCatching {
+                exportHistoryRepository.deleteByPairIdsAndKind(pairIds, ExportHistoryKind.COMBINED)
             }
         }
     }

@@ -4,13 +4,13 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.pairshot.core.domain.combine.CombineHistoryRepository
 import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.combine.DeleteCombinedPhotosUseCase
+import com.pairshot.core.domain.combine.ExportHistoryRepository
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.CombineConfig
-import com.pairshot.core.model.CombineHistory
+import com.pairshot.core.model.ExportHistoryKind
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.navigation.PairPreview
@@ -39,7 +39,7 @@ class PairPreviewViewModel
     constructor(
         savedStateHandle: SavedStateHandle,
         private val photoPairRepository: PhotoPairRepository,
-        private val combineHistoryRepository: CombineHistoryRepository,
+        private val exportHistoryRepository: ExportHistoryRepository,
         private val deleteCombinedPhotosUseCase: DeleteCombinedPhotosUseCase,
         combineSettingsRepository: CombineSettingsRepository,
         watermarkRepository: WatermarkRepository,
@@ -50,8 +50,8 @@ class PairPreviewViewModel
         private val _pair = MutableStateFlow<PhotoPair?>(null)
         val pair: StateFlow<PhotoPair?> = _pair.asStateFlow()
 
-        private val _combined = MutableStateFlow<CombineHistory?>(null)
-        val combined: StateFlow<CombineHistory?> = _combined.asStateFlow()
+        private val _hasCombined = MutableStateFlow(false)
+        val hasCombined: StateFlow<Boolean> = _hasCombined.asStateFlow()
 
         val currentConfig: StateFlow<CombineConfig> =
             combineSettingsRepository.configFlow.stateIn(
@@ -72,9 +72,8 @@ class PairPreviewViewModel
                 _pair,
                 currentConfig,
                 currentWatermark,
-                _combined,
-            ) { pair, config, watermark, combined ->
-                if (pair == null || pair.afterPhotoUri == null || combined != null) {
+            ) { pair, config, watermark ->
+                if (pair == null || pair.afterPhotoUri == null) {
                     null
                 } else {
                     LivePreviewInputs(pair, config, watermark)
@@ -89,7 +88,7 @@ class PairPreviewViewModel
 
         init {
             loadPair()
-            loadCombined()
+            refreshHasCombined()
         }
 
         private fun loadPair() {
@@ -98,9 +97,12 @@ class PairPreviewViewModel
             }
         }
 
-        private fun loadCombined() {
+        private fun refreshHasCombined() {
             viewModelScope.launch {
-                _combined.value = combineHistoryRepository.getByPair(pairId)
+                _hasCombined.value =
+                    exportHistoryRepository
+                        .findByPairIdsAndKind(listOf(pairId), ExportHistoryKind.COMBINED)
+                        .isNotEmpty()
             }
         }
 
@@ -115,7 +117,7 @@ class PairPreviewViewModel
         fun deletePair() {
             viewModelScope.launch {
                 val currentPair = _pair.value ?: return@launch
-                runCatching { deleteCombinedPhotosUseCase(listOf(currentPair.id)) }
+                runCatching { exportHistoryRepository.deleteByPairIds(listOf(currentPair.id)) }
                 photoPairRepository.delete(currentPair)
                 _showDeleteDialog.value = false
                 _deleteComplete.emit(Unit)
@@ -125,7 +127,7 @@ class PairPreviewViewModel
         fun deleteCombinedOnly() {
             viewModelScope.launch {
                 deleteCombinedPhotosUseCase(listOf(pairId))
-                _combined.value = null
+                _hasCombined.value = false
                 _showDeleteDialog.value = false
             }
         }

@@ -15,6 +15,10 @@
     <string name="common_desc_back">뒤로가기</string>
     <string name="common_desc_settings">설정</string>
     <string name="common_desc_more">더보기</string>
+    <string name="common_desc_sort_descending">내림차순 정렬</string>
+    <string name="common_desc_sort_ascending">오름차순 정렬</string>
+    <string name="common_label_sort_descending">최신순</string>
+    <string name="common_label_sort_ascending">오래된순</string>
 
     <!-- Common Titles -->
     <string name="common_title_settings">설정</string>
@@ -41,6 +45,10 @@
     <!-- Snackbar: Success -->
     <string name="snackbar_success_all_after_captured">모든 After 촬영이 완료되었습니다</string>
     <string name="snackbar_success_cache_cleared">캐시를 정리했습니다</string>
+    <string name="snackbar_success_saved_to_device">기기에 저장했습니다</string>
+
+    <!-- Snackbar: Warning -->
+    <string name="snackbar_warning_nothing_to_save">저장할 새 이미지가 없습니다</string>
 
     <!-- Snackbar: Error -->
     <string name="snackbar_error_capture_failed">촬영에 실패했습니다. 다시 시도해주세요</string>
@@ -48,12 +56,5 @@
     <string name="snackbar_error_unknown">오류가 발생했습니다. 다시 시도해주세요</string>
     <string name="snackbar_error_share_failed">공유 준비에 실패했습니다. 다시 시도해주세요</string>
     <string name="snackbar_error_file_load_failed">파일을 불러올 수 없습니다</string>
-
-    <!-- Snackbar: Info -->
-    <string name="snackbar_info_combined_exists">이미 합성본이 있습니다</string>
-    <string name="snackbar_info_select_zip_location">압축파일 저장 위치를 선택해주세요</string>
-    <string name="snackbar_info_save_cancelled">저장을 취소했습니다</string>
-    <string name="snackbar_info_saved_to_device">기기에 저장했습니다</string>
-    <string name="snackbar_info_saved_to_device_partial">기기에 저장했습니다 (일부 건너뜀)</string>
 
 </resources>

@@ -16,7 +16,6 @@ fun ExportSettingsRoute(
 ) {
     val preset by viewModel.preset.collectAsStateWithLifecycle()
     val applyWatermark by viewModel.applyWatermark.collectAsStateWithLifecycle()
-    val applyCombineConfig by viewModel.applyCombineConfig.collectAsStateWithLifecycle()
 
     ExportSettingsScreen(
         includeBefore = preset.includeBefore,
@@ -24,7 +23,7 @@ fun ExportSettingsRoute(
         includeCombined = preset.includeCombined,
         format = preset.format,
         applyWatermark = applyWatermark,
-        applyCombineConfig = applyCombineConfig,
+        applyCombineConfig = preset.applyCombineConfig,
         onIncludeBeforeChange = viewModel::setIncludeBefore,
         onIncludeAfterChange = viewModel::setIncludeAfter,
         onIncludeCombinedChange = viewModel::setIncludeCombined,

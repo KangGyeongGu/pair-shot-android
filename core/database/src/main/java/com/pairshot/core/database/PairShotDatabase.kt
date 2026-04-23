@@ -4,11 +4,11 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.pairshot.core.database.dao.AlbumDao
-import com.pairshot.core.database.dao.CombineHistoryDao
+import com.pairshot.core.database.dao.ExportHistoryDao
 import com.pairshot.core.database.dao.PairAlbumCrossRefDao
 import com.pairshot.core.database.dao.PhotoPairDao
 import com.pairshot.core.database.entity.AlbumEntity
-import com.pairshot.core.database.entity.CombineHistoryEntity
+import com.pairshot.core.database.entity.ExportHistoryEntity
 import com.pairshot.core.database.entity.PairAlbumCrossRefEntity
 import com.pairshot.core.database.entity.PhotoPairEntity
 
@@ -17,7 +17,7 @@ import com.pairshot.core.database.entity.PhotoPairEntity
         PhotoPairEntity::class,
         AlbumEntity::class,
         PairAlbumCrossRefEntity::class,
-        CombineHistoryEntity::class,
+        ExportHistoryEntity::class,
     ],
     version = 1,
     exportSchema = true,
@@ -30,5 +30,5 @@ abstract class PairShotDatabase : RoomDatabase() {
 
     abstract fun pairAlbumCrossRefDao(): PairAlbumCrossRefDao
 
-    abstract fun combineHistoryDao(): CombineHistoryDao
+    abstract fun exportHistoryDao(): ExportHistoryDao
 }

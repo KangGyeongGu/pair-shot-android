@@ -44,7 +44,7 @@ fun PairPreviewRoute(
     modifier: Modifier = Modifier,
     viewModel: PairPreviewViewModel = hiltViewModel(),
 ) {
-    val combined by viewModel.combined.collectAsStateWithLifecycle()
+    val hasCombined by viewModel.hasCombined.collectAsStateWithLifecycle()
     val livePreviewInputs by viewModel.livePreviewInputs.collectAsStateWithLifecycle()
     val showDeleteDialog by viewModel.showDeleteDialog.collectAsStateWithLifecycle()
 
@@ -109,7 +109,7 @@ fun PairPreviewRoute(
                 ) + fadeIn(animationSpec = tween(durationMillis = ModalEnterDurationMs)),
         ) {
             PairPreviewScreen(
-                combined = combined,
+                hasCombined = hasCombined,
                 livePreviewBitmap = livePreviewBitmap,
                 showDeleteDialog = showDeleteDialog,
                 onClose = onDismiss,

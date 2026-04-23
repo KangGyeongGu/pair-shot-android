@@ -23,9 +23,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import com.pairshot.core.model.CombineHistory
-import com.pairshot.core.ui.component.ImageProfile
-import com.pairshot.core.ui.component.ProfiledAsyncImage
 import com.pairshot.feature.pairpreview.R
 
 private const val MinZoomScale = 1f
@@ -33,7 +30,6 @@ private const val MaxZoomScale = 4f
 
 @Composable
 fun PairPreviewCenter(
-    combined: CombineHistory?,
     livePreviewBitmap: Bitmap?,
     modifier: Modifier = Modifier,
 ) {
@@ -59,30 +55,18 @@ fun PairPreviewCenter(
                 },
         contentAlignment = Alignment.Center,
     ) {
-        val zoomModifier =
-            Modifier
-                .fillMaxSize()
-                .graphicsLayer(
-                    scaleX = scale,
-                    scaleY = scale,
-                    translationX = offset.x,
-                    translationY = offset.y,
-                )
-
-        if (combined != null) {
-            ProfiledAsyncImage(
-                data = combined.mediaStoreUri,
-                profile = ImageProfile.DETAIL,
-                contentDescription = stringResource(R.string.pair_preview_desc_saved_combined),
-                contentScale = ContentScale.Fit,
-                modifier = zoomModifier,
-            )
-        } else {
-            LivePreviewContent(
-                bitmap = livePreviewBitmap,
-                modifier = zoomModifier,
-            )
-        }
+        LivePreviewContent(
+            bitmap = livePreviewBitmap,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y,
+                    ),
+        )
     }
 }
 

@@ -12,6 +12,8 @@ interface PhotoPairRepository {
 
     suspend fun getById(id: Long): PhotoPair?
 
+    suspend fun getByIds(ids: List<Long>): List<PhotoPair>
+
     suspend fun delete(pair: PhotoPair)
 
     fun countAll(): Flow<Int>

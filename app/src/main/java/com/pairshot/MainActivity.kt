@@ -2,10 +2,8 @@ package com.pairshot
 
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +29,7 @@ import com.pairshot.app.navigation.PairShotNavHost
 import com.pairshot.app.navigation.SelectionActionViewModel
 import com.pairshot.app.navigation.SelectionMessage
 import com.pairshot.app.navigation.effect.ExportShareEffect
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTheme
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.SnackbarVariant
@@ -63,7 +62,6 @@ class MainActivity : AppCompatActivity() {
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     val selectionVm: SelectionActionViewModel = hiltViewModel()
-                    val pendingZip by selectionVm.pendingZipSave.collectAsStateWithLifecycle()
                     val progress by selectionVm.progress.collectAsStateWithLifecycle()
                     var selectionMessage by remember { mutableStateOf<SelectionMessage?>(null) }
 
@@ -75,19 +73,6 @@ class MainActivity : AppCompatActivity() {
                         if (selectionMessage != null) {
                             delay(2500)
                             selectionMessage = null
-                        }
-                    }
-
-                    val saveZipLauncher =
-                        rememberLauncherForActivityResult(
-                            ActivityResultContracts.CreateDocument("application/zip"),
-                        ) { uri ->
-                            selectionVm.completeZipSave(uri?.toString())
-                        }
-
-                    LaunchedEffect(pendingZip) {
-                        if (pendingZip != null) {
-                            saveZipLauncher.launch("PairShot_export.zip")
                         }
                     }
 
@@ -117,14 +102,15 @@ class MainActivity : AppCompatActivity() {
                                     Modifier
                                         .align(Alignment.TopCenter)
                                         .statusBarsPadding()
-                                        .padding(top = 8.dp),
+                                        .padding(top = PairShotSpacing.snackbarTopOffset),
                             )
                         }
 
                         selectionMessage?.let { msg ->
                             val variant =
                                 when (msg) {
-                                    is SelectionMessage.Info -> SnackbarVariant.INFO
+                                    is SelectionMessage.Success -> SnackbarVariant.SUCCESS
+                                    is SelectionMessage.Warning -> SnackbarVariant.WARNING
                                     is SelectionMessage.Error -> SnackbarVariant.ERROR
                                 }
                             PairShotSnackbar(
@@ -134,7 +120,7 @@ class MainActivity : AppCompatActivity() {
                                     Modifier
                                         .align(Alignment.TopCenter)
                                         .statusBarsPadding()
-                                        .padding(top = if (progress != null) 64.dp else 8.dp),
+                                        .padding(top = if (progress != null) 80.dp else PairShotSpacing.snackbarTopOffset),
                             )
                         }
                     }

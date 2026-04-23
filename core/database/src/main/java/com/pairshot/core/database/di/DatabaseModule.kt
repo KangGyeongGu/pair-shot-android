@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.pairshot.core.database.PairShotDatabase
 import com.pairshot.core.database.dao.AlbumDao
-import com.pairshot.core.database.dao.CombineHistoryDao
+import com.pairshot.core.database.dao.ExportHistoryDao
 import com.pairshot.core.database.dao.PairAlbumCrossRefDao
 import com.pairshot.core.database.dao.PhotoPairDao
 import dagger.Module
@@ -41,5 +41,5 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideCombineHistoryDao(db: PairShotDatabase): CombineHistoryDao = db.combineHistoryDao()
+    fun provideExportHistoryDao(db: PairShotDatabase): ExportHistoryDao = db.exportHistoryDao()
 }

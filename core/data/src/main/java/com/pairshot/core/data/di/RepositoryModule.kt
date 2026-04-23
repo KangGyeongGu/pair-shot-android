@@ -2,15 +2,15 @@ package com.pairshot.core.data.di
 
 import com.pairshot.core.data.repository.AlbumRepositoryImpl
 import com.pairshot.core.data.repository.AppSettingsRepositoryImpl
-import com.pairshot.core.data.repository.CombineHistoryRepositoryImpl
 import com.pairshot.core.data.repository.CombineSettingsRepositoryImpl
+import com.pairshot.core.data.repository.ExportHistoryRepositoryImpl
 import com.pairshot.core.data.repository.ExportRepositoryImpl
 import com.pairshot.core.data.repository.PhotoPairRepositoryImpl
 import com.pairshot.core.data.repository.StorageRepositoryImpl
 import com.pairshot.core.data.repository.WatermarkRepositoryImpl
 import com.pairshot.core.domain.album.AlbumRepository
-import com.pairshot.core.domain.combine.CombineHistoryRepository
 import com.pairshot.core.domain.combine.CombineSettingsRepository
+import com.pairshot.core.domain.combine.ExportHistoryRepository
 import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
@@ -31,7 +31,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindCombineHistoryRepository(impl: CombineHistoryRepositoryImpl): CombineHistoryRepository
+    abstract fun bindExportHistoryRepository(impl: ExportHistoryRepositoryImpl): ExportHistoryRepository
 
     @Binds
     abstract fun bindExportRepository(impl: ExportRepositoryImpl): ExportRepository

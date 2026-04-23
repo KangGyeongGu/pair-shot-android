@@ -5,36 +5,25 @@ import com.pairshot.core.model.ExportPreset
 import com.pairshot.core.model.WatermarkConfig
 
 interface ExportRepository {
-    suspend fun exportZipToDevice(
+    suspend fun composeCombinedForGallery(
         pairIds: List<Long>,
-        outputUri: String,
-        preset: ExportPreset,
         combineConfig: CombineConfig,
         watermarkConfig: WatermarkConfig?,
         onProgress: (current: Int, total: Int) -> Unit,
-    )
+    ): Int
 
-    suspend fun saveImagesToGallery(
+    suspend fun saveWatermarkedOriginals(
         pairIds: List<Long>,
         preset: ExportPreset,
-        combineConfig: CombineConfig,
-        watermarkConfig: WatermarkConfig?,
+        watermarkConfig: WatermarkConfig,
         onProgress: (current: Int, total: Int) -> Unit,
-    )
+    ): Int
 
-    suspend fun prepareShareableImages(
+    suspend fun buildShareablePayload(
         pairIds: List<Long>,
         preset: ExportPreset,
         combineConfig: CombineConfig,
         watermarkConfig: WatermarkConfig?,
         onProgress: (current: Int, total: Int) -> Unit,
-    ): List<String>
-
-    suspend fun createShareableZip(
-        pairIds: List<Long>,
-        preset: ExportPreset,
-        combineConfig: CombineConfig,
-        watermarkConfig: WatermarkConfig?,
-        onProgress: (current: Int, total: Int) -> Unit,
-    ): String
+    ): ExportAction
 }

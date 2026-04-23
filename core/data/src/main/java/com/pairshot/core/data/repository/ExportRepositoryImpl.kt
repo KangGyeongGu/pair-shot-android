@@ -1,17 +1,18 @@
 package com.pairshot.core.data.repository
 
 import android.net.Uri
-import com.pairshot.core.data.export.EntryKind
-import com.pairshot.core.data.export.ExportEntryFactory
 import com.pairshot.core.data.export.ShareImagePreparer
 import com.pairshot.core.data.export.WatermarkedBitmapWriter
-import com.pairshot.core.data.export.WatermarkedZipTask
 import com.pairshot.core.database.dao.PhotoPairDao
-import com.pairshot.core.domain.combine.CombineHistoryRepository
+import com.pairshot.core.database.entity.PhotoPairEntity
+import com.pairshot.core.domain.combine.ExportHistoryRepository
+import com.pairshot.core.domain.export.ExportAction
 import com.pairshot.core.domain.export.ExportRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.CombineConfig
-import com.pairshot.core.model.CombineHistory
+import com.pairshot.core.model.ExportFormat
+import com.pairshot.core.model.ExportHistoryEntry
+import com.pairshot.core.model.ExportHistoryKind
 import com.pairshot.core.model.ExportPreset
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.rendering.PairImageComposer
@@ -19,7 +20,6 @@ import com.pairshot.core.storage.MediaStoreManager
 import com.pairshot.core.storage.ZipImageEntry
 import com.pairshot.core.storage.ZipManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -33,169 +33,132 @@ class ExportRepositoryImpl
         private val zipManager: ZipManager,
         private val mediaStoreManager: MediaStoreManager,
         private val watermarkedBitmapWriter: WatermarkedBitmapWriter,
-        private val exportEntryFactory: ExportEntryFactory,
         private val shareImagePreparer: ShareImagePreparer,
         private val pairImageComposer: PairImageComposer,
         private val appSettingsRepository: AppSettingsRepository,
-        private val combineHistoryRepository: CombineHistoryRepository,
+        private val exportHistoryRepository: ExportHistoryRepository,
     ) : ExportRepository {
-        override suspend fun exportZipToDevice(
+        override suspend fun composeCombinedForGallery(
             pairIds: List<Long>,
-            outputUri: String,
-            preset: ExportPreset,
             combineConfig: CombineConfig,
             watermarkConfig: WatermarkConfig?,
             onProgress: (current: Int, total: Int) -> Unit,
-        ): Unit =
+        ): Int =
             withContext(Dispatchers.IO) {
                 val jpegQuality = appSettingsRepository.getCurrent().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
-                // Save 경로: 이미 합성본 있는 페어는 합성본 생성 자체를 건너뛴다 (1-per-pair 룰)
-                val existingCombined = existingCombinedUriMap(pairs.map { it.id })
-                val tempDir = shareImagePreparer.prepareTempDir("export_wm")
+                val tempDir = shareImagePreparer.prepareTempDir("compose_combined")
+                var savedCount = 0
                 try {
-                    val tasks =
-                        exportEntryFactory.buildWatermarkedZipEntries(
-                            pairs = pairs,
-                            includeBefore = preset.includeBefore,
-                            includeAfter = preset.includeAfter,
-                            includeCombined = preset.includeCombined,
-                            tempDir = tempDir,
-                            existingCombined = existingCombined,
-                            allowComposeWhenMissingCombined = true,
-                        )
-                    val entries =
-                        buildZipEntriesFromTasks(
-                            tasks,
-                            watermarkConfig,
-                            jpegQuality,
-                            combineConfig,
-                        )
-                    onProgress(0, pairs.size)
-                    zipManager.createZip(
-                        entries = entries,
-                        outputUri = Uri.parse(outputUri),
-                        onProgress = { _, _ -> },
-                    )
-
-                    // 새로 합성한 것만 MediaStore에 저장 + DB upsert (기존 합성본은 그대로 유지)
-                    tasks.filter { it.isCombinedNew }.forEach { task ->
-                        val savedUri =
-                            mediaStoreManager.saveToGallery(
-                                tempFileUri = Uri.fromFile(task.destFile),
-                                subfolder = "Combined",
-                                displayName = task.destFile.name,
+                    pairs.forEachIndexed { index, pair ->
+                        val before = pair.validBeforeUriOrNull()
+                        val after = pair.validAfterUriOrNull()
+                        if (before != null && after != null) {
+                            val displayName = "PAIR_%03d.jpg".format(index + 1)
+                            val tempFile = File(tempDir, displayName)
+                            composeCombinedFile(
+                                beforeUri = before,
+                                afterUri = after,
+                                destFile = tempFile,
+                                combineConfig = combineConfig,
+                                watermarkConfig = watermarkConfig,
+                                jpegQuality = jpegQuality,
                             )
-                        combineHistoryRepository.upsert(
-                            CombineHistory(pairId = task.pairId, mediaStoreUri = savedUri.toString()),
-                        )
+                            val savedUri =
+                                mediaStoreManager.saveToGallery(
+                                    tempFileUri = Uri.fromFile(tempFile),
+                                    subfolder = "Combined",
+                                    displayName = displayName,
+                                )
+                            exportHistoryRepository.insert(
+                                ExportHistoryEntry(
+                                    pairId = pair.id,
+                                    mediaStoreUri = savedUri.toString(),
+                                    kind = ExportHistoryKind.COMBINED,
+                                ),
+                            )
+                            savedCount++
+                        }
+                        onProgress(index + 1, pairs.size)
                     }
-                    onProgress(pairs.size, pairs.size)
                 } finally {
                     tempDir.deleteRecursively()
                 }
+                savedCount
             }
 
-        override suspend fun saveImagesToGallery(
+        override suspend fun saveWatermarkedOriginals(
+            pairIds: List<Long>,
+            preset: ExportPreset,
+            watermarkConfig: WatermarkConfig,
+            onProgress: (current: Int, total: Int) -> Unit,
+        ): Int =
+            withContext(Dispatchers.IO) {
+                val jpegQuality = appSettingsRepository.getCurrent().jpegQuality
+                val pairs = photoPairDao.getByIds(pairIds)
+                val tempDir = shareImagePreparer.prepareTempDir("save_wm_originals")
+                var savedCount = 0
+                try {
+                    pairs.forEachIndexed { index, pair ->
+                        val seq = index + 1
+                        if (preset.includeBefore) {
+                            pair.validBeforeUriOrNull()?.let { uri ->
+                                saveWatermarkedToGallery(
+                                    pairId = pair.id,
+                                    sourceUri = uri,
+                                    tempDir = tempDir,
+                                    displayName = "BEFORE_%03d_WM.jpg".format(seq),
+                                    kind = ExportHistoryKind.WATERMARKED_BEFORE,
+                                    watermarkConfig = watermarkConfig,
+                                    jpegQuality = jpegQuality,
+                                )
+                                savedCount++
+                            }
+                        }
+                        if (preset.includeAfter) {
+                            pair.validAfterUriOrNull()?.let { uri ->
+                                saveWatermarkedToGallery(
+                                    pairId = pair.id,
+                                    sourceUri = uri,
+                                    tempDir = tempDir,
+                                    displayName = "AFTER_%03d_WM.jpg".format(seq),
+                                    kind = ExportHistoryKind.WATERMARKED_AFTER,
+                                    watermarkConfig = watermarkConfig,
+                                    jpegQuality = jpegQuality,
+                                )
+                                savedCount++
+                            }
+                        }
+                        onProgress(index + 1, pairs.size)
+                    }
+                } finally {
+                    tempDir.deleteRecursively()
+                }
+                savedCount
+            }
+
+        override suspend fun buildShareablePayload(
             pairIds: List<Long>,
             preset: ExportPreset,
             combineConfig: CombineConfig,
             watermarkConfig: WatermarkConfig?,
             onProgress: (current: Int, total: Int) -> Unit,
-        ) = withContext(Dispatchers.IO) {
-            val jpegQuality = appSettingsRepository.getCurrent().jpegQuality
-            val pairs = photoPairDao.getByIds(pairIds)
-            val existingCombined = existingCombinedUriMap(pairs.map { it.id })
-            val galleryEntries =
-                exportEntryFactory.buildGalleryEntries(
-                    pairs = pairs,
-                    includeBefore = preset.includeBefore,
-                    includeAfter = preset.includeAfter,
-                    includeCombined = preset.includeCombined,
-                    existingCombined = existingCombined,
-                )
-
-            val hasCombined = galleryEntries.any { it.isCombinedNew }
-            val tempDir = if (hasCombined) shareImagePreparer.prepareTempDir("gallery_wm") else null
-
-            try {
-                // 페어 단위로 진행도 리포트
-                pairs.forEachIndexed { pairIdx, pair ->
-                    val pairEntries = galleryEntries.filter { it.pairId == pair.id }
-                    pairEntries.forEachIndexed { entryIdx, entry ->
-                        val savedUri: Uri =
-                            when {
-                                entry.isCombinedNew && tempDir != null -> {
-                                    val tempFile = File(tempDir, entry.displayName)
-                                    if (watermarkConfig != null) {
-                                        watermarkedBitmapWriter.combineWithWatermark(
-                                            entry.beforeUri!!,
-                                            entry.afterUri!!,
-                                            tempFile,
-                                            watermarkConfig,
-                                            jpegQuality,
-                                            combineConfig,
-                                        )
-                                    } else {
-                                        pairImageComposer.composeToFile(
-                                            beforeUri = Uri.parse(entry.beforeUri!!),
-                                            afterUri = Uri.parse(entry.afterUri!!),
-                                            destFile = tempFile,
-                                            combineConfig = combineConfig,
-                                            watermarkConfig = WatermarkConfig(),
-                                            jpegQuality = jpegQuality,
-                                        )
-                                    }
-                                    mediaStoreManager.saveToGallery(
-                                        tempFileUri = Uri.fromFile(tempFile),
-                                        subfolder = "Combined",
-                                        displayName = entry.displayName,
-                                    )
-                                }
-
-                                watermarkConfig != null && entry.sourceUri.isNotBlank() -> {
-                                    val singleTempDir =
-                                        shareImagePreparer.prepareTempDir("gallery_single_${pair.id}_$entryIdx")
-                                    val tempFile = File(singleTempDir, entry.displayName)
-                                    watermarkedBitmapWriter.applyWatermarkToFile(
-                                        entry.sourceUri,
-                                        tempFile,
-                                        watermarkConfig,
-                                        jpegQuality,
-                                    )
-                                    val uri =
-                                        mediaStoreManager.saveToGallery(
-                                            tempFileUri = Uri.fromFile(tempFile),
-                                            subfolder = "",
-                                            displayName = entry.displayName,
-                                        )
-                                    singleTempDir.deleteRecursively()
-                                    uri
-                                }
-
-                                else -> {
-                                    mediaStoreManager.saveToGallery(
-                                        tempFileUri = Uri.parse(entry.sourceUri),
-                                        subfolder = "",
-                                        displayName = entry.displayName,
-                                    )
-                                }
-                            }
-
-                        if (entry.isCombinedNew && entry.pairId != 0L) {
-                            combineHistoryRepository.upsert(
-                                CombineHistory(pairId = entry.pairId, mediaStoreUri = savedUri.toString()),
-                            )
-                        }
-                    }
-                    onProgress(pairIdx + 1, pairs.size)
+        ): ExportAction =
+            when (preset.format) {
+                ExportFormat.INDIVIDUAL -> {
+                    ExportAction.ShareImages(
+                        buildShareIndividual(pairIds, preset, combineConfig, watermarkConfig, onProgress),
+                    )
                 }
-            } finally {
-                tempDir?.deleteRecursively()
-            }
-        }
 
-        override suspend fun prepareShareableImages(
+                ExportFormat.ZIP -> {
+                    ExportAction.ShareZip(
+                        buildShareZip(pairIds, preset, combineConfig, watermarkConfig, onProgress),
+                    )
+                }
+            }
+
+        private suspend fun buildShareIndividual(
             pairIds: List<Long>,
             preset: ExportPreset,
             combineConfig: CombineConfig,
@@ -205,71 +168,26 @@ class ExportRepositoryImpl
             withContext(Dispatchers.IO) {
                 val jpegQuality = appSettingsRepository.getCurrent().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
-                val existingCombined = existingCombinedUriMap(pairs.map { it.id })
                 val shareDir = shareImagePreparer.prepareShareImageDir()
-                val shareEntries =
-                    exportEntryFactory.buildShareEntries(
-                        pairs = pairs,
-                        includeBefore = preset.includeBefore,
-                        includeAfter = preset.includeAfter,
-                        includeCombined = preset.includeCombined,
-                        existingCombined = existingCombined,
-                    )
-
-                val results = ArrayList<String>(shareEntries.size)
-                pairs.forEachIndexed { pairIdx, pair ->
-                    val pairEntries = shareEntries.filter { it.pairId == pair.id }
-                    pairEntries.forEach { entry ->
-                        val destFile = File(shareDir, entry.fileName)
-                        when {
-                            entry.isCombinedNew -> {
-                                if (watermarkConfig != null) {
-                                    watermarkedBitmapWriter.combineWithWatermark(
-                                        entry.beforeUri!!,
-                                        entry.afterUri!!,
-                                        destFile,
-                                        watermarkConfig,
-                                        jpegQuality,
-                                        combineConfig,
-                                    )
-                                } else {
-                                    pairImageComposer.composeToFile(
-                                        beforeUri = Uri.parse(entry.beforeUri!!),
-                                        afterUri = Uri.parse(entry.afterUri!!),
-                                        destFile = destFile,
-                                        combineConfig = combineConfig,
-                                        watermarkConfig = WatermarkConfig(),
-                                        jpegQuality = jpegQuality,
-                                    )
-                                }
-                            }
-
-                            entry.isCombinedExisting -> {
-                                // 이미 저장 시점 워터마크가 baked-in. 재적용하지 않고 그대로 복사.
-                                shareImagePreparer.copyFromContentUri(entry.sourceUri, destFile)
-                            }
-
-                            watermarkConfig != null && entry.sourceUri.isNotBlank() -> {
-                                watermarkedBitmapWriter.applyWatermarkToFile(
-                                    entry.sourceUri,
-                                    destFile,
-                                    watermarkConfig,
-                                    jpegQuality,
-                                )
-                            }
-
-                            else -> {
-                                shareImagePreparer.copyFromContentUri(entry.sourceUri, destFile)
-                            }
-                        }
+                val results = ArrayList<String>()
+                pairs.forEachIndexed { index, pair ->
+                    materializePairForShare(
+                        pair = pair,
+                        seq = index + 1,
+                        preset = preset,
+                        combineConfig = combineConfig,
+                        watermarkConfig = watermarkConfig,
+                        jpegQuality = jpegQuality,
+                        destDir = shareDir,
+                    ) { destFile, _ ->
                         results.add(shareImagePreparer.getFileProviderUri(destFile).toString())
                     }
-                    onProgress(pairIdx + 1, pairs.size)
+                    onProgress(index + 1, pairs.size)
                 }
                 results
             }
 
-        override suspend fun createShareableZip(
+        private suspend fun buildShareZip(
             pairIds: List<Long>,
             preset: ExportPreset,
             combineConfig: CombineConfig,
@@ -279,94 +197,148 @@ class ExportRepositoryImpl
             withContext(Dispatchers.IO) {
                 val jpegQuality = appSettingsRepository.getCurrent().jpegQuality
                 val pairs = photoPairDao.getByIds(pairIds)
-                val existingCombined = existingCombinedUriMap(pairs.map { it.id })
-                val shareDir = shareImagePreparer.prepareTempDir("share_zip")
-                val outputFile = File(shareDir, "PairShot.zip")
-                val tempDir = shareImagePreparer.prepareTempDir("share_wm")
+                val outputDir = shareImagePreparer.prepareTempDir("share_zip")
+                val outputFile = File(outputDir, "PairShot.zip")
+                val staging = shareImagePreparer.prepareTempDir("share_zip_staging")
                 try {
-                    val tasks =
-                        exportEntryFactory.buildWatermarkedZipEntries(
-                            pairs = pairs,
-                            includeBefore = preset.includeBefore,
-                            includeAfter = preset.includeAfter,
-                            includeCombined = preset.includeCombined,
-                            tempDir = tempDir,
-                            existingCombined = existingCombined,
-                            allowComposeWhenMissingCombined = true,
-                        )
-                    val entries =
-                        buildZipEntriesFromTasks(
-                            tasks,
-                            watermarkConfig,
-                            jpegQuality,
-                            combineConfig,
-                        )
-                    onProgress(0, pairs.size)
+                    val zipEntries = ArrayList<ZipImageEntry>()
+                    pairs.forEachIndexed { index, pair ->
+                        materializePairForShare(
+                            pair = pair,
+                            seq = index + 1,
+                            preset = preset,
+                            combineConfig = combineConfig,
+                            watermarkConfig = watermarkConfig,
+                            jpegQuality = jpegQuality,
+                            destDir = staging,
+                        ) { destFile, subdir ->
+                            zipEntries.add(
+                                ZipImageEntry(
+                                    uri = Uri.fromFile(destFile),
+                                    entryPath = "$subdir/${destFile.name}",
+                                ),
+                            )
+                        }
+                        onProgress(index + 1, pairs.size)
+                    }
                     zipManager.createZipToFile(
-                        entries = entries,
+                        entries = zipEntries,
                         outputFile = outputFile,
                         onProgress = { _, _ -> },
                     )
-                    onProgress(pairs.size, pairs.size)
                 } finally {
-                    tempDir.deleteRecursively()
+                    staging.deleteRecursively()
                 }
                 outputFile.absolutePath
             }
 
-        private suspend fun buildZipEntriesFromTasks(
-            tasks: List<WatermarkedZipTask>,
+        private suspend inline fun materializePairForShare(
+            pair: PhotoPairEntity,
+            seq: Int,
+            preset: ExportPreset,
+            combineConfig: CombineConfig,
             watermarkConfig: WatermarkConfig?,
             jpegQuality: Int,
-            combineConfig: CombineConfig,
-        ): List<ZipImageEntry> =
-            tasks.map { task ->
-                when (task.kind) {
-                    EntryKind.COMBINED_NEW -> {
-                        if (watermarkConfig != null) {
-                            watermarkedBitmapWriter.combineWithWatermark(
-                                task.sourceUri,
-                                task.afterUri!!,
-                                task.destFile,
-                                watermarkConfig,
-                                jpegQuality,
-                                combineConfig,
-                            )
-                        } else {
-                            pairImageComposer.composeToFile(
-                                beforeUri = Uri.parse(task.sourceUri),
-                                afterUri = Uri.parse(task.afterUri!!),
-                                destFile = task.destFile,
-                                combineConfig = combineConfig,
-                                watermarkConfig = WatermarkConfig(),
-                                jpegQuality = jpegQuality,
-                            )
-                        }
-                    }
-
-                    EntryKind.COMBINED_EXISTING -> {
-                        // 이미 워터마크 baked-in 상태 — 그대로 복사
-                        shareImagePreparer.copyFromContentUri(task.sourceUri, task.destFile)
-                    }
-
-                    EntryKind.BEFORE, EntryKind.AFTER -> {
-                        if (watermarkConfig != null) {
-                            watermarkedBitmapWriter.applyWatermarkToFile(
-                                task.sourceUri,
-                                task.destFile,
-                                watermarkConfig,
-                                jpegQuality,
-                            )
-                        } else {
-                            shareImagePreparer.copyFromContentUri(task.sourceUri, task.destFile)
-                        }
-                    }
+            destDir: File,
+            onFile: (destFile: File, subdir: String) -> Unit,
+        ) {
+            if (preset.includeBefore) {
+                pair.validBeforeUriOrNull()?.let { uri ->
+                    val name = "BEFORE_%03d.jpg".format(seq)
+                    val destFile = File(destDir, name)
+                    materializeSingle(uri, destFile, watermarkConfig, jpegQuality)
+                    onFile(destFile, "before")
                 }
-                ZipImageEntry(uri = Uri.fromFile(task.destFile), entryPath = task.entryPath)
             }
+            if (preset.includeAfter) {
+                pair.validAfterUriOrNull()?.let { uri ->
+                    val name = "AFTER_%03d.jpg".format(seq)
+                    val destFile = File(destDir, name)
+                    materializeSingle(uri, destFile, watermarkConfig, jpegQuality)
+                    onFile(destFile, "after")
+                }
+            }
+            if (preset.includeCombined) {
+                val before = pair.validBeforeUriOrNull()
+                val after = pair.validAfterUriOrNull()
+                if (before != null && after != null) {
+                    val name = "PAIR_%03d.jpg".format(seq)
+                    val destFile = File(destDir, name)
+                    composeCombinedFile(before, after, destFile, combineConfig, watermarkConfig, jpegQuality)
+                    onFile(destFile, "combined")
+                }
+            }
+        }
 
-        private suspend fun existingCombinedUriMap(pairIds: List<Long>): Map<Long, String> =
-            combineHistoryRepository
-                .findByPairIds(pairIds)
-                .mapValues { it.value.mediaStoreUri }
+        private suspend fun materializeSingle(
+            sourceUri: String,
+            destFile: File,
+            watermarkConfig: WatermarkConfig?,
+            jpegQuality: Int,
+        ) {
+            if (watermarkConfig != null) {
+                watermarkedBitmapWriter.applyWatermarkToFile(sourceUri, destFile, watermarkConfig, jpegQuality)
+            } else {
+                shareImagePreparer.copyFromContentUri(sourceUri, destFile)
+            }
+        }
+
+        private suspend fun saveWatermarkedToGallery(
+            pairId: Long,
+            sourceUri: String,
+            tempDir: File,
+            displayName: String,
+            kind: ExportHistoryKind,
+            watermarkConfig: WatermarkConfig,
+            jpegQuality: Int,
+        ) {
+            val tempFile = File(tempDir, displayName)
+            watermarkedBitmapWriter.applyWatermarkToFile(sourceUri, tempFile, watermarkConfig, jpegQuality)
+            val savedUri =
+                mediaStoreManager.saveToGallery(
+                    tempFileUri = Uri.fromFile(tempFile),
+                    subfolder = "Watermarked",
+                    displayName = displayName,
+                )
+            exportHistoryRepository.insert(
+                ExportHistoryEntry(
+                    pairId = pairId,
+                    mediaStoreUri = savedUri.toString(),
+                    kind = kind,
+                ),
+            )
+        }
+
+        private suspend fun composeCombinedFile(
+            beforeUri: String,
+            afterUri: String,
+            destFile: File,
+            combineConfig: CombineConfig,
+            watermarkConfig: WatermarkConfig?,
+            jpegQuality: Int,
+        ) {
+            if (watermarkConfig != null) {
+                watermarkedBitmapWriter.combineWithWatermark(
+                    beforeUri = beforeUri,
+                    afterUri = afterUri,
+                    destFile = destFile,
+                    config = watermarkConfig,
+                    jpegQuality = jpegQuality,
+                    combineConfig = combineConfig,
+                )
+            } else {
+                pairImageComposer.composeToFile(
+                    beforeUri = Uri.parse(beforeUri),
+                    afterUri = Uri.parse(afterUri),
+                    destFile = destFile,
+                    combineConfig = combineConfig,
+                    watermarkConfig = WatermarkConfig(),
+                    jpegQuality = jpegQuality,
+                )
+            }
+        }
     }
+
+private fun PhotoPairEntity.validBeforeUriOrNull(): String? = beforePhotoUri.takeIf { it.isNotBlank() && Uri.parse(it).scheme == "content" }
+
+private fun PhotoPairEntity.validAfterUriOrNull(): String? = afterPhotoUri?.takeIf { it.isNotBlank() && Uri.parse(it).scheme == "content" }

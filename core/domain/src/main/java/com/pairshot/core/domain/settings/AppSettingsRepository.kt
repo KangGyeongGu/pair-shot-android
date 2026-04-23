@@ -2,6 +2,7 @@ package com.pairshot.core.domain.settings
 
 import com.pairshot.core.model.AppSettings
 import com.pairshot.core.model.ExportPreset
+import com.pairshot.core.model.SortOrder
 import kotlinx.coroutines.flow.Flow
 
 interface AppSettingsRepository {
@@ -30,4 +31,12 @@ interface AppSettingsRepository {
     suspend fun getLastExportPreset(): ExportPreset
 
     suspend fun saveLastExportPreset(preset: ExportPreset)
+
+    val homeSortOrderFlow: Flow<SortOrder>
+
+    val albumSortOrderFlow: Flow<SortOrder>
+
+    suspend fun updateHomeSortOrder(order: SortOrder)
+
+    suspend fun updateAlbumSortOrder(order: SortOrder)
 }

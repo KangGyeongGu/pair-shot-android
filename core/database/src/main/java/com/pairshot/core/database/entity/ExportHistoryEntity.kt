@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "combine_history",
+    tableName = "export_history",
     foreignKeys = [
         ForeignKey(
             entity = PhotoPairEntity::class,
@@ -16,11 +16,14 @@ import androidx.room.PrimaryKey
         ),
     ],
     indices = [
-        Index(value = ["pairId"], unique = true),
+        Index(value = ["pairId"]),
+        Index(value = ["pairId", "kind"]),
     ],
 )
-data class CombineHistoryEntity(
+data class ExportHistoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val pairId: Long,
     val mediaStoreUri: String,
+    val kind: String,
+    val createdAt: Long,
 )

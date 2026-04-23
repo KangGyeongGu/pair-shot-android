@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.model.CombineHistory
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
 import com.pairshot.feature.pairpreview.component.PairPreviewCenter
 import com.pairshot.feature.pairpreview.component.PairPreviewTopBar
@@ -22,7 +21,7 @@ private val ModalHeight = 420.dp
 
 @Composable
 fun PairPreviewScreen(
-    combined: CombineHistory?,
+    hasCombined: Boolean,
     livePreviewBitmap: Bitmap?,
     showDeleteDialog: Boolean,
     onClose: () -> Unit,
@@ -54,10 +53,7 @@ fun PairPreviewScreen(
                 )
 
                 Box(modifier = Modifier.weight(1f)) {
-                    PairPreviewCenter(
-                        combined = combined,
-                        livePreviewBitmap = livePreviewBitmap,
-                    )
+                    PairPreviewCenter(livePreviewBitmap = livePreviewBitmap)
                 }
             }
         }
@@ -66,7 +62,7 @@ fun PairPreviewScreen(
     if (showDeleteDialog) {
         DeletePairConfirmDialog(
             pairCount = 1,
-            combinedCount = if (combined != null) 1 else 0,
+            combinedCount = if (hasCombined) 1 else 0,
             onDeleteAll = onDeleteAll,
             onDeleteCombinedOnly = onDeleteCombinedOnly,
             onDismiss = onDeleteDismissed,

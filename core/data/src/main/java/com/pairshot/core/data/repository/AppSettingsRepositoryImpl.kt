@@ -5,9 +5,11 @@ import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.AppSettings
 import com.pairshot.core.model.ExportFormat
 import com.pairshot.core.model.ExportPreset
+import com.pairshot.core.model.SortOrder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -80,20 +82,20 @@ class AppSettingsRepositoryImpl
 
         override suspend fun updateCameraHdr(enabled: Boolean) = appPreferences.setCameraHdr(enabled)
 
-        override suspend fun getLastExportPreset(): ExportPreset =
-            combine(
-                appPreferences.exportFormat,
-                appPreferences.exportIncludeBefore,
-                appPreferences.exportIncludeAfter,
-                appPreferences.exportIncludeCombined,
-            ) { format, before, after, combined ->
-                ExportPreset(
-                    format = runCatching { ExportFormat.valueOf(format) }.getOrDefault(ExportFormat.ZIP),
-                    includeBefore = before,
-                    includeAfter = after,
-                    includeCombined = combined,
-                )
-            }.first()
+        override suspend fun getLastExportPreset(): ExportPreset {
+            val format = appPreferences.exportFormat.first()
+            val includeBefore = appPreferences.exportIncludeBefore.first()
+            val includeAfter = appPreferences.exportIncludeAfter.first()
+            val includeCombined = appPreferences.exportIncludeCombined.first()
+            val applyCombineConfig = appPreferences.exportApplyCombineConfig.first()
+            return ExportPreset(
+                format = runCatching { ExportFormat.valueOf(format) }.getOrDefault(ExportFormat.INDIVIDUAL),
+                includeBefore = includeBefore,
+                includeAfter = includeAfter,
+                includeCombined = includeCombined,
+                applyCombineConfig = applyCombineConfig,
+            )
+        }
 
         override suspend fun saveLastExportPreset(preset: ExportPreset) {
             appPreferences.saveExportPreset(
@@ -101,6 +103,17 @@ class AppSettingsRepositoryImpl
                 includeBefore = preset.includeBefore,
                 includeAfter = preset.includeAfter,
                 includeCombined = preset.includeCombined,
+                applyCombineConfig = preset.applyCombineConfig,
             )
         }
+
+        override val homeSortOrderFlow: Flow<SortOrder> = appPreferences.homeSortOrder.map { it.toSortOrder() }
+
+        override val albumSortOrderFlow: Flow<SortOrder> = appPreferences.albumSortOrder.map { it.toSortOrder() }
+
+        override suspend fun updateHomeSortOrder(order: SortOrder) = appPreferences.setHomeSortOrder(order.name)
+
+        override suspend fun updateAlbumSortOrder(order: SortOrder) = appPreferences.setAlbumSortOrder(order.name)
     }
+
+private fun String.toSortOrder(): SortOrder = runCatching { SortOrder.valueOf(this) }.getOrDefault(SortOrder.DESC)

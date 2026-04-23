@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -19,8 +21,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.LocalPairShotExtendedColors
+import com.pairshot.core.designsystem.PairShotSpacing
 
 @Composable
 fun TopProgressPill(
@@ -37,13 +41,20 @@ fun TopProgressPill(
 
     val extendedColors = LocalPairShotExtendedColors.current
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
-        shadowElevation = 8.dp,
-        modifier = modifier.padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(999.dp),
+        color = SnackbarBackground,
+        shadowElevation = PairShotSpacing.snackbarElevation,
+        modifier =
+            modifier
+                .widthIn(max = PairShotSpacing.progressPillMaxWidth)
+                .heightIn(min = PairShotSpacing.snackbarMinHeight),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier =
+                Modifier.padding(
+                    horizontal = PairShotSpacing.snackbarHorizontalPadding,
+                    vertical = PairShotSpacing.snackbarVerticalPadding,
+                ),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Row(
@@ -53,13 +64,13 @@ fun TopProgressPill(
             ) {
                 Text(
                     text = label,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = Color.White,
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 if (progressText.isNotEmpty()) {
                     Text(
                         text = progressText,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }
@@ -72,7 +83,7 @@ fun TopProgressPill(
                         .height(3.dp)
                         .clip(RoundedCornerShape(999.dp)),
                 color = extendedColors.success,
-                trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
+                trackColor = Color.White.copy(alpha = 0.2f),
             )
         }
     }

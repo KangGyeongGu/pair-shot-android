@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.ExportFormat
@@ -27,7 +26,6 @@ class ExportSettingsViewModel
         savedStateHandle: SavedStateHandle,
         private val appSettingsRepository: AppSettingsRepository,
         private val watermarkRepository: WatermarkRepository,
-        private val combineSettingsRepository: CombineSettingsRepository,
     ) : ViewModel() {
         val pairIds: String = savedStateHandle.toRoute<ExportSettings>().pairIds
 
@@ -37,10 +35,7 @@ class ExportSettingsViewModel
         val applyWatermark: StateFlow<Boolean> =
             watermarkRepository.watermarkConfigFlow
                 .map { it.enabled }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-        private val _applyCombineConfig = MutableStateFlow(true)
-        val applyCombineConfig: StateFlow<Boolean> = _applyCombineConfig.asStateFlow()
+                .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
         init {
             viewModelScope.launch {
@@ -72,7 +67,7 @@ class ExportSettingsViewModel
         }
 
         fun setApplyCombineConfig(value: Boolean) {
-            _applyCombineConfig.value = value
+            updatePreset { it.copy(applyCombineConfig = value) }
         }
 
         private fun updatePreset(transform: (ExportPreset) -> ExportPreset) {

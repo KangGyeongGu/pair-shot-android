@@ -15,14 +15,14 @@ interface PhotoPairDao {
         """
         SELECT
             pp.*,
-            EXISTS(SELECT 1 FROM combine_history ch WHERE ch.pairId = pp.id) AS hasCombined
+            EXISTS(SELECT 1 FROM export_history eh WHERE eh.pairId = pp.id AND eh.kind = 'COMBINED') AS hasCombined
         FROM photo_pairs pp
         ORDER BY pp.beforeTimestamp ASC
         """,
     )
     fun observeAllWithCounts(): Flow<List<PhotoPairWithCountsEntity>>
 
-    @Query("SELECT * FROM photo_pairs WHERE status = 'BEFORE_ONLY' ORDER BY beforeTimestamp ASC")
+    @Query("SELECT * FROM photo_pairs WHERE status = 'BEFORE_ONLY' ORDER BY beforeTimestamp DESC")
     fun observeUnpaired(): Flow<List<PhotoPairEntity>>
 
     @Query("SELECT * FROM photo_pairs WHERE id = :id")
