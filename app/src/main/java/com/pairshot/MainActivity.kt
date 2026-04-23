@@ -1,7 +1,6 @@
 package com.pairshot
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -38,6 +37,7 @@ import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.component.TopProgressPill
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import timber.log.Timber
 
 private const val SELECTION_MESSAGE_AUTO_DISMISS_MS = 2500L
 private const val SNACKBAR_OFFSET_WHEN_PROGRESS_DP = 80
@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
         jankStats =
             JankStats.createAndTrack(window) { frameData ->
                 if (frameData.isJank && BuildConfig.DEBUG) {
-                    Log.w("JankStats", frameData.toString())
+                    Timber.tag("JankStats").w(frameData.toString())
                 }
             }
         metricsStateHolder.state?.putState("screen", "Camera")

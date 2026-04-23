@@ -248,6 +248,43 @@ fun SettingsScreen(
                                 vertical = PairShotSpacing.cardPadding,
                             ),
                     ) {
+                        item(key = "label_general") {
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_general))
+                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                        }
+
+                        item(key = "card_general") {
+                            SettingsCard {
+                                val languageLabel =
+                                    when (currentLocale) {
+                                        AppLocale.SYSTEM -> stringResource(R.string.settings_language_system)
+                                        AppLocale.KOREAN -> stringResource(R.string.settings_language_korean)
+                                        AppLocale.ENGLISH -> stringResource(R.string.settings_language_english)
+                                    }
+                                SettingsItem(
+                                    label = stringResource(R.string.settings_item_language),
+                                    trailing = languageLabel,
+                                    onClick = { showLanguageDialog = true },
+                                )
+                                SettingsDivider()
+                                val themeLabel =
+                                    when (currentTheme) {
+                                        AppTheme.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                        AppTheme.LIGHT -> stringResource(R.string.settings_theme_light)
+                                        AppTheme.DARK -> stringResource(R.string.settings_theme_dark)
+                                    }
+                                SettingsItem(
+                                    label = stringResource(R.string.settings_item_theme),
+                                    trailing = themeLabel,
+                                    onClick = { showThemeDialog = true },
+                                )
+                            }
+                        }
+
+                        item(key = "gap_general") {
+                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                        }
+
                         item(key = "label_capture") {
                             SettingsSectionLabel(label = stringResource(R.string.settings_section_shooting_files))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
@@ -414,12 +451,12 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                         }
 
-                        item(key = "label_storage") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_storage))
+                        item(key = "label_storage_info") {
+                            SettingsSectionLabel(label = stringResource(R.string.settings_section_storage_and_info))
                             Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
 
-                        item(key = "card_storage") {
+                        item(key = "card_storage_info") {
                             SettingsCard {
                                 SettingsItem(
                                     label = stringResource(R.string.settings_item_photo_storage),
@@ -431,57 +468,7 @@ fun SettingsScreen(
                                     trailing = formatBytes(uiState.cacheBytes),
                                     onClick = { showClearCacheDialog = true },
                                 )
-                            }
-                        }
-
-                        item(key = "gap_general") {
-                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-                        }
-
-                        item(key = "label_general") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_general))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
-
-                        item(key = "card_general") {
-                            SettingsCard {
-                                val languageLabel =
-                                    when (currentLocale) {
-                                        AppLocale.SYSTEM -> stringResource(R.string.settings_language_system)
-                                        AppLocale.KOREAN -> stringResource(R.string.settings_language_korean)
-                                        AppLocale.ENGLISH -> stringResource(R.string.settings_language_english)
-                                    }
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_language),
-                                    trailing = languageLabel,
-                                    onClick = { showLanguageDialog = true },
-                                )
                                 SettingsDivider()
-                                val themeLabel =
-                                    when (currentTheme) {
-                                        AppTheme.SYSTEM -> stringResource(R.string.settings_theme_system)
-                                        AppTheme.LIGHT -> stringResource(R.string.settings_theme_light)
-                                        AppTheme.DARK -> stringResource(R.string.settings_theme_dark)
-                                    }
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_theme),
-                                    trailing = themeLabel,
-                                    onClick = { showThemeDialog = true },
-                                )
-                            }
-                        }
-
-                        item(key = "gap_3") {
-                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-                        }
-
-                        item(key = "label_info") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_app_info))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
-
-                        item(key = "card_info") {
-                            SettingsCard {
                                 SettingsItem(
                                     label = stringResource(R.string.settings_item_app_version),
                                     trailing = uiState.appVersion,

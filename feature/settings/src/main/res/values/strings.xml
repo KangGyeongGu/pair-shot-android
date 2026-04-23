@@ -6,9 +6,8 @@
     <string name="settings_section_shooting_files">촬영 및 파일</string>
     <string name="settings_section_watermark">워터마크</string>
     <string name="settings_section_combine">합성</string>
-    <string name="settings_section_storage">저장공간</string>
     <string name="settings_section_general">일반</string>
-    <string name="settings_section_app_info">앱 정보</string>
+    <string name="settings_section_storage_and_info">저장공간 및 앱 정보</string>
 
     <!-- Language -->
     <string name="settings_item_language">언어</string>

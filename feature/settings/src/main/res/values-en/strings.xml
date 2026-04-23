@@ -6,9 +6,8 @@
     <string name="settings_section_shooting_files">Shooting and files</string>
     <string name="settings_section_watermark">Watermark</string>
     <string name="settings_section_combine">Combining</string>
-    <string name="settings_section_storage">Storage</string>
     <string name="settings_section_general">General</string>
-    <string name="settings_section_app_info">App info</string>
+    <string name="settings_section_storage_and_info">Storage and app info</string>
 
     <!-- Language -->
     <string name="settings_item_language">Language</string>
