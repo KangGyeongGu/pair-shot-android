@@ -83,16 +83,16 @@ fun DeletePairConfirmDialog(
                 )
             },
             confirmButton = {
-                TextButton(onClick = onDeleteAll) {
-                    Text(
-                        text = stringResource(R.string.common_button_delete),
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(text = stringResource(R.string.common_button_cancel))
+                Row {
+                    TextButton(onClick = onDeleteAll) {
+                        Text(
+                            text = stringResource(R.string.common_button_delete),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text(text = stringResource(R.string.common_button_cancel))
+                    }
                 }
             },
         )

@@ -7,10 +7,14 @@ import androidx.navigation.toRoute
 import com.pairshot.core.domain.album.AlbumRepository
 import com.pairshot.core.domain.album.DeleteAlbumUseCase
 import com.pairshot.core.domain.album.RenameAlbumUseCase
+import com.pairshot.core.domain.combine.DeleteCombinedPhotosUseCase
+import com.pairshot.core.domain.pair.DeletePairsUseCase
 import com.pairshot.core.domain.pair.PairNavigationTarget
 import com.pairshot.core.domain.pair.ResolvePairNavigationTargetUseCase
+import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
+import com.pairshot.core.model.SortOrder
 import com.pairshot.core.navigation.AlbumDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -59,6 +63,7 @@ sealed interface AlbumDetailUiState {
         val showRenameDialog: Boolean = false,
         val showDeleteAlbumDialog: Boolean = false,
         val showDeletePairsDialog: Boolean = false,
+        val sortOrder: SortOrder = SortOrder.DESC,
     ) : AlbumDetailUiState
 }
 
@@ -93,6 +98,9 @@ class AlbumDetailViewModel
         private val deleteAlbumUseCase: DeleteAlbumUseCase,
         private val renameAlbumUseCase: RenameAlbumUseCase,
         private val resolvePairNavigationTargetUseCase: ResolvePairNavigationTargetUseCase,
+        private val deletePairsUseCase: DeletePairsUseCase,
+        private val deleteCombinedPhotosUseCase: DeleteCombinedPhotosUseCase,
+        private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AlbumDetail>()
         val albumId: Long = route.albumId
@@ -104,12 +112,20 @@ class AlbumDetailViewModel
         private var latestAlbum: Album? = null
         private var latestPairs: List<PhotoPair> = emptyList()
 
+        val sortOrder: StateFlow<SortOrder> =
+            appSettingsRepository.albumSortOrderFlow.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = SortOrder.DESC,
+            )
+
         val uiState: StateFlow<AlbumDetailUiState> =
             combine(
                 _contentPhase,
                 _selection,
                 _dialogs,
-            ) { phase, selection, dialogs ->
+                sortOrder,
+            ) { phase, selection, dialogs, sort ->
                 when (phase) {
                     AlbumContentPhase.Loading -> {
                         AlbumDetailUiState.Loading
@@ -128,6 +144,7 @@ class AlbumDetailViewModel
                             showRenameDialog = dialogs.showRename,
                             showDeleteAlbumDialog = dialogs.showDeleteAlbum,
                             showDeletePairsDialog = dialogs.showDeletePairs,
+                            sortOrder = sort,
                         )
                     }
                 }
@@ -135,6 +152,13 @@ class AlbumDetailViewModel
 
         private val _events = MutableSharedFlow<AlbumDetailEvent>()
         val events: SharedFlow<AlbumDetailEvent> = _events.asSharedFlow()
+
+        fun toggleSortOrder() {
+            viewModelScope.launch {
+                val next = if (sortOrder.value == SortOrder.DESC) SortOrder.ASC else SortOrder.DESC
+                appSettingsRepository.updateAlbumSortOrder(next)
+            }
+        }
 
         init {
             loadAlbum()
@@ -227,13 +251,38 @@ class AlbumDetailViewModel
             _dialogs.update { it.copy(showDeletePairs = false) }
         }
 
-        fun confirmDeletePairs() {
+        fun removeSelectedFromAlbum() {
             val selectedIds = _selection.value.selectedIds.toList()
             viewModelScope.launch {
                 if (selectedIds.isNotEmpty()) albumRepository.removePairs(albumId, selectedIds)
-                _dialogs.update { it.copy(showDeletePairs = false) }
-                _selection.value = SelectionState()
+                closeSelectionAndDialog()
             }
+        }
+
+        fun deleteSelectedPairs() {
+            val selectedIds = _selection.value.selectedIds
+            if (selectedIds.isEmpty()) {
+                closeSelectionAndDialog()
+                return
+            }
+            val pairsToDelete = latestPairs.filter { it.id in selectedIds }
+            viewModelScope.launch {
+                deletePairsUseCase(pairsToDelete)
+                closeSelectionAndDialog()
+            }
+        }
+
+        fun deleteSelectedCombinedOnly() {
+            val selectedIds = _selection.value.selectedIds.toList()
+            viewModelScope.launch {
+                if (selectedIds.isNotEmpty()) deleteCombinedPhotosUseCase(selectedIds)
+                closeSelectionAndDialog()
+            }
+        }
+
+        private fun closeSelectionAndDialog() {
+            _dialogs.update { it.copy(showDeletePairs = false) }
+            _selection.value = SelectionState()
         }
 
         fun showRenameDialog() {

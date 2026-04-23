@@ -1,6 +1,7 @@
 package com.pairshot.feature.album.screen
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -11,11 +12,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.pairshot.feature.album.component.AlbumDetailTopBar
 import com.pairshot.feature.album.component.AlbumEmptyActions
+import com.pairshot.feature.album.component.AlbumFilterRow
 import com.pairshot.feature.album.component.AlbumPairGridSection
 import com.pairshot.feature.album.component.AlbumPrimaryActionBar
 import com.pairshot.feature.album.component.AlbumSelectionBottomBar
+import com.pairshot.feature.album.dialog.AlbumDeletePairsDialog
 import com.pairshot.feature.album.dialog.DeleteAlbumDialog
-import com.pairshot.feature.album.dialog.DeletePairsDialog
 import com.pairshot.feature.album.dialog.RenameAlbumDialog
 import com.pairshot.feature.album.viewmodel.AlbumDetailUiState
 import com.pairshot.core.ui.R as CoreR
@@ -31,7 +33,7 @@ fun AlbumDetailScreen(
     onAddPairsClick: () -> Unit,
     onShareClick: () -> Unit,
     onSaveToDeviceClick: () -> Unit,
-    onRemoveFromAlbumClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onExportSettingsClick: () -> Unit,
     onRenameClick: () -> Unit,
     onDeleteAlbumClick: () -> Unit,
@@ -39,8 +41,11 @@ fun AlbumDetailScreen(
     onRenameDismiss: () -> Unit,
     onDeleteAlbumConfirm: () -> Unit,
     onDeleteAlbumDismiss: () -> Unit,
-    onDeletePairsConfirm: () -> Unit,
+    onRemoveFromAlbum: () -> Unit,
+    onDeletePairs: () -> Unit,
+    onDeleteCombinedOnly: () -> Unit,
     onDeletePairsDismiss: () -> Unit,
+    onToggleSortOrder: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pairsEmpty = uiState.pairs.isEmpty()
@@ -64,7 +69,7 @@ fun AlbumDetailScreen(
                     AlbumSelectionBottomBar(
                         onShareClick = onShareClick,
                         onSaveToDeviceClick = onSaveToDeviceClick,
-                        onRemoveFromAlbumClick = onRemoveFromAlbumClick,
+                        onDeleteClick = onDeleteClick,
                         onExportSettingsClick = onExportSettingsClick,
                     )
                 }
@@ -88,16 +93,21 @@ fun AlbumDetailScreen(
                         .padding(innerPadding),
             )
         } else {
-            Box(modifier = Modifier.padding(innerPadding)) {
+            Column(modifier = Modifier.padding(innerPadding)) {
+                AlbumFilterRow(
+                    sortOrder = uiState.sortOrder,
+                    onToggleSortOrder = onToggleSortOrder,
+                )
                 AlbumPairGridSection(
                     pairs = uiState.pairs,
                     selectedIds = uiState.selectedIds,
                     isSelectionMode = uiState.isSelectionMode,
+                    sortOrder = uiState.sortOrder,
                     onPairClick = onPairClick,
                     onPairLongPress = onPairLongPress,
                     contentPadding =
                         PaddingValues(
-                            top = 12.dp,
+                            top = 0.dp,
                             bottom = 12.dp,
                             start = 12.dp,
                             end = 12.dp,
@@ -124,9 +134,14 @@ fun AlbumDetailScreen(
     }
 
     if (uiState.showDeletePairsDialog) {
-        DeletePairsDialog(
-            count = uiState.selectedIds.size,
-            onConfirm = onDeletePairsConfirm,
+        val combinedInSelection =
+            uiState.pairs.count { it.id in uiState.selectedIds && it.hasCombined }
+        AlbumDeletePairsDialog(
+            pairCount = uiState.selectedIds.size,
+            combinedCount = combinedInSelection,
+            onRemoveFromAlbum = onRemoveFromAlbum,
+            onDeletePairs = onDeletePairs,
+            onDeleteCombinedOnly = onDeleteCombinedOnly,
             onDismiss = onDeletePairsDismiss,
         )
     }

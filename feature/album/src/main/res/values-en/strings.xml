@@ -15,7 +15,6 @@
 
     <!-- Album Selection Bottom Bar -->
     <string name="album_button_remove_from_album">Remove from album</string>
-    <string name="album_button_export_settings_long">Export settings</string>
 
     <!-- Dialog: Delete Album -->
     <string name="album_dialog_delete_title">Delete album</string>
@@ -24,14 +23,6 @@
     <!-- Dialog: Rename Album -->
     <string name="album_dialog_rename_title">Rename album</string>
     <string name="album_dialog_rename_placeholder">Enter album name</string>
-
-    <!-- Dialog: Delete Pairs -->
-    <string name="album_dialog_delete_pairs_title">Remove pairs</string>
-    <plurals name="album_dialog_delete_pairs_confirm">
-        <item quantity="one">Remove %1$d pair from this album?</item>
-        <item quantity="other">Remove %1$d pairs from this album?</item>
-    </plurals>
-    <string name="album_dialog_delete_pairs_button">Remove</string>
 
     <!-- Pair Picker -->
     <plurals name="pair_picker_title_selected">

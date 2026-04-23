@@ -74,7 +74,7 @@ fun AlbumDetailRoute(
                 onAddPairsClick = viewModel::onAddPairsClick,
                 onShareClick = { onShareSelected(state.selectedIds) },
                 onSaveToDeviceClick = { onSaveSelectedToDevice(state.selectedIds) },
-                onRemoveFromAlbumClick = viewModel::showDeletePairsDialog,
+                onDeleteClick = viewModel::showDeletePairsDialog,
                 onExportSettingsClick = { onNavigateToExportSettings(state.selectedIds) },
                 onRenameClick = viewModel::showRenameDialog,
                 onDeleteAlbumClick = viewModel::showDeleteAlbumDialog,
@@ -82,8 +82,11 @@ fun AlbumDetailRoute(
                 onRenameDismiss = viewModel::dismissRenameDialog,
                 onDeleteAlbumConfirm = viewModel::confirmDeleteAlbum,
                 onDeleteAlbumDismiss = viewModel::dismissDeleteAlbumDialog,
-                onDeletePairsConfirm = viewModel::confirmDeletePairs,
+                onRemoveFromAlbum = viewModel::removeSelectedFromAlbum,
+                onDeletePairs = viewModel::deleteSelectedPairs,
+                onDeleteCombinedOnly = viewModel::deleteSelectedCombinedOnly,
                 onDeletePairsDismiss = viewModel::dismissDeletePairsDialog,
+                onToggleSortOrder = viewModel::toggleSortOrder,
                 modifier = modifier,
             )
         }

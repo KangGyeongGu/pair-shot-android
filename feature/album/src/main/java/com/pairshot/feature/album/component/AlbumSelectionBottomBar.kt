@@ -1,10 +1,10 @@
 package com.pairshot.feature.album.component
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.FileDownload
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -12,14 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ui.component.PairShotActionBar
 import com.pairshot.core.ui.component.PairShotActionBarItem
-import com.pairshot.feature.album.R
 import com.pairshot.core.ui.R as CoreR
 
 @Composable
 fun AlbumSelectionBottomBar(
     onShareClick: () -> Unit,
     onSaveToDeviceClick: () -> Unit,
-    onRemoveFromAlbumClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onExportSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -29,7 +28,7 @@ fun AlbumSelectionBottomBar(
             onClick = onShareClick,
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.Share,
+                    imageVector = Icons.Outlined.Share,
                     contentDescription = stringResource(CoreR.string.common_button_share),
                 )
             },
@@ -39,30 +38,30 @@ fun AlbumSelectionBottomBar(
             onClick = onSaveToDeviceClick,
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.FileDownload,
+                    imageVector = Icons.Outlined.FileDownload,
                     contentDescription = stringResource(CoreR.string.common_button_save_to_device),
                 )
             },
         )
         PairShotActionBarItem(
-            label = stringResource(R.string.album_button_remove_from_album),
-            onClick = onRemoveFromAlbumClick,
+            label = stringResource(CoreR.string.common_button_delete),
+            onClick = onDeleteClick,
+            labelColor = MaterialTheme.colorScheme.error,
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = stringResource(R.string.album_button_remove_from_album),
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = stringResource(CoreR.string.common_button_delete),
                     tint = MaterialTheme.colorScheme.error,
                 )
             },
-            labelColor = MaterialTheme.colorScheme.error,
         )
         PairShotActionBarItem(
-            label = stringResource(R.string.album_button_export_settings_long),
+            label = stringResource(CoreR.string.common_button_export_settings),
             onClick = onExportSettingsClick,
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = stringResource(R.string.album_button_export_settings_long),
+                    imageVector = Icons.Outlined.Tune,
+                    contentDescription = stringResource(CoreR.string.common_button_export_settings),
                 )
             },
         )
