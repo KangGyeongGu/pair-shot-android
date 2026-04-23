@@ -29,4 +29,8 @@ object PairShotSpacing {
     val snackbarMaxWidth = 480.dp
     val snackbarTopOffset = 12.dp
     val progressPillMaxWidth = 260.dp
+
+    val modalWidth = 340.dp
+    val modalHeight = 420.dp
+    val modalElevation = 8.dp
 }

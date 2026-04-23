@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -124,7 +125,7 @@ fun BeforePreviewStrip(
             modifier
                 .fillMaxWidth()
                 .height(stripHeight)
-                .background(Color.Black),
+                .background(PairShotCameraTokens.Letterbox),
     ) {
         if (beforePreviewUris.isEmpty()) {
             Text(
@@ -248,7 +249,7 @@ private fun StripProgressIndicator(
             text = stringResource(R.string.camera_strip_progress, completed, total),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
-            color = Color.White,
+            color = PairShotCameraTokens.Foreground,
         )
     }
 }

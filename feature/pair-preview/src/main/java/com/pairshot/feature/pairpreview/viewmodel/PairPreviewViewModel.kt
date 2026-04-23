@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -33,6 +32,17 @@ data class LivePreviewInputs(
     val config: CombineConfig,
     val watermark: WatermarkConfig,
 )
+
+sealed interface PairPreviewUiState {
+    data object Loading : PairPreviewUiState
+
+    data class Ready(
+        val pair: PhotoPair,
+        val hasCombined: Boolean,
+        val showDeleteDialog: Boolean,
+        val livePreviewInputs: LivePreviewInputs?,
+    ) : PairPreviewUiState
+}
 
 @HiltViewModel
 class PairPreviewViewModel
@@ -49,40 +59,51 @@ class PairPreviewViewModel
         val pairId: Long = route.pairId
 
         private val _pair = MutableStateFlow<PhotoPair?>(null)
-        val pair: StateFlow<PhotoPair?> = _pair.asStateFlow()
-
         private val _hasCombined = MutableStateFlow(false)
-        val hasCombined: StateFlow<Boolean> = _hasCombined.asStateFlow()
+        private val _showDeleteDialog = MutableStateFlow(false)
 
-        val currentConfig: StateFlow<CombineConfig> =
+        private val configFlow: StateFlow<CombineConfig> =
             combineSettingsRepository.configFlow.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
                 CombineConfig(),
             )
 
-        val currentWatermark: StateFlow<WatermarkConfig> =
+        private val watermarkFlow: StateFlow<WatermarkConfig> =
             watermarkRepository.watermarkConfigFlow.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
                 WatermarkConfig(),
             )
 
-        val livePreviewInputs: StateFlow<LivePreviewInputs?> =
+        val uiState: StateFlow<PairPreviewUiState> =
             combine(
                 _pair,
-                currentConfig,
-                currentWatermark,
-            ) { pair, config, watermark ->
-                if (pair == null || pair.afterPhotoUri == null) {
-                    null
+                _hasCombined,
+                _showDeleteDialog,
+                configFlow,
+                watermarkFlow,
+            ) { pair, hasCombined, showDialog, config, watermark ->
+                if (pair == null) {
+                    PairPreviewUiState.Loading
                 } else {
-                    LivePreviewInputs(pair, config, watermark)
+                    PairPreviewUiState.Ready(
+                        pair = pair,
+                        hasCombined = hasCombined,
+                        showDeleteDialog = showDialog,
+                        livePreviewInputs =
+                            if (pair.afterPhotoUri == null) {
+                                null
+                            } else {
+                                LivePreviewInputs(pair, config, watermark)
+                            },
+                    )
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-        private val _showDeleteDialog = MutableStateFlow(false)
-        val showDeleteDialog: StateFlow<Boolean> = _showDeleteDialog.asStateFlow()
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = PairPreviewUiState.Loading,
+            )
 
         private val _deleteComplete = MutableSharedFlow<Unit>()
         val deleteComplete: SharedFlow<Unit> = _deleteComplete.asSharedFlow()

@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
@@ -128,20 +129,20 @@ private fun PermissionRationaleContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(PairShotCameraTokens.Letterbox)
                 .padding(PairShotSpacing.sectionGap),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.camera_permission_title),
-            color = Color.White,
+            color = PairShotCameraTokens.Foreground,
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.itemGap))
         Text(
             text = stringResource(R.string.camera_permission_message),
-            color = Color.White.copy(alpha = 0.75f),
+            color = PairShotCameraTokens.Foreground.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
@@ -152,7 +153,7 @@ private fun PermissionRationaleContent(
         TextButton(onClick = onNavigateBack) {
             Text(
                 text = stringResource(CoreR.string.common_button_cancel),
-                color = Color.White.copy(alpha = 0.6f),
+                color = PairShotCameraTokens.Foreground.copy(alpha = 0.6f),
             )
         }
     }
@@ -167,20 +168,20 @@ private fun PermissionDeniedContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(Color.Black)
+                .background(PairShotCameraTokens.Letterbox)
                 .padding(PairShotSpacing.sectionGap),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.camera_permission_denied_title),
-            color = Color.White,
+            color = PairShotCameraTokens.Foreground,
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.itemGap))
         Text(
             text = stringResource(R.string.camera_permission_denied_message),
-            color = Color.White.copy(alpha = 0.75f),
+            color = PairShotCameraTokens.Foreground.copy(alpha = 0.75f),
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
@@ -191,7 +192,7 @@ private fun PermissionDeniedContent(
         TextButton(onClick = onNavigateBack) {
             Text(
                 text = stringResource(CoreR.string.common_button_cancel),
-                color = Color.White.copy(alpha = 0.6f),
+                color = PairShotCameraTokens.Foreground.copy(alpha = 0.6f),
             )
         }
     }

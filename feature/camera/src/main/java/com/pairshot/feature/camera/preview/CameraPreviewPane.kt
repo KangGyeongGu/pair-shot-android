@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -78,7 +79,7 @@ internal fun CameraPreviewPane(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .background(Color.Black.copy(alpha = blackoutAlpha)),
+                                .background(PairShotCameraTokens.Letterbox.copy(alpha = blackoutAlpha)),
                     )
                 }
             }

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -171,14 +172,14 @@ fun ZoomControls(
                         Modifier
                             .size(LensButtonSize)
                             .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.35f))
+                            .background(PairShotCameraTokens.Letterbox.copy(alpha = 0.35f))
                             .clickable(onClick = toggleLens),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Default.FlipCameraAndroid,
                         contentDescription = stringResource(R.string.camera_desc_switch),
-                        tint = Color.White,
+                        tint = PairShotCameraTokens.Foreground,
                         modifier = Modifier.size(LensButtonIconSize),
                     )
                 }
@@ -205,7 +206,7 @@ private fun ZoomPresetCard(
         modifier =
             Modifier
                 .background(
-                    color = Color.Black.copy(alpha = 0.35f),
+                    color = PairShotCameraTokens.Letterbox.copy(alpha = 0.35f),
                     shape = shape,
                 ).padding(horizontal = 4.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -215,7 +216,7 @@ private fun ZoomPresetCard(
             val isActive = preset == activePreset
             val displayRatio = zoomUiState.customRatios[preset] ?: preset
             val bgColor = if (isActive) primary else Color.Transparent
-            val textColor = if (isActive) onPrimary else Color.White.copy(alpha = 0.7f)
+            val textColor = if (isActive) onPrimary else PairShotCameraTokens.Foreground.copy(alpha = 0.7f)
 
             Box(
                 modifier =
@@ -254,14 +255,14 @@ private fun ZoomDialWithLabel(
             modifier =
                 Modifier
                     .background(
-                        color = Color.Black.copy(alpha = 0.35f),
+                        color = PairShotCameraTokens.Letterbox.copy(alpha = 0.35f),
                         shape = MaterialTheme.shapes.small,
                     ).padding(horizontal = 10.dp, vertical = 4.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = formatZoomLabel(zoomUiState.currentRatio),
-                color = Color.White,
+                color = PairShotCameraTokens.Foreground,
                 style = labelStyle,
                 fontWeight = FontWeight.Medium,
             )
@@ -297,7 +298,7 @@ private fun ZoomDialWithLabel(
                     if (isMajor) with(density) { 12.dp.toPx() } else with(density) { 6.dp.toPx() }
                 val tickWidthPx =
                     if (isMajor) with(density) { 2.dp.toPx() } else with(density) { 1.dp.toPx() }
-                val tickColor = if (isMajor) Color.White else Color.White.copy(alpha = 0.5f)
+                val tickColor = if (isMajor) PairShotCameraTokens.Foreground else PairShotCameraTokens.Foreground.copy(alpha = 0.5f)
                 val topY = canvasH - tickHeightPx
 
                 drawLine(

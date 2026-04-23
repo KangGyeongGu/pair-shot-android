@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.model.RenderProfile
 import com.pairshot.core.rendering.PairImageComposer
 import com.pairshot.feature.pairpreview.screen.PairPreviewScreen
+import com.pairshot.feature.pairpreview.viewmodel.PairPreviewUiState
 import com.pairshot.feature.pairpreview.viewmodel.PairPreviewViewModel
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -44,9 +45,7 @@ fun PairPreviewRoute(
     modifier: Modifier = Modifier,
     viewModel: PairPreviewViewModel = hiltViewModel(),
 ) {
-    val hasCombined by viewModel.hasCombined.collectAsStateWithLifecycle()
-    val livePreviewInputs by viewModel.livePreviewInputs.collectAsStateWithLifecycle()
-    val showDeleteDialog by viewModel.showDeleteDialog.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val composer =
@@ -57,6 +56,8 @@ fun PairPreviewRoute(
                     PairPreviewRenderEntryPoint::class.java,
                 ).pairImageComposer()
         }
+
+    val livePreviewInputs = (uiState as? PairPreviewUiState.Ready)?.livePreviewInputs
 
     var livePreviewBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
@@ -108,18 +109,26 @@ fun PairPreviewRoute(
                     animationSpec = tween(durationMillis = ModalEnterDurationMs),
                 ) + fadeIn(animationSpec = tween(durationMillis = ModalEnterDurationMs)),
         ) {
-            PairPreviewScreen(
-                hasCombined = hasCombined,
-                livePreviewBitmap = livePreviewBitmap,
-                showDeleteDialog = showDeleteDialog,
-                onClose = onDismiss,
-                onShareSelected = { onShareSelected(viewModel.pairId) },
-                onNavigateToAfterCamera = { onNavigateToAfterCamera(viewModel.pairId) },
-                onDeleteRequested = viewModel::showDeleteDialog,
-                onDeleteAll = viewModel::deletePair,
-                onDeleteCombinedOnly = viewModel::deleteCombinedOnly,
-                onDeleteDismissed = viewModel::dismissDeleteDialog,
-            )
+            when (val state = uiState) {
+                PairPreviewUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize())
+                }
+
+                is PairPreviewUiState.Ready -> {
+                    PairPreviewScreen(
+                        hasCombined = state.hasCombined,
+                        livePreviewBitmap = livePreviewBitmap,
+                        showDeleteDialog = state.showDeleteDialog,
+                        onClose = onDismiss,
+                        onShareSelected = { onShareSelected(viewModel.pairId) },
+                        onNavigateToAfterCamera = { onNavigateToAfterCamera(viewModel.pairId) },
+                        onDeleteRequested = viewModel::showDeleteDialog,
+                        onDeleteAll = viewModel::deletePair,
+                        onDeleteCombinedOnly = viewModel::deleteCombinedOnly,
+                        onDeleteDismissed = viewModel::dismissDeleteDialog,
+                    )
+                }
+            }
         }
     }
 }

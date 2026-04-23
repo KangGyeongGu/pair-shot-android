@@ -6,13 +6,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun GridOverlay(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier.fillMaxSize()) {
         val strokeWidth = 1.dp.toPx()
-        val color = Color.White.copy(alpha = 0.3f)
+        val color = PairShotCameraTokens.Foreground.copy(alpha = 0.3f)
         val thirdW = size.width / 3f
         val thirdH = size.height / 3f
 

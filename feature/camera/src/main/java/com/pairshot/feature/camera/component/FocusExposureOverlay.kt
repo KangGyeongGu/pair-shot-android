@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -198,7 +199,7 @@ fun FocusExposureOverlay(
                 val radius = (focusRingSizePx / 2f) * scale
 
                 drawCircle(
-                    color = Color.White.copy(alpha = alpha),
+                    color = PairShotCameraTokens.Foreground.copy(alpha = alpha),
                     radius = radius,
                     center = focusPos,
                     style = Stroke(width = focusRingStrokePx),
@@ -214,7 +215,7 @@ fun FocusExposureOverlay(
                     val barBottom = focusPos.y + barHeightPx / 2f
 
                     drawLine(
-                        color = Color.White.copy(alpha = alpha * 0.7f),
+                        color = PairShotCameraTokens.Foreground.copy(alpha = alpha * 0.7f),
                         start = Offset(barX, barTop),
                         end = Offset(barX, barBottom),
                         strokeWidth = barWidthPx,
@@ -230,7 +231,7 @@ fun FocusExposureOverlay(
                         center = Offset(barX, sunY),
                     )
                     drawCircle(
-                        color = Color.White.copy(alpha = alpha),
+                        color = PairShotCameraTokens.Foreground.copy(alpha = alpha),
                         radius = sunSizePx / 2f,
                         center = Offset(barX, sunY),
                         style = Stroke(width = with(density) { 1.dp.toPx() }),
@@ -252,7 +253,7 @@ fun FocusExposureOverlay(
 
                 Text(
                     text = evText,
-                    color = Color.White.copy(alpha = ringAlpha.value),
+                    color = PairShotCameraTokens.Foreground.copy(alpha = ringAlpha.value),
                     fontSize = 12.sp,
                     modifier =
                         Modifier.offset {

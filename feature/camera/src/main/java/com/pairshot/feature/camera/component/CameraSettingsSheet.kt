@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -101,7 +102,7 @@ fun CameraSettingsSheet(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.52f))
+                        .background(PairShotCameraTokens.Letterbox.copy(alpha = 0.52f))
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
@@ -325,7 +326,7 @@ private fun SettingIconItem(
                     .clip(CircleShape)
                     .background(
                         if (isActive) {
-                            Color.White.copy(alpha = 0.18f)
+                            PairShotCameraTokens.Foreground.copy(alpha = 0.18f)
                         } else {
                             Color.Transparent
                         },
@@ -339,13 +340,13 @@ private fun SettingIconItem(
                     Modifier
                         .size(24.dp)
                         .graphicsLayer(scaleY = if (iconFlippedVertical) -1f else 1f),
-                tint = if (isActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.55f),
+                tint = if (isActive) MaterialTheme.colorScheme.primary else PairShotCameraTokens.Foreground.copy(alpha = 0.55f),
             )
         }
         Text(
             text = label,
             style = PairShotTypographyTokens.labelExtraSmall,
-            color = if (isActive) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.55f),
+            color = if (isActive) MaterialTheme.colorScheme.primary else PairShotCameraTokens.Foreground.copy(alpha = 0.55f),
         )
     }
 }

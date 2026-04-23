@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -217,7 +218,7 @@ internal fun AfterCameraScreen(
     }
 
     val density = LocalDensity.current
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(PairShotCameraTokens.Letterbox)) {
         val safeTopPx = WindowInsets.safeDrawing.getTop(density)
         val safeBottomPx = WindowInsets.safeDrawing.getBottom(density)
         val fullHeightPx = with(density) { maxHeight.roundToPx() }

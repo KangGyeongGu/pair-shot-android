@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.pairshot.feature.camera.permission.CameraPermissionGate
 import com.pairshot.feature.camera.screen.AfterCameraScreen
@@ -20,7 +21,7 @@ fun AfterCameraRoute(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(Color.Black),
+                .background(PairShotCameraTokens.Letterbox),
     ) {
         CameraPermissionGate(onNavigateBack = onNavigateBack) {
             AfterCameraScreen(

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -29,7 +30,7 @@ import com.pairshot.feature.camera.R
 fun ShutterButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    innerColor: Color = Color.White,
+    innerColor: Color = PairShotCameraTokens.Foreground,
     enabled: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -47,7 +48,7 @@ fun ShutterButton(
                 .size(56.dp)
                 .scale(scale)
                 .alpha(if (enabled) 1f else 0.5f)
-                .border(width = 3.dp, color = Color.White, shape = CircleShape)
+                .border(width = 3.dp, color = PairShotCameraTokens.Foreground, shape = CircleShape)
                 .semantics { contentDescription = shutterDesc }
                 .clickable(
                     interactionSource = interactionSource,
@@ -66,7 +67,7 @@ fun ShutterButton(
         if (!enabled) {
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
-                color = Color.White,
+                color = PairShotCameraTokens.Foreground,
                 strokeWidth = 2.dp,
             )
         }

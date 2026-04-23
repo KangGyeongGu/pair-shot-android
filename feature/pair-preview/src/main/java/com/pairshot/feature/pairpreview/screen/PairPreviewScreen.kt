@@ -11,13 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
 import com.pairshot.feature.pairpreview.component.PairPreviewCenter
 import com.pairshot.feature.pairpreview.component.PairPreviewTopBar
-
-private val ModalWidth = 340.dp
-private val ModalHeight = 420.dp
 
 @Composable
 fun PairPreviewScreen(
@@ -38,10 +35,14 @@ fun PairPreviewScreen(
         contentAlignment = Alignment.Center,
     ) {
         Surface(
-            modifier = Modifier.size(width = ModalWidth, height = ModalHeight),
+            modifier =
+                Modifier.size(
+                    width = PairShotSpacing.modalWidth,
+                    height = PairShotSpacing.modalHeight,
+                ),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp,
+            shadowElevation = PairShotSpacing.modalElevation,
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 PairPreviewTopBar(

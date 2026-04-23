@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -48,7 +49,7 @@ internal fun CameraBottomBar(
             Modifier
                 .fillMaxWidth()
                 .height(height)
-                .background(Color.Black)
+                .background(PairShotCameraTokens.Letterbox)
                 .padding(horizontal = 32.dp),
     ) {
         ThumbnailOrHomeButton(
@@ -64,7 +65,7 @@ internal fun CameraBottomBar(
             Icon(
                 imageVector = Icons.Default.Settings,
                 contentDescription = stringResource(CoreR.string.common_desc_settings),
-                tint = Color.White,
+                tint = PairShotCameraTokens.Foreground,
                 modifier = Modifier.size(28.dp),
             )
         }
@@ -108,7 +109,7 @@ private fun ThumbnailOrHomeButton(
             Icon(
                 imageVector = Icons.Default.Home,
                 contentDescription = stringResource(R.string.camera_desc_home),
-                tint = Color.White,
+                tint = PairShotCameraTokens.Foreground,
                 modifier = Modifier.size(28.dp),
             )
         }
