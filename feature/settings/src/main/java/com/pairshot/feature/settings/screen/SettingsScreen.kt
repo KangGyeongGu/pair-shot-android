@@ -28,7 +28,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -50,8 +49,8 @@ import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.isContentMissing
-import com.pairshot.core.ui.component.PairShotSnackbarContent
 import com.pairshot.core.ui.component.PairShotSnackbarController
+import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SettingsCard
 import com.pairshot.core.ui.component.SettingsDivider
 import com.pairshot.core.ui.component.SettingsItem
@@ -488,16 +487,13 @@ fun SettingsScreen(
             }
         }
 
-        SnackbarHost(
-            hostState = snackbarController.hostState,
+        PairShotSnackbarHost(
+            controller = snackbarController,
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
                     .statusBarsPadding()
-                    .padding(top = 8.dp),
-            snackbar = { data ->
-                PairShotSnackbarContent(data, snackbarController.currentVariant)
-            },
+                    .padding(top = PairShotSpacing.snackbarTopOffset),
         )
     }
 }

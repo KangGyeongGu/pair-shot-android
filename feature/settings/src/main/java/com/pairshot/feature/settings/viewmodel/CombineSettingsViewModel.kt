@@ -30,7 +30,7 @@ class CombineSettingsViewModel
         val watermarkConfig: StateFlow<WatermarkConfig> =
             watermarkRepository.watermarkConfigFlow.stateIn(
                 scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
+                started = SharingStarted.Eagerly,
                 initialValue = WatermarkConfig(),
             )
 
