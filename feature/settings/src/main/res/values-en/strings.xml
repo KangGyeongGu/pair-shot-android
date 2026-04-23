@@ -17,6 +17,13 @@
     <string name="settings_language_korean">한국어</string>
     <string name="settings_language_english">English</string>
 
+    <!-- Theme -->
+    <string name="settings_item_theme">System theme</string>
+    <string name="settings_dialog_theme_title">Select theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+
     <string name="settings_item_image_quality">Image quality</string>
     <string name="settings_item_file_name_prefix">File name prefix</string>
     <string name="settings_item_overlay_opacity">Overlay opacity</string>

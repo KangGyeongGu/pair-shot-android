@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -62,9 +63,14 @@ import com.pairshot.feature.settings.dialog.ClearCacheDialog
 import com.pairshot.feature.settings.dialog.FileNamePrefixDialog
 import com.pairshot.feature.settings.dialog.ImageQualityDialog
 import com.pairshot.feature.settings.dialog.LanguageDialog
+import com.pairshot.feature.settings.dialog.ThemeDialog
 import com.pairshot.feature.settings.locale.AppLocale
 import com.pairshot.feature.settings.locale.apply
 import com.pairshot.feature.settings.locale.currentAppLocale
+import com.pairshot.feature.settings.theme.AppTheme
+import com.pairshot.feature.settings.theme.applyNightMode
+import com.pairshot.feature.settings.theme.loadAppTheme
+import com.pairshot.feature.settings.theme.saveAppTheme
 import com.pairshot.feature.settings.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.viewmodel.formatBytes
 import kotlin.math.roundToInt
@@ -88,11 +94,14 @@ fun SettingsScreen(
     snackbarController: PairShotSnackbarController,
 ) {
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     var showClearCacheDialog by remember { mutableStateOf(false) }
     var showQualityDialog by remember { mutableStateOf(false) }
     var showPrefixDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     var currentLocale by remember { mutableStateOf(currentAppLocale()) }
+    var currentTheme by remember { mutableStateOf(context.loadAppTheme()) }
 
     if (showLanguageDialog) {
         LanguageDialog(
@@ -102,6 +111,18 @@ fun SettingsScreen(
                 option.apply()
             },
             onDismiss = { showLanguageDialog = false },
+        )
+    }
+
+    if (showThemeDialog) {
+        ThemeDialog(
+            current = currentTheme,
+            onSelect = { option ->
+                currentTheme = option
+                context.saveAppTheme(option)
+                option.applyNightMode()
+            },
+            onDismiss = { showThemeDialog = false },
         )
     }
 
@@ -424,6 +445,18 @@ fun SettingsScreen(
                                     label = stringResource(R.string.settings_item_language),
                                     trailing = languageLabel,
                                     onClick = { showLanguageDialog = true },
+                                )
+                                SettingsDivider()
+                                val themeLabel =
+                                    when (currentTheme) {
+                                        AppTheme.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                        AppTheme.LIGHT -> stringResource(R.string.settings_theme_light)
+                                        AppTheme.DARK -> stringResource(R.string.settings_theme_dark)
+                                    }
+                                SettingsItem(
+                                    label = stringResource(R.string.settings_item_theme),
+                                    trailing = themeLabel,
+                                    onClick = { showThemeDialog = true },
                                 )
                             }
                         }
