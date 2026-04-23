@@ -23,12 +23,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotSpacing
 
-/**
- * 3x3 격자로 9개 포지션 중 하나를 선택하는 공용 피커.
- * Watermark 로고 위치 / Combine 레이블 앵커 등에서 공통 사용.
- *
- * @param positions 9개 포지션 (행 우선 순서: TL, TC, TR, CL, CC, CR, BL, BC, BR)
- */
 @Composable
 internal fun <T> PositionPicker3x3Row(
     label: String,

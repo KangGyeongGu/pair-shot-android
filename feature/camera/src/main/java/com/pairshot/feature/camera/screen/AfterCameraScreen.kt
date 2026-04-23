@@ -95,7 +95,6 @@ internal fun AfterCameraScreen(
     val snackbarController = remember { PairShotSnackbarController() }
     val thumbnailListState = rememberLazyListState()
 
-    // Overlay bitmap is owned by the Screen, produced via cameraSession.
     var overlayBitmap by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(overlayInputs) {
         val inputs = overlayInputs

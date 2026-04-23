@@ -106,17 +106,14 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.compose.tooling.preview)
 
-    // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    // Room
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    // CameraX
     implementation(libs.camerax.core)
     implementation(libs.camerax.camera2)
     implementation(libs.camerax.lifecycle)
@@ -124,46 +121,33 @@ dependencies {
     implementation(libs.camerax.compose)
     implementation(libs.camerax.extensions)
 
-    // Navigation
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
 
-    // Location
     implementation(libs.play.services.location)
 
-    // DataStore
     implementation(libs.datastore.preferences)
 
-    // Activity Compose
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
 
-    // AppCompat (per-app language support)
     implementation(libs.appcompat)
 
-    // ExifInterface
     implementation(libs.exifinterface)
 
-    // Lifecycle
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
 
-    // Concurrent Futures (ListenableFuture.await())
     implementation(libs.concurrent.futures.ktx)
 
-    // ProfileInstaller
     implementation(libs.profileinstaller)
 
-    // ColorPicker
     implementation(libs.colorpicker.compose)
 
-    // Timber
     implementation(libs.timber)
 
-    // JankStats
     implementation(libs.jankstats)
 
-    // Test
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)

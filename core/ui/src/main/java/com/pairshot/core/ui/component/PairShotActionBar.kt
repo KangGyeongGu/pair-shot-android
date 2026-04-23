@@ -56,7 +56,6 @@ fun PairShotActionBarItem(
     labelColor: Color = Color.Unspecified,
     icon: @Composable () -> Unit,
 ) {
-    // label 색상: 명시된 경우 비활성 시 alpha 적용, 미지정 시 onSurface로 fallback 후 dimming
     val resolvedLabelColor =
         when {
             !enabled && labelColor != Color.Unspecified -> labelColor.copy(alpha = DisabledAlpha)

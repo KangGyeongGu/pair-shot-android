@@ -209,7 +209,6 @@ fun SettingsSliderItem(
     valueLabel: (Float) -> String,
     onValueChange: (Float) -> Unit,
     steps: Int = 0,
-    // 드래그 중 실시간 업데이트가 필요한 경우(미리보기 등)에만 사용. null이면 onValueChangeFinished에만 호출
     onLiveUpdate: ((Float) -> Unit)? = null,
     footer: (@Composable () -> Unit)? = null,
 ) {
@@ -217,7 +216,6 @@ fun SettingsSliderItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isDragged by interactionSource.collectIsDraggedAsState()
 
-    // 드래그 중에는 외부 값 동기화 차단 — DataStore 비동기 emit이 드래그 위치를 덮어쓰지 않도록
     LaunchedEffect(value) {
         if (!isDragged && abs(sliderValue - value) > 1e-4f) sliderValue = value
     }

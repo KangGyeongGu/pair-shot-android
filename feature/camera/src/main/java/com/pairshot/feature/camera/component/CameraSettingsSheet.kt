@@ -361,7 +361,6 @@ private fun OverlayAlphaSlider(
     val interactionSource = remember { MutableInteractionSource() }
     val isDragged by interactionSource.collectIsDraggedAsState()
 
-    // 드래그 중에는 ViewModel 값 동기화 차단
     LaunchedEffect(alpha) {
         if (!isDragged) localAlpha = alpha
     }
