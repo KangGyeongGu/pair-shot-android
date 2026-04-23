@@ -17,6 +17,9 @@ import com.pairshot.core.navigation.AfterCamera
 import com.pairshot.feature.camera.component.ZoomStateHolder
 import com.pairshot.feature.camera.component.ZoomUiState
 import com.pairshot.feature.camera.state.CameraSettingsState
+import com.pairshot.feature.camera.state.CameraSettingsStateHolder
+import com.pairshot.feature.camera.state.CapabilityAdjustment
+import com.pairshot.feature.camera.state.InitialCameraSessionConfig
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +31,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -66,6 +68,7 @@ class AfterCameraViewModel
         private val photoPairRepository: PhotoPairRepository,
         private val getLatestBeforeThumbnailUseCase: GetLatestBeforeThumbnailUseCase,
         private val appSettingsRepository: AppSettingsRepository,
+        private val cameraSettings: CameraSettingsStateHolder,
         albumRepository: AlbumRepository,
     ) : ViewModel() {
         private val route = savedStateHandle.toRoute<AfterCamera>()
@@ -188,8 +191,7 @@ class AfterCameraViewModel
                 OverlayInputs(null, true, 0.35f, LensFacing.BACK),
             )
 
-        private val _settingsState = MutableStateFlow(CameraSettingsState())
-        val settingsState: StateFlow<CameraSettingsState> = _settingsState.asStateFlow()
+        val settingsState: StateFlow<CameraSettingsState> = cameraSettings.state
 
         private val _events = MutableSharedFlow<AfterCameraEvent>()
         val events: SharedFlow<AfterCameraEvent> = _events.asSharedFlow()
@@ -200,19 +202,11 @@ class AfterCameraViewModel
         private var initialIndexSet = false
 
         suspend fun loadInitialSettings(): InitialCameraSessionConfig {
-            val s = appSettingsRepository.getCurrent()
-            val initial =
-                CameraSettingsState(
-                    gridEnabled = s.cameraGridEnabled,
-                    levelEnabled = s.cameraLevelEnabled,
-                    flashMode = runCatching { FlashMode.valueOf(s.cameraFlashMode) }.getOrDefault(FlashMode.OFF),
-                    nightModeEnabled = s.cameraNightModeEnabled,
-                    hdrEnabled = s.cameraHdrEnabled,
-                )
-            _settingsState.value = initial
-            _overlayEnabled.value = s.overlayEnabled
-            _overlayAlpha.value = s.defaultOverlayAlpha.coerceIn(0f, 1f)
-            return InitialCameraSessionConfig(initial.flashMode, initial.nightModeEnabled, initial.hdrEnabled)
+            val config = cameraSettings.loadInitial()
+            val settings = appSettingsRepository.getCurrent()
+            _overlayEnabled.value = settings.overlayEnabled
+            _overlayAlpha.value = settings.defaultOverlayAlpha.coerceIn(0f, 1f)
+            return config
         }
 
         fun onCameraZoomCapabilities(
@@ -242,27 +236,7 @@ class AfterCameraViewModel
             zoomHolder.restoreZoomForPair(zoomLevel)
         }
 
-        fun adjustForCapabilities(caps: CameraCapabilities): CapabilityAdjustment {
-            val state = _settingsState.value
-            var changed = state
-            var adjustedFlash: FlashMode? = null
-            var adjustedNight: Boolean? = null
-            var adjustedHdr: Boolean? = null
-            if (!caps.hasFlash && state.flashMode != FlashMode.OFF) {
-                changed = changed.copy(flashMode = FlashMode.OFF)
-                adjustedFlash = FlashMode.OFF
-            }
-            if (!caps.nightModeAvailable && state.nightModeEnabled) {
-                changed = changed.copy(nightModeEnabled = false)
-                adjustedNight = false
-            }
-            if (!caps.hdrAvailable && state.hdrEnabled) {
-                changed = changed.copy(hdrEnabled = false)
-                adjustedHdr = false
-            }
-            if (changed !== state) _settingsState.value = changed
-            return CapabilityAdjustment(adjustedFlash, adjustedNight, adjustedHdr)
-        }
+        fun adjustForCapabilities(caps: CameraCapabilities): CapabilityAdjustment = cameraSettings.adjustForCapabilities(caps)
 
         fun onUnpairedPhotosUpdated(photos: List<PhotoPair>) {
             _pairsLoaded.value = true
@@ -354,77 +328,21 @@ class AfterCameraViewModel
             return next
         }
 
-        fun toggleGrid() {
-            _settingsState.update { it.copy(gridEnabled = !it.gridEnabled) }
-            persistSettings()
-        }
+        fun toggleGrid() = cameraSettings.toggleGrid(viewModelScope)
 
-        fun toggleLevel() {
-            _settingsState.update { it.copy(levelEnabled = !it.levelEnabled) }
-            persistSettings()
-        }
+        fun toggleLevel() = cameraSettings.toggleLevel(viewModelScope)
 
-        fun cycleFlash(): FlashMode {
-            _settingsState.update {
-                val next =
-                    when (it.flashMode) {
-                        FlashMode.OFF -> FlashMode.AUTO
-                        FlashMode.AUTO -> FlashMode.ON
-                        FlashMode.ON -> FlashMode.TORCH
-                        FlashMode.TORCH -> FlashMode.OFF
-                    }
-                it.copy(flashMode = next)
-            }
-            persistSettings()
-            return _settingsState.value.flashMode
-        }
+        fun cycleFlash(): FlashMode = cameraSettings.cycleFlash(viewModelScope)
 
-        fun toggleNightMode(): Boolean {
-            val next = !_settingsState.value.nightModeEnabled
-            _settingsState.update {
-                it.copy(
-                    nightModeEnabled = next,
-                    hdrEnabled = if (next) false else it.hdrEnabled,
-                )
-            }
-            persistSettings()
-            return next
-        }
+        fun toggleNightMode(): Boolean = cameraSettings.toggleNightMode(viewModelScope)
 
-        fun toggleHdr(): Boolean {
-            val next = !_settingsState.value.hdrEnabled
-            _settingsState.update {
-                it.copy(
-                    hdrEnabled = next,
-                    nightModeEnabled = if (next) false else it.nightModeEnabled,
-                )
-            }
-            persistSettings()
-            return next
-        }
+        fun toggleHdr(): Boolean = cameraSettings.toggleHdr(viewModelScope)
 
-        fun setExposureIndex(index: Int) {
-            _settingsState.update { it.copy(exposureIndex = index) }
-        }
+        fun setExposureIndex(index: Int) = cameraSettings.setExposureIndex(index)
 
-        fun toggleSettingsPanel() {
-            _settingsState.update { it.copy(showPanel = !it.showPanel) }
-        }
+        fun toggleSettingsPanel() = cameraSettings.toggleSettingsPanel()
 
-        fun dismissSettingsPanel() {
-            _settingsState.update { it.copy(showPanel = false) }
-        }
-
-        private fun persistSettings() {
-            val state = _settingsState.value
-            viewModelScope.launch {
-                appSettingsRepository.updateCameraGridEnabled(state.gridEnabled)
-                appSettingsRepository.updateCameraLevelEnabled(state.levelEnabled)
-                appSettingsRepository.updateCameraFlashMode(state.flashMode.name)
-                appSettingsRepository.updateCameraNightMode(state.nightModeEnabled)
-                appSettingsRepository.updateCameraHdr(state.hdrEnabled)
-            }
-        }
+        fun dismissSettingsPanel() = cameraSettings.dismissSettingsPanel()
     }
 
 private fun Long.toLocalDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()

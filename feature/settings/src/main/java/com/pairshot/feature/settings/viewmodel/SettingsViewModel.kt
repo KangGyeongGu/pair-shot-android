@@ -8,10 +8,10 @@ import com.pairshot.core.domain.settings.ClearCacheUseCase
 import com.pairshot.core.domain.settings.GetStorageInfoUseCase
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.WatermarkConfig
-import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.text.UiText
+import com.pairshot.feature.settings.R
 import com.pairshot.feature.settings.theme.AppTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.pairshot.core.ui.R as CoreR
 
 sealed interface SettingsUiState {
     data object Loading : SettingsUiState
@@ -40,7 +41,9 @@ sealed interface SettingsUiState {
         val overlayAlpha: Float = 0.35f,
     ) : SettingsUiState
 
-    data object Error : SettingsUiState
+    data class Error(
+        val message: UiText,
+    ) : SettingsUiState
 }
 
 @HiltViewModel
@@ -74,7 +77,7 @@ class SettingsViewModel
                         storageState
                     }
 
-                    SettingsUiState.Error -> {
+                    is SettingsUiState.Error -> {
                         storageState
                     }
                 }
@@ -130,7 +133,8 @@ class SettingsViewModel
                         )
                     }
                 } catch (_: Exception) {
-                    _storageState.value = SettingsUiState.Error
+                    _storageState.value =
+                        SettingsUiState.Error(UiText.Resource(R.string.settings_error_load_failed))
                 }
             }
         }
@@ -149,7 +153,7 @@ class SettingsViewModel
                 clearCacheUseCase()
                 _snackbarMessage.emit(
                     SnackbarEvent(
-                        UiText.Resource(R.string.snackbar_success_cache_cleared),
+                        UiText.Resource(CoreR.string.snackbar_success_cache_cleared),
                         SnackbarVariant.SUCCESS,
                     ),
                 )
@@ -172,7 +176,7 @@ class SettingsViewModel
                 } catch (_: Exception) {
                     _snackbarMessage.emit(
                         SnackbarEvent(
-                            UiText.Resource(R.string.snackbar_error_file_load_failed),
+                            UiText.Resource(CoreR.string.snackbar_error_file_load_failed),
                             SnackbarVariant.ERROR,
                         ),
                     )

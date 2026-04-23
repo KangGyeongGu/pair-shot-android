@@ -192,7 +192,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = stringResource(R.string.settings_error_load_failed),
+                            text = uiState.message.asString(),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

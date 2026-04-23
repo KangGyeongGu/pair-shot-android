@@ -16,6 +16,8 @@ import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.SortOrder
 import com.pairshot.core.navigation.AlbumDetail
+import com.pairshot.core.ui.text.UiText
+import com.pairshot.feature.album.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,7 +55,9 @@ sealed interface AlbumDetailEvent {
 sealed interface AlbumDetailUiState {
     data object Loading : AlbumDetailUiState
 
-    data object Error : AlbumDetailUiState
+    data class Error(
+        val message: UiText,
+    ) : AlbumDetailUiState
 
     data class Success(
         val album: Album,
@@ -132,7 +136,7 @@ class AlbumDetailViewModel
                     }
 
                     AlbumContentPhase.Error -> {
-                        AlbumDetailUiState.Error
+                        AlbumDetailUiState.Error(UiText.Resource(R.string.album_route_load_failed))
                     }
 
                     is AlbumContentPhase.Loaded -> {

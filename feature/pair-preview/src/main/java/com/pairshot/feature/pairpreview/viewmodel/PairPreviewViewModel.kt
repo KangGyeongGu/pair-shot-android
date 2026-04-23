@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 data class LivePreviewInputs(
@@ -118,6 +119,9 @@ class PairPreviewViewModel
             viewModelScope.launch {
                 val currentPair = _pair.value ?: return@launch
                 runCatching { exportHistoryRepository.deleteByPairIds(listOf(currentPair.id)) }
+                    .onFailure { error ->
+                        Timber.w(error, "failed to clear export history for pair ${currentPair.id}")
+                    }
                 photoPairRepository.delete(currentPair)
                 _showDeleteDialog.value = false
                 _deleteComplete.emit(Unit)

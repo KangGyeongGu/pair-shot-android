@@ -28,7 +28,7 @@ import com.pairshot.feature.album.viewmodel.PairPickerUiState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PairPickerScreen(
-    uiState: PairPickerUiState,
+    state: PairPickerUiState.Ready,
     onToggle: (Long) -> Unit,
     onConfirm: () -> Unit,
     onClose: () -> Unit,
@@ -40,11 +40,11 @@ fun PairPickerScreen(
             CenterAlignedTopAppBar(
                 title = {
                     val countLabel =
-                        if (uiState.selectedIds.isNotEmpty()) {
+                        if (state.selectedIds.isNotEmpty()) {
                             pluralStringResource(
                                 R.plurals.pair_picker_title_selected,
-                                uiState.selectedIds.size,
-                                uiState.selectedIds.size,
+                                state.selectedIds.size,
+                                state.selectedIds.size,
                             )
                         } else {
                             stringResource(R.string.pair_picker_title)
@@ -77,7 +77,7 @@ fun PairPickerScreen(
             ) {
                 Button(
                     onClick = onConfirm,
-                    enabled = uiState.selectedIds.isNotEmpty() && !uiState.isConfirming,
+                    enabled = state.selectedIds.isNotEmpty() && !state.isConfirming,
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -87,7 +87,7 @@ fun PairPickerScreen(
                     Text(
                         text =
                             stringResource(
-                                if (uiState.isConfirming) R.string.pair_picker_button_adding else R.string.pair_picker_button_add,
+                                if (state.isConfirming) R.string.pair_picker_button_adding else R.string.pair_picker_button_add,
                             ),
                     )
                 }
@@ -95,9 +95,9 @@ fun PairPickerScreen(
         },
     ) { innerPadding ->
         PairPickerGridSection(
-            pairs = uiState.pairs,
-            selectedIds = uiState.selectedIds,
-            alreadyInAlbumIds = uiState.alreadyInAlbumIds,
+            pairs = state.pairs,
+            selectedIds = state.selectedIds,
+            alreadyInAlbumIds = state.alreadyInAlbumIds,
             onToggle = onToggle,
             contentPadding =
                 androidx.compose.foundation.layout.PaddingValues(
