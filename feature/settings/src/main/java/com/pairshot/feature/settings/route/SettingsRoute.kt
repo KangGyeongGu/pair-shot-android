@@ -77,6 +77,10 @@ fun SettingsRoute(
         }
     val rewardedAdController = remember(entryPoint) { entryPoint.rewardedAdController() }
     val settingsPremiumGate = remember(entryPoint) { entryPoint.settingsPremiumGate() }
+    val adFreeStatusProvider = remember(entryPoint) { entryPoint.adFreeStatusProvider() }
+    val isAdFree by adFreeStatusProvider
+        .observeIsAdFree()
+        .collectAsStateWithLifecycle(initialValue = false)
 
     var showCouponDialog by remember { mutableStateOf(false) }
     var showRewardedGateDialog by remember { mutableStateOf<PremiumFeature?>(null) }
@@ -180,14 +184,14 @@ fun SettingsRoute(
         onNavigateBack = onNavigateBack,
         onWatermarkConfigChange = viewModel::updateWatermarkConfig,
         onWatermarkSettingsClick = {
-            if (settingsPremiumGate.isUnlocked(PremiumFeature.WATERMARK_DETAIL)) {
+            if (isAdFree || settingsPremiumGate.isUnlocked(PremiumFeature.WATERMARK_DETAIL)) {
                 onNavigateToWatermarkSettings()
             } else {
                 showRewardedGateDialog = PremiumFeature.WATERMARK_DETAIL
             }
         },
         onCombineSettingsClick = {
-            if (settingsPremiumGate.isUnlocked(PremiumFeature.COMBINE_DETAIL)) {
+            if (isAdFree || settingsPremiumGate.isUnlocked(PremiumFeature.COMBINE_DETAIL)) {
                 onNavigateToCombineSettings()
             } else {
                 showRewardedGateDialog = PremiumFeature.COMBINE_DETAIL
