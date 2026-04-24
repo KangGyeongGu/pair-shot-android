@@ -124,6 +124,6 @@ class InterstitialAdController
 
         private companion object {
             const val TAG = "InterstitialAdCtrl"
-            const val COOLDOWN_MS = 120_000L
+            const val COOLDOWN_MS = 15_000L
         }
     }
