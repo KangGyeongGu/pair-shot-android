@@ -8,18 +8,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ads.component.PairShotNativeAdCard
+import com.pairshot.core.ads.di.AdsEntryPoint
+import com.pairshot.core.ads.util.PairListItem
+import com.pairshot.core.ads.util.buildPairListWithAds
+import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.SortOrder
 import com.pairshot.core.ui.component.PairCard
 import com.pairshot.feature.home.R
+import dagger.hilt.android.EntryPointAccessors
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -56,52 +65,107 @@ fun HomePairGridSection(
     modifier: Modifier = Modifier,
 ) {
     val today = remember { LocalDate.now(ZoneId.systemDefault()) }
-    val grouped =
+
+    val sortedPairs =
         remember(pairs, sortOrder) {
-            pairs
-                .groupBy { it.beforeTimestamp.toLocalDate() }
-                .toSortedMap(compareByDescending { it })
-                .mapValues { (_, items) ->
-                    when (sortOrder) {
-                        SortOrder.DESC -> items.sortedByDescending { it.beforeTimestamp }
-                        SortOrder.ASC -> items.sortedBy { it.beforeTimestamp }
-                    }
-                }
+            when (sortOrder) {
+                SortOrder.DESC -> pairs.sortedByDescending { it.beforeTimestamp }
+                SortOrder.ASC -> pairs.sortedBy { it.beforeTimestamp }
+            }
         }
+
+    val context = LocalContext.current
+    val entryPoint =
+        remember(context) {
+            EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                AdsEntryPoint::class.java,
+            )
+        }
+    val adFreeStatusProvider = remember(entryPoint) { entryPoint.adFreeStatusProvider() }
+    val poolProvider = remember(entryPoint) { entryPoint.nativeAdPoolProvider() }
+
+    val isAdFree: Boolean? by adFreeStatusProvider
+        .observeIsAdFree()
+        .collectAsStateWithLifecycle(initialValue = null)
+
+    val nativeAdPool = remember(poolProvider) { poolProvider.get() }
+    DisposableEffect(nativeAdPool) {
+        onDispose { nativeAdPool.close() }
+    }
+    val nativeAds by nativeAdPool.observeAds().collectAsStateWithLifecycle()
+
+    val items =
+        remember(sortedPairs, isAdFree) {
+            buildPairListWithAds(sortedPairs, isAdFree == true)
+        }
+    val totalAdSlots = remember(items) { items.count { it is PairListItem.Ad } }
+
+    LaunchedEffect(totalAdSlots, isAdFree) {
+        if (isAdFree == false && totalAdSlots > 0) {
+            nativeAdPool.ensurePreloaded(totalAdSlots)
+        }
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap),
+        horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap),
     ) {
-        grouped.forEach { (date, datePairs) ->
-            item(
-                key = "header_$date",
-                span = { GridItemSpan(maxLineSpan) },
-            ) {
-                Text(
-                    text = formatDateLabel(date, today),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 4.dp),
-                )
-            }
-            items(
-                items = datePairs,
-                key = { it.id },
-            ) { pair ->
-                PairCard(
-                    pair = pair,
-                    isSelected = pair.id in selectedIds,
-                    isSelectionMode = selectionMode,
-                    onClick = { onPairClick(pair.id) },
-                    onLongPress = { onPairLongClick(pair.id) },
-                )
+        var lastDate: LocalDate? = null
+        items.forEach { entry ->
+            when (entry) {
+                is PairListItem.Pair -> {
+                    val pair = entry.pair
+                    val pairDate = pair.beforeTimestamp.toLocalDate()
+                    if (pairDate != lastDate) {
+                        lastDate = pairDate
+                        item(
+                            key = "header_$pairDate",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) {
+                            Text(
+                                text = formatDateLabel(pairDate, today),
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            top = PairShotSpacing.iconTextGap,
+                                            bottom = PairShotSpacing.xs,
+                                        ),
+                            )
+                        }
+                    }
+                    item(
+                        key = "pair_${pair.id}",
+                        span = { GridItemSpan(1) },
+                    ) {
+                        PairCard(
+                            pair = pair,
+                            isSelected = pair.id in selectedIds,
+                            isSelectionMode = selectionMode,
+                            onClick = { onPairClick(pair.id) },
+                            onLongPress = { onPairLongClick(pair.id) },
+                        )
+                    }
+                }
+
+                is PairListItem.Ad -> {
+                    val slot = entry.slotIndex
+                    val nativeAd = nativeAds.getOrNull(slot)
+                    if (nativeAd != null) {
+                        item(
+                            key = "ad_$slot",
+                            span = { GridItemSpan(maxLineSpan) },
+                        ) {
+                            PairShotNativeAdCard(nativeAd = nativeAd)
+                        }
+                    }
+                }
             }
         }
     }

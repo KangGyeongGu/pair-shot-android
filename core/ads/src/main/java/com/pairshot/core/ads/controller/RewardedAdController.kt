@@ -4,9 +4,11 @@ import android.app.Activity
 import android.content.Context
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.pairshot.core.ads.config.AdsConfig
+import com.pairshot.core.ads.premium.PremiumFeature
+import com.pairshot.core.ads.premium.SettingsPremiumGate
 import com.pairshot.core.domain.coupon.AdFreeStatusProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -19,22 +21,21 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class InterstitialAdController
+class RewardedAdController
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
         private val adsConfig: AdsConfig,
         private val adFreeStatusProvider: AdFreeStatusProvider,
+        private val gate: SettingsPremiumGate,
         private val fullscreenAdState: FullscreenAdState,
     ) {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         private val loading = AtomicBoolean(false)
+        private val showing = AtomicBoolean(false)
 
         @Volatile
-        private var currentAd: InterstitialAd? = null
-
-        @Volatile
-        private var lastShownAt: Long = 0L
+        private var currentAd: RewardedAd? = null
 
         fun preload() {
             scope.launch {
@@ -44,63 +45,79 @@ class InterstitialAdController
 
         fun showIfAvailable(
             activity: Activity,
-            onFinished: () -> Unit,
+            feature: PremiumFeature,
+            onReward: () -> Unit,
+            onSkip: () -> Unit,
         ) {
             scope.launch {
-                if (adFreeStatusProvider.currentIsAdFree()) {
-                    onFinished()
+                if (gate.isUnlocked(feature)) {
+                    onReward()
                     return@launch
                 }
 
-                val now = System.currentTimeMillis()
-                if (lastShownAt > 0L && now - lastShownAt < COOLDOWN_MS) {
-                    onFinished()
-                    loadInternal()
+                if (adFreeStatusProvider.currentIsAdFree()) {
+                    gate.unlock(feature)
+                    onReward()
+                    return@launch
+                }
+
+                if (!showing.compareAndSet(false, true)) {
+                    onSkip()
                     return@launch
                 }
 
                 val ad = currentAd
                 if (ad == null) {
-                    onFinished()
+                    showing.set(false)
+                    onSkip()
                     loadInternal()
                     return@launch
                 }
 
                 if (activity.isFinishing || activity.isDestroyed) {
-                    onFinished()
+                    showing.set(false)
+                    onSkip()
                     return@launch
                 }
 
                 if (!fullscreenAdState.markShown()) {
-                    onFinished()
+                    showing.set(false)
+                    onSkip()
                     return@launch
                 }
 
+                var rewarded = false
                 ad.fullScreenContentCallback =
                     fullscreenCallback(
                         tag = TAG,
                         fullscreenAdState = fullscreenAdState,
                         onDismissed = {
                             currentAd = null
-                            lastShownAt = System.currentTimeMillis()
-                            onFinished()
+                            showing.set(false)
+                            if (rewarded) onReward() else onSkip()
                             loadInternal()
                         },
                         onShowFailed = {
                             currentAd = null
-                            onFinished()
+                            showing.set(false)
+                            onSkip()
                             loadInternal()
                         },
                         onShown = { currentAd = null },
                     )
-                runCatching { ad.show(activity) }
-                    .onFailure { error ->
-                        Timber.tag(TAG).e(error, "show threw")
-                        fullscreenAdState.markDismissed()
-                        currentAd = null
-                        onFinished()
-                        loadInternal()
+                runCatching {
+                    ad.show(activity) {
+                        rewarded = true
+                        gate.unlock(feature)
                     }
+                }.onFailure { error ->
+                    Timber.tag(TAG).e(error, "show threw")
+                    fullscreenAdState.markDismissed()
+                    currentAd = null
+                    showing.set(false)
+                    onSkip()
+                    loadInternal()
+                }
             }
         }
 
@@ -108,12 +125,12 @@ class InterstitialAdController
             if (currentAd != null) return
             if (!loading.compareAndSet(false, true)) return
             val request = AdRequest.Builder().build()
-            InterstitialAd.load(
+            RewardedAd.load(
                 context,
-                adsConfig.interstitialExportCompleteAdUnitId,
+                adsConfig.rewardedAdUnitId,
                 request,
-                object : InterstitialAdLoadCallback() {
-                    override fun onAdLoaded(ad: InterstitialAd) {
+                object : RewardedAdLoadCallback() {
+                    override fun onAdLoaded(ad: RewardedAd) {
                         currentAd = ad
                         loading.set(false)
                     }
@@ -128,7 +145,6 @@ class InterstitialAdController
         }
 
         private companion object {
-            const val TAG = "InterstitialAdCtrl"
-            const val COOLDOWN_MS = 5_000L
+            const val TAG = "RewardedAdCtrl"
         }
     }

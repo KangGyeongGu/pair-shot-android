@@ -1,6 +1,8 @@
 package com.pairshot.feature.settings.screen
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -28,11 +31,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -49,6 +56,7 @@ import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.isContentMissing
+import com.pairshot.core.navigation.SettingsHighlight
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SettingsCard
@@ -69,6 +77,7 @@ import com.pairshot.feature.settings.locale.currentAppLocale
 import com.pairshot.feature.settings.theme.AppTheme
 import com.pairshot.feature.settings.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.viewmodel.formatBytes
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import com.pairshot.core.ui.R as CoreR
 
@@ -78,6 +87,12 @@ private const val DEFAULT_OVERLAY_ALPHA = 0.35f
 private const val JPEG_QUALITY_LOW = 75
 private const val JPEG_QUALITY_HIGH = 85
 private const val JPEG_QUALITY_BEST = 95
+
+private const val HIGHLIGHT_PULSE_ON_MS = 600L
+private const val HIGHLIGHT_PULSE_OFF_MS = 400L
+private const val HIGHLIGHT_COLOR_ALPHA = 0.3f
+private const val HIGHLIGHT_WATERMARK_INDEX = 6
+private const val HIGHLIGHT_COMBINE_INDEX = 9
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +113,7 @@ fun SettingsScreen(
     onOverlayEnabledChange: (Boolean) -> Unit,
     onOverlayAlphaChange: (Float) -> Unit,
     snackbarController: PairShotSnackbarController,
+    highlight: SettingsHighlight? = null,
     couponSection: @Composable () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
@@ -107,6 +123,29 @@ fun SettingsScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var currentLocale by remember { mutableStateOf(currentAppLocale()) }
+    val listState = rememberLazyListState()
+    var alreadyHighlighted by remember { mutableStateOf(false) }
+    var highlightPulse by remember { mutableStateOf(false) }
+
+    LaunchedEffect(highlight, uiState) {
+        if (alreadyHighlighted) return@LaunchedEffect
+        if (highlight == null) return@LaunchedEffect
+        if (uiState !is SettingsUiState.Success) return@LaunchedEffect
+        alreadyHighlighted = true
+        val targetIndex =
+            when (highlight) {
+                SettingsHighlight.WATERMARK -> HIGHLIGHT_WATERMARK_INDEX
+                SettingsHighlight.COMBINE -> HIGHLIGHT_COMBINE_INDEX
+            }
+        listState.animateScrollToItem(targetIndex)
+        highlightPulse = true
+        delay(HIGHLIGHT_PULSE_ON_MS)
+        highlightPulse = false
+        delay(HIGHLIGHT_PULSE_OFF_MS)
+        highlightPulse = true
+        delay(HIGHLIGHT_PULSE_ON_MS)
+        highlightPulse = false
+    }
 
     if (showLanguageDialog) {
         LanguageDialog(
@@ -249,6 +288,7 @@ fun SettingsScreen(
                         PairShotBannerAd()
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
+                            state = listState,
                             contentPadding =
                                 PaddingValues(
                                     horizontal = PairShotSpacing.screenPadding,
@@ -386,7 +426,9 @@ fun SettingsScreen(
                             }
 
                             item(key = "card_watermark") {
-                                SettingsCard {
+                                HighlightableSettingsCard(
+                                    pulse = highlightPulse && highlight == SettingsHighlight.WATERMARK,
+                                ) {
                                     Row(
                                         modifier =
                                             Modifier
@@ -446,7 +488,9 @@ fun SettingsScreen(
                             }
 
                             item(key = "card_combine") {
-                                SettingsCard {
+                                HighlightableSettingsCard(
+                                    pulse = highlightPulse && highlight == SettingsHighlight.COMBINE,
+                                ) {
                                     SettingsItem(
                                         label = stringResource(R.string.settings_item_user_settings),
                                         onClick = onCombineSettingsClick,
@@ -510,5 +554,33 @@ fun SettingsScreen(
                     .statusBarsPadding()
                     .padding(top = PairShotSpacing.snackbarTopOffset),
         )
+    }
+}
+
+@Composable
+private fun HighlightableSettingsCard(
+    pulse: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val targetColor =
+        if (pulse) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = HIGHLIGHT_COLOR_ALPHA)
+        } else {
+            MaterialTheme.colorScheme.surface
+        }
+    val backgroundColor: State<Color> =
+        animateColorAsState(
+            targetValue = targetColor,
+            animationSpec = tween(durationMillis = HIGHLIGHT_PULSE_ON_MS.toInt()),
+            label = "settings_highlight_bg",
+        )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = backgroundColor.value,
+    ) {
+        Column {
+            content()
+        }
     }
 }

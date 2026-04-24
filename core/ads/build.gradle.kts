@@ -14,9 +14,12 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:model"))
     implementation(project(":core:domain"))
+    implementation(project(":core:designsystem"))
+    implementation(project(":core:ui"))
 
-    implementation(libs.play.services.ads)
+    api(libs.play.services.ads)
 
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
@@ -25,11 +28,12 @@ dependencies {
 
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.process)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.timber)
 }

@@ -15,6 +15,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.navigation.AfterCamera
 import com.pairshot.core.navigation.AlbumDetail
@@ -26,6 +27,7 @@ import com.pairshot.core.navigation.License
 import com.pairshot.core.navigation.PairPicker
 import com.pairshot.core.navigation.PairPreview
 import com.pairshot.core.navigation.Settings
+import com.pairshot.core.navigation.SettingsHighlight
 import com.pairshot.core.navigation.WatermarkSettings
 import com.pairshot.feature.album.route.AlbumDetailRoute
 import com.pairshot.feature.album.route.PairPickerRoute
@@ -87,7 +89,7 @@ fun PairShotNavHost(
                 },
                 onNavigateToAlbumDetail = { albumId -> navController.navigate(AlbumDetail(albumId)) },
                 onNavigateToCamera = { navController.navigate(Camera()) },
-                onNavigateToSettings = { navController.navigate(Settings) },
+                onNavigateToSettings = { navController.navigate(Settings()) },
                 onNavigateToExportSettings = { ids ->
                     navController.navigate(ExportSettings(ids.joinToString(",")))
                 },
@@ -153,16 +155,22 @@ fun PairShotNavHost(
         composable<ExportSettings> {
             ExportSettingsRoute(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
-                onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
+                onNavigateToWatermarkSettings = {
+                    navController.navigate(Settings(highlight = SettingsHighlight.WATERMARK))
+                },
+                onNavigateToCombineSettings = {
+                    navController.navigate(Settings(highlight = SettingsHighlight.COMBINE))
+                },
             )
         }
         composable<Settings> {
+            val settings: Settings = it.toRoute()
             SettingsRoute(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLicense = { navController.navigate(License) },
                 onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
                 onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
+                highlight = settings.highlight,
             )
         }
         composable<License> {

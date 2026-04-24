@@ -4,8 +4,11 @@ import android.app.Application
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.pairshot.core.ads.controller.AppOpenAdController
 import com.pairshot.core.ads.controller.InterstitialAdController
+import com.pairshot.core.ads.controller.RewardedAdController
 import com.pairshot.core.ads.initializer.AdsInitializer
+import com.pairshot.core.ads.lifecycle.AppOpenAdLifecycleObserver
 import com.pairshot.core.coupon.domain.CouponRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.feature.settings.theme.AppTheme
@@ -31,6 +34,15 @@ class PairShotApplication : Application() {
     lateinit var interstitialAdController: InterstitialAdController
 
     @Inject
+    lateinit var rewardedAdController: RewardedAdController
+
+    @Inject
+    lateinit var appOpenAdController: AppOpenAdController
+
+    @Inject
+    lateinit var appOpenAdLifecycleObserver: AppOpenAdLifecycleObserver
+
+    @Inject
     lateinit var couponRepository: CouponRepository
 
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -46,6 +58,9 @@ class PairShotApplication : Application() {
         }
         adsInitializer.initialize(this)
         interstitialAdController.preload()
+        rewardedAdController.preload()
+        appOpenAdController.preload()
+        appOpenAdLifecycleObserver.register(this)
         applicationScope.launch {
             runCatching { withContext(Dispatchers.IO) { couponRepository.retryPendingIfAny() } }
         }
