@@ -24,36 +24,62 @@ class CouponPreferencesSource
         @ApplicationContext private val context: Context,
     ) {
         private object Keys {
-            val COUPON_ID = stringPreferencesKey("coupon_id")
-            val DURATION_DAYS = longPreferencesKey("duration_days")
-            val ACTIVATED_AT_MILLIS = longPreferencesKey("activated_at_millis")
-            val HAS_DURATION = longPreferencesKey("has_duration_flag")
+            val LATEST_COUPON_ID = stringPreferencesKey("latest_coupon_id")
+            val FIRST_ACTIVATED_AT_MILLIS = longPreferencesKey("first_activated_at_millis")
+            val EXPIRES_AT_MILLIS = longPreferencesKey("expires_at_millis")
+            val HAS_EXPIRY = longPreferencesKey("has_expiry")
+            val PENDING_CODE = stringPreferencesKey("pending_code")
+            val PENDING_SINCE = longPreferencesKey("pending_since")
         }
 
         val state: Flow<StoredCouponState?> =
             context.couponDataStore.data.map { prefs ->
-                val id = prefs[Keys.COUPON_ID] ?: return@map null
-                val activatedAt = prefs[Keys.ACTIVATED_AT_MILLIS] ?: return@map null
-                val hasDuration = (prefs[Keys.HAS_DURATION] ?: 0L) == 1L
-                val durationDays = if (hasDuration) prefs[Keys.DURATION_DAYS] else null
+                val id = prefs[Keys.LATEST_COUPON_ID] ?: return@map null
+                val firstActivatedAt = prefs[Keys.FIRST_ACTIVATED_AT_MILLIS] ?: return@map null
+                val hasExpiry = (prefs[Keys.HAS_EXPIRY] ?: 0L) == 1L
+                val expiresAt = if (hasExpiry) prefs[Keys.EXPIRES_AT_MILLIS] else null
                 StoredCouponState(
-                    couponId = id,
-                    durationDays = durationDays,
-                    activatedAtEpochMillis = activatedAt,
+                    latestCouponId = id,
+                    firstActivatedAtEpochMillis = firstActivatedAt,
+                    expiresAtEpochMillis = expiresAt,
                 )
+            }
+
+        val pending: Flow<PendingCouponActivation?> =
+            context.couponDataStore.data.map { prefs ->
+                val code = prefs[Keys.PENDING_CODE] ?: return@map null
+                val since = prefs[Keys.PENDING_SINCE] ?: return@map null
+                PendingCouponActivation(code = code, sinceEpochMillis = since)
             }
 
         suspend fun save(state: StoredCouponState) {
             context.couponDataStore.edit { prefs ->
-                prefs[Keys.COUPON_ID] = state.couponId
-                prefs[Keys.ACTIVATED_AT_MILLIS] = state.activatedAtEpochMillis
-                if (state.durationDays != null) {
-                    prefs[Keys.DURATION_DAYS] = state.durationDays
-                    prefs[Keys.HAS_DURATION] = 1L
+                prefs[Keys.LATEST_COUPON_ID] = state.latestCouponId
+                prefs[Keys.FIRST_ACTIVATED_AT_MILLIS] = state.firstActivatedAtEpochMillis
+                if (state.expiresAtEpochMillis != null) {
+                    prefs[Keys.EXPIRES_AT_MILLIS] = state.expiresAtEpochMillis
+                    prefs[Keys.HAS_EXPIRY] = 1L
                 } else {
-                    prefs.remove(Keys.DURATION_DAYS)
-                    prefs[Keys.HAS_DURATION] = 0L
+                    prefs.remove(Keys.EXPIRES_AT_MILLIS)
+                    prefs[Keys.HAS_EXPIRY] = 0L
                 }
+            }
+        }
+
+        suspend fun savePending(
+            code: String,
+            sinceEpochMillis: Long,
+        ) {
+            context.couponDataStore.edit { prefs ->
+                prefs[Keys.PENDING_CODE] = code
+                prefs[Keys.PENDING_SINCE] = sinceEpochMillis
+            }
+        }
+
+        suspend fun clearPending() {
+            context.couponDataStore.edit { prefs ->
+                prefs.remove(Keys.PENDING_CODE)
+                prefs.remove(Keys.PENDING_SINCE)
             }
         }
 

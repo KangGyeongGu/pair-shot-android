@@ -4,7 +4,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ActivateRequestDto(
-    @SerialName("code") val code: String,
+data class CouponListRequestDto(
     @SerialName("device_hash") val deviceHash: String,
 )

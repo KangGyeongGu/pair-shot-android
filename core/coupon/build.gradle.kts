@@ -60,7 +60,6 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))
 
-    implementation(libs.bouncycastle.bcprov)
     implementation(libs.mlkit.barcode.scanning)
 
     implementation(libs.ktor.client.core)
@@ -69,7 +68,6 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.serialization.cbor)
 
     implementation(libs.datastore.preferences)
 

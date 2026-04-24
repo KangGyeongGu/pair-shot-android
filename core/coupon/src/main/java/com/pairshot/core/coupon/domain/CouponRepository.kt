@@ -7,5 +7,11 @@ interface CouponRepository {
 
     suspend fun activate(couponCode: String): ActivationResult
 
+    suspend fun retryPendingIfAny()
+
+    suspend fun syncStatus()
+
+    suspend fun fetchMyCoupons(): List<CouponListItem>
+
     suspend fun clear()
 }

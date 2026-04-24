@@ -1,7 +1,7 @@
 package com.pairshot.core.coupon.local
 
 data class StoredCouponState(
-    val couponId: String,
-    val durationDays: Long?,
-    val activatedAtEpochMillis: Long,
+    val latestCouponId: String,
+    val firstActivatedAtEpochMillis: Long,
+    val expiresAtEpochMillis: Long?,
 )

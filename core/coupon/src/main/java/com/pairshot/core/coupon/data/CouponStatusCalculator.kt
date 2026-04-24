@@ -13,20 +13,26 @@ internal object CouponStatusCalculator {
         nowMillis: Long,
     ): CouponStatus {
         if (stored == null) return CouponStatus.None
-        val duration = CouponDuration.fromDays(stored.durationDays)
+
         val coupon =
             Coupon(
-                id = stored.couponId,
-                duration = duration,
-                activatedAtEpochMillis = stored.activatedAtEpochMillis,
+                id = stored.latestCouponId,
+                duration =
+                    if (stored.expiresAtEpochMillis == null) {
+                        CouponDuration.Preset.Unlimited
+                    } else {
+                        CouponDuration.fromDays(
+                            ((stored.expiresAtEpochMillis - nowMillis) / MILLIS_PER_DAY).coerceAtLeast(0L),
+                        )
+                    },
+                activatedAtEpochMillis = stored.firstActivatedAtEpochMillis,
             )
-        val days = duration.days
-        if (days == null) {
+
+        if (stored.expiresAtEpochMillis == null) {
             return CouponStatus.Active(coupon = coupon, expiresAtEpochMillis = null)
         }
-        val expiresAt = stored.activatedAtEpochMillis + days * MILLIS_PER_DAY
-        return if (nowMillis < expiresAt) {
-            CouponStatus.Active(coupon = coupon, expiresAtEpochMillis = expiresAt)
+        return if (nowMillis < stored.expiresAtEpochMillis) {
+            CouponStatus.Active(coupon = coupon, expiresAtEpochMillis = stored.expiresAtEpochMillis)
         } else {
             CouponStatus.Expired(coupon = coupon)
         }

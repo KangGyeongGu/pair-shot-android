@@ -7,13 +7,15 @@ sealed interface ActivationApiResult {
         val response: ActivateResponseDto,
     ) : ActivationApiResult
 
+    data object InvalidCodeFormat : ActivationApiResult
+
+    data object InvalidSignature : ActivationApiResult
+
     data object NotFound : ActivationApiResult
 
     data object AlreadyUsedOnAnotherDevice : ActivationApiResult
 
     data object Revoked : ActivationApiResult
-
-    data object InvalidRequest : ActivationApiResult
 
     data object ServerError : ActivationApiResult
 

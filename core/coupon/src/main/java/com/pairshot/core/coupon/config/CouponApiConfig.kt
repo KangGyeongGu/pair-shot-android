@@ -4,6 +4,7 @@ interface CouponApiConfig {
     val baseUrl: String
     val activatePath: String
     val statusPath: String
+    val byDevicePath: String
     val authHeaderName: String?
     val authHeaderValue: String?
     val timeoutMillis: Long

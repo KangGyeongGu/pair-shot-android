@@ -1,8 +1,12 @@
 package com.pairshot
 
 import android.app.Application
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.pairshot.core.ads.controller.InterstitialAdController
 import com.pairshot.core.ads.initializer.AdsInitializer
+import com.pairshot.core.coupon.domain.CouponRepository
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.feature.settings.theme.AppTheme
 import dagger.hilt.android.HiltAndroidApp
@@ -11,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -24,15 +30,34 @@ class PairShotApplication : Application() {
     @Inject
     lateinit var interstitialAdController: InterstitialAdController
 
+    @Inject
+    lateinit var couponRepository: CouponRepository
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate() {
         super.onCreate()
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
         applicationScope.launch {
             val name = appSettingsRepository.appThemeNameFlow.first()
             AppTheme.fromName(name).apply()
         }
         adsInitializer.initialize(this)
         interstitialAdController.preload()
+        applicationScope.launch {
+            runCatching { withContext(Dispatchers.IO) { couponRepository.retryPendingIfAny() } }
+        }
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) {
+                    applicationScope.launch {
+                        runCatching { withContext(Dispatchers.IO) { couponRepository.syncStatus() } }
+                    }
+                }
+            },
+        )
     }
 }
