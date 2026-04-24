@@ -91,6 +91,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:ads"))
 
     implementation(project(":feature:camera"))
     implementation(project(":feature:settings"))

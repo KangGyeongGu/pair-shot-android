@@ -1,5 +1,8 @@
 package com.pairshot.app.navigation.effect
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,8 +13,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import com.pairshot.app.di.AdsHostEntryPoint
 import com.pairshot.app.navigation.SaveDocumentRequest
 import com.pairshot.app.navigation.SaveDocumentResult
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -30,6 +35,15 @@ fun SaveZipToDocumentEffect(
     var pending by remember { mutableStateOf<SaveDocumentRequest?>(null) }
     var launcherResult by remember { mutableStateOf<Pair<SaveDocumentRequest, Uri?>?>(null) }
 
+    val interstitialAdController =
+        remember(context) {
+            EntryPointAccessors
+                .fromApplication(
+                    context.applicationContext,
+                    AdsHostEntryPoint::class.java,
+                ).interstitialAdController()
+        }
+
     val launcher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.CreateDocument(ZIP_MIME_TYPE),
@@ -42,7 +56,13 @@ fun SaveZipToDocumentEffect(
     LaunchedEffect(Unit) {
         requests.collect { request ->
             pending = request
-            launcher.launch(request.suggestedName)
+            val activity = context.findActivity()
+            val launchSaf: () -> Unit = { launcher.launch(request.suggestedName) }
+            if (activity != null) {
+                interstitialAdController.showIfAvailable(activity, launchSaf)
+            } else {
+                launchSaf()
+            }
         }
     }
 
@@ -84,3 +104,10 @@ fun SaveZipToDocumentEffect(
             }
     }
 }
+
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }

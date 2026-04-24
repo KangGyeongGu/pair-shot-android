@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
 import com.pairshot.feature.pairpreview.component.PairPreviewCenter
@@ -56,6 +57,8 @@ fun PairPreviewScreen(
                 Box(modifier = Modifier.weight(1f)) {
                     PairPreviewCenter(livePreviewBitmap = livePreviewBitmap)
                 }
+
+                PairShotBannerAd()
             }
         }
     }

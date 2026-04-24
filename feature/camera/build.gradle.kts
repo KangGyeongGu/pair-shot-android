@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:rendering"))
     implementation(project(":core:infra"))
+    implementation(project(":core:ads"))
 
     implementation(libs.camerax.compose)
     implementation(libs.camerax.view)

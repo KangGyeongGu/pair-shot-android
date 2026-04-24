@@ -37,6 +37,7 @@ include(":core:database")
 include(":core:storage")
 include(":core:datastore")
 include(":core:data")
+include(":core:ads")
 
 include(":feature:camera")
 include(":feature:settings")

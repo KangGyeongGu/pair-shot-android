@@ -70,6 +70,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.CombineLayout
@@ -189,300 +190,305 @@ fun CombineSettingsScreen(
             )
         },
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
-            contentPadding =
-                PaddingValues(
-                    horizontal = PairShotSpacing.screenPadding,
-                    vertical = PairShotSpacing.cardPadding,
-                ),
         ) {
-            item(key = "label_layout") {
-                SettingsSectionLabel(label = stringResource(R.string.combine_section_alignment))
-                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-            }
-
-            item(key = "card_layout") {
-                SettingsCard {
-                    CombineLayoutItem(
-                        selectedLayout = combineConfig.layout,
-                        onLayoutChange = { layout ->
-                            onCombineConfigChange(combineConfig.copy(layout = layout))
-                        },
-                    )
+            PairShotBannerAd()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding =
+                    PaddingValues(
+                        horizontal = PairShotSpacing.screenPadding,
+                        vertical = PairShotSpacing.cardPadding,
+                    ),
+            ) {
+                item(key = "label_layout") {
+                    SettingsSectionLabel(label = stringResource(R.string.combine_section_alignment))
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                 }
-            }
 
-            item(key = "gap_1") {
-                Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-            }
+                item(key = "card_layout") {
+                    SettingsCard {
+                        CombineLayoutItem(
+                            selectedLayout = combineConfig.layout,
+                            onLayoutChange = { layout ->
+                                onCombineConfigChange(combineConfig.copy(layout = layout))
+                            },
+                        )
+                    }
+                }
 
-            item(key = "label_border") {
-                SettingsSectionLabel(label = stringResource(R.string.combine_section_border))
-                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-            }
+                item(key = "gap_1") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                }
 
-            item(key = "card_border") {
-                SettingsCard {
-                    SettingsSwitchItem(
-                        label = stringResource(R.string.combine_item_border_use),
-                        checked = combineConfig.borderEnabled,
-                        onCheckedChange = { checked ->
-                            onCombineConfigChange(combineConfig.copy(borderEnabled = checked))
-                        },
-                    )
-                    AnimatedVisibility(
-                        visible = combineConfig.borderEnabled,
-                        enter = expandVertically(),
-                        exit = shrinkVertically(),
-                    ) {
-                        Column {
-                            SettingsDivider()
-                            SettingsSliderItem(
-                                label = stringResource(R.string.combine_item_border_thickness),
-                                value = combineConfig.borderThicknessDp.toFloat(),
-                                valueRange = 0f..32f,
-                                steps = 31,
-                                valueLabel = { "${it.toInt()}dp" },
-                                onValueChange = { v ->
-                                    onCombineConfigChange(combineConfig.copy(borderThicknessDp = v.toInt()))
-                                },
-                                onLiveUpdate = { v ->
-                                    onCombineConfigChange(combineConfig.copy(borderThicknessDp = v.toInt()))
-                                },
-                            )
-                            SettingsDivider()
-                            ColorItem(
-                                label = stringResource(R.string.combine_item_color),
-                                colorArgb = combineConfig.borderColorArgb,
-                                onClick = { borderColorPickerVisible = true },
-                            )
+                item(key = "label_border") {
+                    SettingsSectionLabel(label = stringResource(R.string.combine_section_border))
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                }
+
+                item(key = "card_border") {
+                    SettingsCard {
+                        SettingsSwitchItem(
+                            label = stringResource(R.string.combine_item_border_use),
+                            checked = combineConfig.borderEnabled,
+                            onCheckedChange = { checked ->
+                                onCombineConfigChange(combineConfig.copy(borderEnabled = checked))
+                            },
+                        )
+                        AnimatedVisibility(
+                            visible = combineConfig.borderEnabled,
+                            enter = expandVertically(),
+                            exit = shrinkVertically(),
+                        ) {
+                            Column {
+                                SettingsDivider()
+                                SettingsSliderItem(
+                                    label = stringResource(R.string.combine_item_border_thickness),
+                                    value = combineConfig.borderThicknessDp.toFloat(),
+                                    valueRange = 0f..32f,
+                                    steps = 31,
+                                    valueLabel = { "${it.toInt()}dp" },
+                                    onValueChange = { v ->
+                                        onCombineConfigChange(combineConfig.copy(borderThicknessDp = v.toInt()))
+                                    },
+                                    onLiveUpdate = { v ->
+                                        onCombineConfigChange(combineConfig.copy(borderThicknessDp = v.toInt()))
+                                    },
+                                )
+                                SettingsDivider()
+                                ColorItem(
+                                    label = stringResource(R.string.combine_item_color),
+                                    colorArgb = combineConfig.borderColorArgb,
+                                    onClick = { borderColorPickerVisible = true },
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            item(key = "gap_2") {
-                Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-            }
+                item(key = "gap_2") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                }
 
-            item(key = "label_label") {
-                SettingsSectionLabel(label = stringResource(R.string.combine_section_label))
-                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-            }
+                item(key = "label_label") {
+                    SettingsSectionLabel(label = stringResource(R.string.combine_section_label))
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                }
 
-            item(key = "card_label_text") {
-                SettingsCard {
-                    SettingsSwitchItem(
-                        label = stringResource(R.string.combine_item_label_use),
-                        checked = combineConfig.labelEnabled,
-                        onCheckedChange = { checked ->
-                            onCombineConfigChange(combineConfig.copy(labelEnabled = checked))
-                        },
-                    )
+                item(key = "card_label_text") {
+                    SettingsCard {
+                        SettingsSwitchItem(
+                            label = stringResource(R.string.combine_item_label_use),
+                            checked = combineConfig.labelEnabled,
+                            onCheckedChange = { checked ->
+                                onCombineConfigChange(combineConfig.copy(labelEnabled = checked))
+                            },
+                        )
+                        AnimatedVisibility(
+                            visible = combineConfig.labelEnabled,
+                            enter = expandVertically(),
+                            exit = shrinkVertically(),
+                        ) {
+                            Column {
+                                SettingsDivider()
+                                LabelTextItem(
+                                    labelName = stringResource(R.string.combine_item_label_before),
+                                    text = combineConfig.beforeLabel,
+                                    onTextChange = { text ->
+                                        onCombineConfigChange(combineConfig.copy(beforeLabel = text))
+                                    },
+                                )
+                                SettingsDivider()
+                                LabelTextItem(
+                                    labelName = stringResource(R.string.combine_item_label_after),
+                                    text = combineConfig.afterLabel,
+                                    onTextChange = { text ->
+                                        onCombineConfigChange(combineConfig.copy(afterLabel = text))
+                                    },
+                                )
+                                SettingsDivider()
+                                SettingsSliderItem(
+                                    label = stringResource(R.string.combine_item_text_size),
+                                    value = combineConfig.labelSizeRatio,
+                                    valueRange = 0f..0.10f,
+                                    steps = 9,
+                                    valueLabel = { "${(it * 100).roundToInt()}%" },
+                                    onValueChange = { v ->
+                                        onCombineConfigChange(combineConfig.copy(labelSizeRatio = v))
+                                    },
+                                    onLiveUpdate = { v ->
+                                        onCombineConfigChange(combineConfig.copy(labelSizeRatio = v))
+                                    },
+                                )
+                                SettingsDivider()
+                                ColorItem(
+                                    label = stringResource(R.string.combine_item_text_color),
+                                    colorArgb = combineConfig.labelTextColorArgb,
+                                    onClick = { labelTextColorPickerVisible = true },
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item(key = "label_label_mode") {
                     AnimatedVisibility(
                         visible = combineConfig.labelEnabled,
                         enter = expandVertically(),
                         exit = shrinkVertically(),
                     ) {
                         Column {
-                            SettingsDivider()
-                            LabelTextItem(
-                                labelName = stringResource(R.string.combine_item_label_before),
-                                text = combineConfig.beforeLabel,
-                                onTextChange = { text ->
-                                    onCombineConfigChange(combineConfig.copy(beforeLabel = text))
-                                },
-                            )
-                            SettingsDivider()
-                            LabelTextItem(
-                                labelName = stringResource(R.string.combine_item_label_after),
-                                text = combineConfig.afterLabel,
-                                onTextChange = { text ->
-                                    onCombineConfigChange(combineConfig.copy(afterLabel = text))
-                                },
-                            )
-                            SettingsDivider()
-                            SettingsSliderItem(
-                                label = stringResource(R.string.combine_item_text_size),
-                                value = combineConfig.labelSizeRatio,
-                                valueRange = 0f..0.10f,
-                                steps = 9,
-                                valueLabel = { "${(it * 100).roundToInt()}%" },
-                                onValueChange = { v ->
-                                    onCombineConfigChange(combineConfig.copy(labelSizeRatio = v))
-                                },
-                                onLiveUpdate = { v ->
-                                    onCombineConfigChange(combineConfig.copy(labelSizeRatio = v))
-                                },
-                            )
-                            SettingsDivider()
-                            ColorItem(
-                                label = stringResource(R.string.combine_item_text_color),
-                                colorArgb = combineConfig.labelTextColorArgb,
-                                onClick = { labelTextColorPickerVisible = true },
-                            )
+                            Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                            SettingsSectionLabel(label = stringResource(R.string.combine_section_label_mode))
+                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                         }
                     }
                 }
-            }
 
-            item(key = "label_label_mode") {
-                AnimatedVisibility(
-                    visible = combineConfig.labelEnabled,
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
-                ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                        SettingsSectionLabel(label = stringResource(R.string.combine_section_label_mode))
-                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                    }
-                }
-            }
-
-            item(key = "card_label_position") {
-                AnimatedVisibility(
-                    visible = combineConfig.labelEnabled,
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
-                ) {
-                    Column {
-                        SettingsCard {
-                            LabelPositionModeItem(
-                                selectedMode = combineConfig.labelPositionMode,
-                                onModeChange = { mode ->
-                                    onCombineConfigChange(combineConfig.copy(labelPositionMode = mode))
-                                },
-                            )
-                            if (combineConfig.labelPositionMode == LabelPositionMode.FULL_WIDTH) {
-                                SettingsDivider()
-                                LabelPositionItem(
-                                    selectedPosition = combineConfig.labelPosition,
-                                    onPositionChange = { position ->
-                                        onCombineConfigChange(combineConfig.copy(labelPosition = position))
+                item(key = "card_label_position") {
+                    AnimatedVisibility(
+                        visible = combineConfig.labelEnabled,
+                        enter = expandVertically(),
+                        exit = shrinkVertically(),
+                    ) {
+                        Column {
+                            SettingsCard {
+                                LabelPositionModeItem(
+                                    selectedMode = combineConfig.labelPositionMode,
+                                    onModeChange = { mode ->
+                                        onCombineConfigChange(combineConfig.copy(labelPositionMode = mode))
                                     },
                                 )
-                            } else {
-                                SettingsDivider()
-                                PositionPicker3x3Row(
-                                    label = stringResource(R.string.combine_item_position_before),
-                                    positions = labelAnchorOrder,
-                                    selectedPosition = combineConfig.beforeLabelAnchor,
-                                    onPositionChange = { anchor ->
-                                        onCombineConfigChange(combineConfig.copy(beforeLabelAnchor = anchor))
-                                    },
-                                )
-                                SettingsDivider()
-                                PositionPicker3x3Row(
-                                    label = stringResource(R.string.combine_item_position_after),
-                                    positions = labelAnchorOrder,
-                                    selectedPosition = combineConfig.afterLabelAnchor,
-                                    onPositionChange = { anchor ->
-                                        onCombineConfigChange(combineConfig.copy(afterLabelAnchor = anchor))
-                                    },
-                                )
+                                if (combineConfig.labelPositionMode == LabelPositionMode.FULL_WIDTH) {
+                                    SettingsDivider()
+                                    LabelPositionItem(
+                                        selectedPosition = combineConfig.labelPosition,
+                                        onPositionChange = { position ->
+                                            onCombineConfigChange(combineConfig.copy(labelPosition = position))
+                                        },
+                                    )
+                                } else {
+                                    SettingsDivider()
+                                    PositionPicker3x3Row(
+                                        label = stringResource(R.string.combine_item_position_before),
+                                        positions = labelAnchorOrder,
+                                        selectedPosition = combineConfig.beforeLabelAnchor,
+                                        onPositionChange = { anchor ->
+                                            onCombineConfigChange(combineConfig.copy(beforeLabelAnchor = anchor))
+                                        },
+                                    )
+                                    SettingsDivider()
+                                    PositionPicker3x3Row(
+                                        label = stringResource(R.string.combine_item_position_after),
+                                        positions = labelAnchorOrder,
+                                        selectedPosition = combineConfig.afterLabelAnchor,
+                                        onPositionChange = { anchor ->
+                                            onCombineConfigChange(combineConfig.copy(afterLabelAnchor = anchor))
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            item(key = "label_label_bg") {
-                AnimatedVisibility(
-                    visible = combineConfig.labelEnabled,
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
-                ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-                        SettingsSectionLabel(label = stringResource(R.string.combine_section_label_background))
-                        Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                item(key = "label_label_bg") {
+                    AnimatedVisibility(
+                        visible = combineConfig.labelEnabled,
+                        enter = expandVertically(),
+                        exit = shrinkVertically(),
+                    ) {
+                        Column {
+                            Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                            SettingsSectionLabel(label = stringResource(R.string.combine_section_label_background))
+                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                        }
                     }
                 }
-            }
 
-            item(key = "card_label_bg") {
-                AnimatedVisibility(
-                    visible = combineConfig.labelEnabled,
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
-                ) {
-                    Column {
-                        SettingsCard {
-                            SettingsSwitchItem(
-                                label = stringResource(R.string.combine_item_background_use),
-                                checked = combineConfig.labelBgEnabled,
-                                onCheckedChange = { checked ->
-                                    onCombineConfigChange(combineConfig.copy(labelBgEnabled = checked))
-                                },
-                            )
-                            AnimatedVisibility(
-                                visible = combineConfig.labelBgEnabled,
-                                enter = expandVertically(),
-                                exit = shrinkVertically(),
-                            ) {
-                                Column {
-                                    SettingsDivider()
-                                    ColorItem(
-                                        label = stringResource(R.string.combine_item_color),
-                                        colorArgb = combineConfig.labelBgColorArgb,
-                                        onClick = { labelBgColorPickerVisible = true },
-                                    )
-                                    SettingsDivider()
-                                    SettingsSliderItem(
-                                        label = stringResource(R.string.combine_item_opacity),
-                                        value = combineConfig.labelBgAlpha,
-                                        valueRange = 0f..1f,
-                                        valueLabel = { "${(it * 100).roundToInt()}%" },
-                                        onValueChange = { v ->
-                                            onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
-                                        },
-                                        onLiveUpdate = { v ->
-                                            onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
-                                        },
-                                    )
-                                    if (combineConfig.labelPositionMode == LabelPositionMode.FREE) {
+                item(key = "card_label_bg") {
+                    AnimatedVisibility(
+                        visible = combineConfig.labelEnabled,
+                        enter = expandVertically(),
+                        exit = shrinkVertically(),
+                    ) {
+                        Column {
+                            SettingsCard {
+                                SettingsSwitchItem(
+                                    label = stringResource(R.string.combine_item_background_use),
+                                    checked = combineConfig.labelBgEnabled,
+                                    onCheckedChange = { checked ->
+                                        onCombineConfigChange(combineConfig.copy(labelBgEnabled = checked))
+                                    },
+                                )
+                                AnimatedVisibility(
+                                    visible = combineConfig.labelBgEnabled,
+                                    enter = expandVertically(),
+                                    exit = shrinkVertically(),
+                                ) {
+                                    Column {
+                                        SettingsDivider()
+                                        ColorItem(
+                                            label = stringResource(R.string.combine_item_color),
+                                            colorArgb = combineConfig.labelBgColorArgb,
+                                            onClick = { labelBgColorPickerVisible = true },
+                                        )
                                         SettingsDivider()
                                         SettingsSliderItem(
-                                            label = stringResource(R.string.combine_item_curvature),
-                                            value = combineConfig.labelBgCornerDp.toFloat(),
-                                            valueRange = 0f..50f,
-                                            steps = 49,
-                                            valueLabel = { "${it.toInt()}dp" },
+                                            label = stringResource(R.string.combine_item_opacity),
+                                            value = combineConfig.labelBgAlpha,
+                                            valueRange = 0f..1f,
+                                            valueLabel = { "${(it * 100).roundToInt()}%" },
                                             onValueChange = { v ->
-                                                onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
+                                                onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
                                             },
                                             onLiveUpdate = { v ->
-                                                onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
+                                                onCombineConfigChange(combineConfig.copy(labelBgAlpha = v))
                                             },
                                         )
+                                        if (combineConfig.labelPositionMode == LabelPositionMode.FREE) {
+                                            SettingsDivider()
+                                            SettingsSliderItem(
+                                                label = stringResource(R.string.combine_item_curvature),
+                                                value = combineConfig.labelBgCornerDp.toFloat(),
+                                                valueRange = 0f..50f,
+                                                steps = 49,
+                                                valueLabel = { "${it.toInt()}dp" },
+                                                onValueChange = { v ->
+                                                    onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
+                                                },
+                                                onLiveUpdate = { v ->
+                                                    onCombineConfigChange(combineConfig.copy(labelBgCornerDp = v.toInt()))
+                                                },
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            item(key = "gap_3") {
-                Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
-            }
+                item(key = "gap_3") {
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                }
 
-            item(key = "label_preview") {
-                SettingsSectionLabel(label = stringResource(R.string.combine_section_preview))
-                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-            }
+                item(key = "label_preview") {
+                    SettingsSectionLabel(label = stringResource(R.string.combine_section_preview))
+                    Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                }
 
-            item(key = "combine_preview") {
-                CombinePreviewSection(
-                    config = combineConfig,
-                    watermarkConfig = watermarkConfig,
-                )
-                Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                item(key = "combine_preview") {
+                    CombinePreviewSection(
+                        config = combineConfig,
+                        watermarkConfig = watermarkConfig,
+                    )
+                    Spacer(modifier = Modifier.height(PairShotSpacing.sectionGap))
+                }
             }
         }
     }

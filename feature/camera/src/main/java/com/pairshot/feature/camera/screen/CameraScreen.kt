@@ -25,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -33,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ads.component.PairShotBannerAd
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.PairShotSnackbarController
@@ -175,6 +176,7 @@ internal fun CameraScreen(
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
+                PairShotBannerAd()
                 CameraPreviewPane(
                     surfaceRequest = surfaceRequest,
                     zoomUiState = zoomUiState,

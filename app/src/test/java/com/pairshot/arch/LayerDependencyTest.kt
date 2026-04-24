@@ -60,6 +60,8 @@ class LayerDependencyTest {
             .definedBy("com.pairshot.core.domain..")
             .layer("Infra")
             .definedBy("com.pairshot.core.infra..")
+            .layer("Ads")
+            .definedBy("com.pairshot.core.ads..")
             .layer("AppShell")
             .definedBy("com.pairshot.app..", "com.pairshot.di..")
             .whereLayer("Feature")
@@ -67,7 +69,29 @@ class LayerDependencyTest {
             .whereLayer("Data")
             .mayOnlyBeAccessedByLayers("AppShell")
             .whereLayer("Domain")
-            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "AppShell")
+            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "Ads", "AppShell")
             .whereLayer("Infra")
             .mayOnlyBeAccessedByLayers("Feature", "Data", "AppShell")
+            .whereLayer("Ads")
+            .mayOnlyBeAccessedByLayers("Feature", "AppShell")
+
+    @ArchTest
+    val `L-05 Ads should not access Data`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.core.ads..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.pairshot.core.data..")
+            .because("Ads module must not depend on Data layer")
+
+    @ArchTest
+    val `L-06 Domain should not access Ads`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.core.domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.pairshot.core.ads..")
+            .because("Domain layer must not depend on Ads module — pure Kotlin only")
 }

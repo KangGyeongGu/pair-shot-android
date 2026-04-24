@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.component.PairShotSnackbarController
@@ -248,6 +249,7 @@ internal fun AfterCameraScreen(
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
+                PairShotBannerAd()
                 CameraPreviewPane(
                     surfaceRequest = surfaceRequest,
                     zoomUiState = zoomUiState,

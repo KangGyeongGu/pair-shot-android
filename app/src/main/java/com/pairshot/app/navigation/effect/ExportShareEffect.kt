@@ -1,15 +1,20 @@
 package com.pairshot.app.navigation.effect
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import com.pairshot.app.di.AdsHostEntryPoint
 import com.pairshot.core.domain.export.ExportAction
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 import java.io.File
@@ -17,21 +22,44 @@ import java.io.File
 @Composable
 fun ExportShareEffect(actions: Flow<ExportAction>) {
     val context = LocalContext.current
+    val interstitialAdController =
+        remember(context) {
+            EntryPointAccessors
+                .fromApplication(
+                    context.applicationContext,
+                    AdsHostEntryPoint::class.java,
+                ).interstitialAdController()
+        }
     LaunchedEffect(actions) {
         actions.collect { action ->
-            runCatching {
-                val intent = buildShareIntent(context, action)
-                val chooser =
-                    Intent.createChooser(intent, null).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    }
-                context.startActivity(chooser)
-            }.onFailure { error ->
-                Timber.e(error, "share intent failed")
+            val activity = context.findActivity()
+            val fire: () -> Unit = {
+                runCatching {
+                    val intent = buildShareIntent(context, action)
+                    val chooser =
+                        Intent.createChooser(intent, null).apply {
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    context.startActivity(chooser)
+                }.onFailure { error ->
+                    Timber.e(error, "share intent failed")
+                }
+            }
+            if (activity != null) {
+                interstitialAdController.showIfAvailable(activity, fire)
+            } else {
+                fire()
             }
         }
     }
 }
+
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }
 
 private fun buildShareIntent(
     context: Context,
