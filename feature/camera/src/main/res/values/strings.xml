@@ -33,4 +33,9 @@
     <string name="camera_settings_overlay_opacity_hint">75%% 이하 권장</string>
     <string name="camera_settings_sort">미리보기</string>
 
+    <string name="camera_hint_rotate_left_message">왼쪽으로 눕혀 주세요</string>
+    <string name="camera_hint_rotate_right_message">오른쪽으로 눕혀 주세요</string>
+    <string name="camera_hint_rotate_left_desc">왼쪽으로 회전</string>
+    <string name="camera_hint_rotate_right_desc">오른쪽으로 회전</string>
+
 </resources>
