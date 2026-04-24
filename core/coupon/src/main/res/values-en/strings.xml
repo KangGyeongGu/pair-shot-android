@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="coupon_section_title">Coupon</string>
+    <string name="coupon_item_label">Coupon</string>
+
+    <string name="coupon_status_none">No coupon</string>
+    <string name="coupon_status_active_days_remaining">Ad-free · %1$d days left</string>
+    <string name="coupon_status_active_unlimited">Ad-free · Unlimited</string>
+    <string name="coupon_status_expired">Coupon expired (register again)</string>
+
+    <string name="coupon_dialog_title">Register coupon</string>
+    <string name="coupon_dialog_description">Scan a QR code or\npaste the coupon code</string>
+    <string name="coupon_dialog_scan_qr">Scan QR</string>
+    <string name="coupon_dialog_or_separator">OR</string>
+    <string name="coupon_dialog_input_hint">PS-30D-...</string>
+    <string name="coupon_dialog_register">Register</string>
+    <string name="coupon_dialog_cancel">Cancel</string>
+    <string name="coupon_dialog_registering">Activating coupon...</string>
+
+    <string name="coupon_qr_scanner_title">Scan coupon QR</string>
+    <string name="coupon_qr_camera_permission_required">Camera permission required</string>
+
+    <string name="coupon_error_invalid_format">Invalid coupon format</string>
+    <string name="coupon_error_invalid_signature">Invalid coupon</string>
+    <string name="coupon_error_not_found">Coupon not found</string>
+    <string name="coupon_error_already_used">This coupon is in use on another device</string>
+    <string name="coupon_error_revoked">This coupon has been revoked</string>
+    <string name="coupon_error_network">Check your internet connection</string>
+    <string name="coupon_error_unknown">A temporary error occurred. Please try again later</string>
+
+    <string name="coupon_success_registered_days">%1$d-day ad-free coupon registered</string>
+    <string name="coupon_success_registered_unlimited">Unlimited ad-free coupon registered</string>
+
+</resources>

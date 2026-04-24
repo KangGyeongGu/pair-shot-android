@@ -92,6 +92,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ads"))
+    implementation(project(":core:coupon"))
 
     implementation(project(":feature:camera"))
     implementation(project(":feature:settings"))

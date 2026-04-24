@@ -1,0 +1,15 @@
+{
+  "primaryKeyId": 2050604177,
+  "key": [
+    {
+      "keyData": {
+        "typeUrl": "type.googleapis.com/google.crypto.tink.Ed25519PublicKey",
+        "value": "GiBh9JJqdEmcmGL8EYZT8yYqYrBbZZt0OWlTzv8lJDIMAg==",
+        "keyMaterialType": "ASYMMETRIC_PUBLIC"
+      },
+      "status": "ENABLED",
+      "keyId": 2050604177,
+      "outputPrefixType": "RAW"
+    }
+  ]
+}

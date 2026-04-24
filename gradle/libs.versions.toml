@@ -15,6 +15,9 @@ archunit = "1.4.1"
 profileinstaller = "1.4.1"
 jankstats = "1.0.0-beta01"
 play-services-ads = "23.6.0"
+bouncycastle = "1.79"
+mlkit-barcode = "17.3.0"
+ktor = "2.3.12"
 
 [libraries]
 # Compose
@@ -51,6 +54,21 @@ play-services-location = { group = "com.google.android.gms", name = "play-servic
 
 # Ads
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "play-services-ads" }
+
+# Crypto (Coupon Ed25519 verification)
+bouncycastle-bcprov = { group = "org.bouncycastle", name = "bcprov-jdk18on", version.ref = "bouncycastle" }
+
+# ML Kit Barcode Scanning
+mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkit-barcode" }
+
+# Ktor (Coupon Backend API)
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# CBOR (Coupon payload)
+kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version = "1.7.3" }
 
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.4" }

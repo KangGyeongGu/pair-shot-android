@@ -98,6 +98,7 @@ fun SettingsScreen(
     onOverlayEnabledChange: (Boolean) -> Unit,
     onOverlayAlphaChange: (Float) -> Unit,
     snackbarController: PairShotSnackbarController,
+    couponSection: @Composable () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
     var showClearCacheDialog by remember { mutableStateOf(false) }
@@ -455,6 +456,10 @@ fun SettingsScreen(
 
                             item(key = "gap_combine") {
                                 Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                            }
+
+                            item(key = "section_coupon") {
+                                couponSection()
                             }
 
                             item(key = "label_storage_info") {

@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:rendering"))
     implementation(project(":core:ads"))
+    implementation(project(":core:coupon"))
 
     implementation(libs.appcompat)
 }

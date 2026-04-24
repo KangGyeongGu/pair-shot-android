@@ -62,6 +62,8 @@ class LayerDependencyTest {
             .definedBy("com.pairshot.core.infra..")
             .layer("Ads")
             .definedBy("com.pairshot.core.ads..")
+            .layer("Coupon")
+            .definedBy("com.pairshot.core.coupon..")
             .layer("AppShell")
             .definedBy("com.pairshot.app..", "com.pairshot.di..")
             .whereLayer("Feature")
@@ -69,10 +71,12 @@ class LayerDependencyTest {
             .whereLayer("Data")
             .mayOnlyBeAccessedByLayers("AppShell")
             .whereLayer("Domain")
-            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "Ads", "AppShell")
+            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "Ads", "Coupon", "AppShell")
             .whereLayer("Infra")
             .mayOnlyBeAccessedByLayers("Feature", "Data", "AppShell")
             .whereLayer("Ads")
+            .mayOnlyBeAccessedByLayers("Feature", "AppShell")
+            .whereLayer("Coupon")
             .mayOnlyBeAccessedByLayers("Feature", "AppShell")
 
     @ArchTest
@@ -94,4 +98,34 @@ class LayerDependencyTest {
             .dependOnClassesThat()
             .resideInAPackage("com.pairshot.core.ads..")
             .because("Domain layer must not depend on Ads module — pure Kotlin only")
+
+    @ArchTest
+    val `L-07 Coupon should not access Data`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.core.coupon..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.pairshot.core.data..")
+            .because("Coupon module must not depend on Data layer — domain interface only")
+
+    @ArchTest
+    val `L-08 Domain should not access Coupon`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.core.domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.pairshot.core.coupon..")
+            .because("Domain layer must not depend on Coupon module — pure Kotlin only")
+
+    @ArchTest
+    val `L-09 Coupon should not access Ads`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.core.coupon..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("com.pairshot.core.ads..")
+            .because("Coupon module must not directly depend on Ads module — share AdFreeStatusProvider only")
 }
