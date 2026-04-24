@@ -1,15 +1,16 @@
 package com.pairshot.feature.camera.screen
 
 import android.graphics.Bitmap
+import android.view.Surface
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -28,15 +30,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.rendering.OverlayTransformCalculator
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SnackbarEvent
@@ -48,6 +51,8 @@ import com.pairshot.feature.camera.component.BeforePreviewStrip
 import com.pairshot.feature.camera.component.BeforeStripHeight
 import com.pairshot.feature.camera.component.CameraSettingsSheet
 import com.pairshot.feature.camera.component.OverlayGuide
+import com.pairshot.feature.camera.component.RotationHintDirection
+import com.pairshot.feature.camera.component.RotationHintOverlay
 import com.pairshot.feature.camera.component.StripProgress
 import com.pairshot.feature.camera.preview.CameraPreviewPane
 import com.pairshot.feature.camera.viewmodel.AfterCameraEvent
@@ -76,6 +81,7 @@ internal fun AfterCameraScreen(
     val unpairedPhotos by viewModel.unpairedPhotos.collectAsStateWithLifecycle()
     val pairsLoaded by viewModel.pairsLoaded.collectAsStateWithLifecycle()
     val totalPairCount by viewModel.totalPairCount.collectAsStateWithLifecycle()
+    val isRetakeMode by viewModel.isRetakeMode.collectAsStateWithLifecycle()
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
     val lastPairThumbnailUri by viewModel.lastPairThumbnailUri.collectAsStateWithLifecycle()
     val currentIndex by viewModel.currentIndex.collectAsStateWithLifecycle()
@@ -87,6 +93,7 @@ internal fun AfterCameraScreen(
     val settingsState by viewModel.settingsState.collectAsStateWithLifecycle()
     val capabilities by cameraSession.capabilities.collectAsStateWithLifecycle()
     val roll by sensorSession.roll.collectAsStateWithLifecycle()
+    val deviceOrientation by sensorSession.deviceOrientation.collectAsStateWithLifecycle()
     val surfaceRequest by cameraSession.surfaceRequest.collectAsStateWithLifecycle()
 
     val currentPair = unpairedPhotos.getOrNull(currentIndex)
@@ -98,6 +105,18 @@ internal fun AfterCameraScreen(
     val thumbnailListState = rememberLazyListState()
 
     var overlayBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var overlayRotation by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(overlayInputs.pair?.beforePhotoUri, overlayInputs.lensFacing) {
+        val pair = overlayInputs.pair
+        overlayRotation =
+            if (pair == null) {
+                0f
+            } else {
+                cameraSession.readBeforeRotation(pair.beforePhotoUri, overlayInputs.lensFacing)
+            }
+    }
+
     LaunchedEffect(overlayInputs) {
         val inputs = overlayInputs
         val pair = inputs.pair
@@ -113,6 +132,17 @@ internal fun AfterCameraScreen(
             previous.recycle()
         }
     }
+
+    val rotationHint: RotationHintDirection? =
+        if (currentPair == null || deviceOrientation != Surface.ROTATION_0) {
+            null
+        } else {
+            when (overlayRotation) {
+                OverlayTransformCalculator.LANDSCAPE_LEFT_ROTATION -> RotationHintDirection.LEFT
+                OverlayTransformCalculator.LANDSCAPE_RIGHT_ROTATION -> RotationHintDirection.RIGHT
+                else -> null
+            }
+        }
     DisposableEffect(Unit) {
         onDispose {
             overlayBitmap?.takeIf { !it.isRecycled }?.recycle()
@@ -184,9 +214,13 @@ internal fun AfterCameraScreen(
             when (event) {
                 is AfterCameraEvent.AfterSaved -> {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (isRetakeMode) {
+                        onNavigateBack()
+                    }
                 }
 
                 is AfterCameraEvent.AllCompleted -> {
+                    if (isRetakeMode) return@collect
                     snackbarController.show(
                         SnackbarEvent(
                             UiText.Resource(CoreR.string.snackbar_success_all_after_captured),
@@ -218,28 +252,10 @@ internal fun AfterCameraScreen(
         }
     }
 
-    val density = LocalDensity.current
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(PairShotCameraTokens.Letterbox)) {
-        val safeTopPx = WindowInsets.safeDrawing.getTop(density)
-        val safeBottomPx = WindowInsets.safeDrawing.getBottom(density)
-        val fullHeightPx = with(density) { maxHeight.roundToPx() }
-        val safeAvailableHeightPx = (fullHeightPx - safeTopPx - safeBottomPx).coerceAtLeast(0)
-        val safeAvailableHeightDp = with(density) { safeAvailableHeightPx.toDp() }
+    Box(modifier = Modifier.fillMaxSize().background(PairShotCameraTokens.Letterbox)) {
         val stripSectionHeight = BeforeStripHeight
         val shutterSectionHeight = CameraShutterHeight
-        val bottomSpacerDesired = 32.dp
-        val minPreviewHeight = 180.dp
-
-        val reservedHeight = stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
-        val previewHeightRaw = safeAvailableHeightDp - reservedHeight
-        val previewSectionHeight = if (previewHeightRaw >= minPreviewHeight) previewHeightRaw else minPreviewHeight
-        val bottomSpacerHeight =
-            if (previewHeightRaw >= minPreviewHeight) {
-                bottomSpacerDesired
-            } else {
-                (safeAvailableHeightDp - (stripSectionHeight + shutterSectionHeight + previewSectionHeight))
-                    .coerceAtLeast(0.dp)
-            }
+        val bottomSpacerHeight = 32.dp
 
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -248,6 +264,7 @@ internal fun AfterCameraScreen(
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
+                PairShotBannerAd(modifier = Modifier.fillMaxWidth())
                 CameraPreviewPane(
                     surfaceRequest = surfaceRequest,
                     zoomUiState = zoomUiState,
@@ -260,7 +277,7 @@ internal fun AfterCameraScreen(
                     currentExposureIndex = settingsState.exposureIndex,
                     exposureStepNumerator = capabilities.exposureStepNumerator,
                     exposureStepDenominator = capabilities.exposureStepDenominator,
-                    height = previewSectionHeight,
+                    modifier = Modifier.fillMaxWidth(),
                     onZoomRatioChanged = { newRatio ->
                         viewModel.updateZoomRatio(newRatio)
                         cameraSession.setZoom(newRatio)
@@ -294,6 +311,10 @@ internal fun AfterCameraScreen(
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
+                        RotationHintOverlay(
+                            direction = rotationHint,
+                            modifier = Modifier.fillMaxSize(),
+                        )
                     },
                 )
 
@@ -305,7 +326,12 @@ internal fun AfterCameraScreen(
                     listState = thumbnailListState,
                     emptyMessage = stringResource(R.string.camera_strip_empty_after),
                     stripHeight = stripSectionHeight,
-                    progress = StripProgress(completed = completedCount, total = totalPairCount),
+                    progress =
+                        if (isRetakeMode) {
+                            null
+                        } else {
+                            StripProgress(completed = completedCount, total = totalPairCount)
+                        },
                 )
 
                 CameraBottomBar(

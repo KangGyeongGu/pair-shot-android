@@ -366,6 +366,21 @@ class CameraSessionImpl
             }.getOrDefault(DEFAULT_SENSOR_ORIENTATION_DEGREES)
         }
 
+        override suspend fun readBeforeRotation(
+            beforePhotoUri: String,
+            lensFacing: LensFacing,
+        ): Float =
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val uri = Uri.parse(beforePhotoUri)
+                    val exifDegrees = exifBitmapLoader.readExifDegrees(uri)
+                    val sensor = sensorRotationDegrees(lensFacing)
+                    OverlayTransformCalculator.calculate(sensor, exifDegrees)
+                }
+            }.onFailure { error ->
+                Timber.w(error, "Before rotation read failed: $beforePhotoUri")
+            }.getOrDefault(0f)
+
         override suspend fun prepareOverlay(
             beforePhotoUri: String,
             lensFacing: LensFacing,

@@ -1,6 +1,8 @@
 package com.pairshot.feature.settings.screen
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -28,11 +31,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,13 +47,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.isContentMissing
+import com.pairshot.core.navigation.SettingsHighlight
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SettingsCard
@@ -68,6 +77,7 @@ import com.pairshot.feature.settings.locale.currentAppLocale
 import com.pairshot.feature.settings.theme.AppTheme
 import com.pairshot.feature.settings.viewmodel.SettingsUiState
 import com.pairshot.feature.settings.viewmodel.formatBytes
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import com.pairshot.core.ui.R as CoreR
 
@@ -77,6 +87,12 @@ private const val DEFAULT_OVERLAY_ALPHA = 0.35f
 private const val JPEG_QUALITY_LOW = 75
 private const val JPEG_QUALITY_HIGH = 85
 private const val JPEG_QUALITY_BEST = 95
+
+private const val HIGHLIGHT_PULSE_ON_MS = 600L
+private const val HIGHLIGHT_PULSE_OFF_MS = 400L
+private const val HIGHLIGHT_COLOR_ALPHA = 0.3f
+private const val HIGHLIGHT_WATERMARK_INDEX = 6
+private const val HIGHLIGHT_COMBINE_INDEX = 9
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,6 +113,8 @@ fun SettingsScreen(
     onOverlayEnabledChange: (Boolean) -> Unit,
     onOverlayAlphaChange: (Float) -> Unit,
     snackbarController: PairShotSnackbarController,
+    highlight: SettingsHighlight? = null,
+    couponSection: @Composable () -> Unit = {},
 ) {
     val haptic = LocalHapticFeedback.current
     var showClearCacheDialog by remember { mutableStateOf(false) }
@@ -105,6 +123,29 @@ fun SettingsScreen(
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var currentLocale by remember { mutableStateOf(currentAppLocale()) }
+    val listState = rememberLazyListState()
+    var alreadyHighlighted by remember { mutableStateOf(false) }
+    var highlightPulse by remember { mutableStateOf(false) }
+
+    LaunchedEffect(highlight, uiState) {
+        if (alreadyHighlighted) return@LaunchedEffect
+        if (highlight == null) return@LaunchedEffect
+        if (uiState !is SettingsUiState.Success) return@LaunchedEffect
+        alreadyHighlighted = true
+        val targetIndex =
+            when (highlight) {
+                SettingsHighlight.WATERMARK -> HIGHLIGHT_WATERMARK_INDEX
+                SettingsHighlight.COMBINE -> HIGHLIGHT_COMBINE_INDEX
+            }
+        listState.animateScrollToItem(targetIndex)
+        highlightPulse = true
+        delay(HIGHLIGHT_PULSE_ON_MS)
+        highlightPulse = false
+        delay(HIGHLIGHT_PULSE_OFF_MS)
+        highlightPulse = true
+        delay(HIGHLIGHT_PULSE_ON_MS)
+        highlightPulse = false
+    }
 
     if (showLanguageDialog) {
         LanguageDialog(
@@ -238,68 +279,156 @@ fun SettingsScreen(
                             stringResource(R.string.settings_file_name_prefix_with_underscore, uiState.fileNamePrefix)
                         }
 
-                    LazyColumn(
+                    Column(
                         modifier =
                             Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding),
-                        contentPadding =
-                            PaddingValues(
-                                horizontal = PairShotSpacing.screenPadding,
-                                vertical = PairShotSpacing.cardPadding,
-                            ),
                     ) {
-                        item(key = "label_general") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_general))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
-
-                        item(key = "card_general") {
-                            SettingsCard {
-                                val languageLabel =
-                                    when (currentLocale) {
-                                        AppLocale.SYSTEM -> stringResource(R.string.settings_language_system)
-                                        AppLocale.KOREAN -> stringResource(R.string.settings_language_korean)
-                                        AppLocale.ENGLISH -> stringResource(R.string.settings_language_english)
-                                    }
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_language),
-                                    trailing = languageLabel,
-                                    onClick = { showLanguageDialog = true },
-                                )
-                                SettingsDivider()
-                                val themeLabel =
-                                    when (currentTheme) {
-                                        AppTheme.SYSTEM -> stringResource(R.string.settings_theme_system)
-                                        AppTheme.LIGHT -> stringResource(R.string.settings_theme_light)
-                                        AppTheme.DARK -> stringResource(R.string.settings_theme_dark)
-                                    }
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_theme),
-                                    trailing = themeLabel,
-                                    onClick = { showThemeDialog = true },
-                                )
+                        PairShotBannerAd()
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            state = listState,
+                            contentPadding =
+                                PaddingValues(
+                                    horizontal = PairShotSpacing.screenPadding,
+                                    vertical = PairShotSpacing.cardPadding,
+                                ),
+                        ) {
+                            item(key = "label_general") {
+                                SettingsSectionLabel(label = stringResource(R.string.settings_section_general))
+                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
                             }
-                        }
 
-                        item(key = "gap_general") {
-                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-                        }
+                            item(key = "card_general") {
+                                SettingsCard {
+                                    val languageLabel =
+                                        when (currentLocale) {
+                                            AppLocale.SYSTEM -> stringResource(R.string.settings_language_system)
+                                            AppLocale.KOREAN -> stringResource(R.string.settings_language_korean)
+                                            AppLocale.ENGLISH -> stringResource(R.string.settings_language_english)
+                                        }
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_language),
+                                        trailing = languageLabel,
+                                        onClick = { showLanguageDialog = true },
+                                    )
+                                    SettingsDivider()
+                                    val themeLabel =
+                                        when (currentTheme) {
+                                            AppTheme.SYSTEM -> stringResource(R.string.settings_theme_system)
+                                            AppTheme.LIGHT -> stringResource(R.string.settings_theme_light)
+                                            AppTheme.DARK -> stringResource(R.string.settings_theme_dark)
+                                        }
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_theme),
+                                        trailing = themeLabel,
+                                        onClick = { showThemeDialog = true },
+                                    )
+                                }
+                            }
 
-                        item(key = "label_capture") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_shooting_files))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
+                            item(key = "gap_general") {
+                                Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                            }
 
-                        item(key = "card_capture") {
-                            SettingsCard {
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_image_quality),
-                                    trailing = qualityLabel,
-                                    onClick = { showQualityDialog = true },
-                                )
-                                SettingsDivider()
-                                Column(modifier = Modifier.fillMaxWidth()) {
+                            item(key = "label_capture") {
+                                SettingsSectionLabel(label = stringResource(R.string.settings_section_shooting_files))
+                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                            }
+
+                            item(key = "card_capture") {
+                                SettingsCard {
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_image_quality),
+                                        trailing = qualityLabel,
+                                        onClick = { showQualityDialog = true },
+                                    )
+                                    SettingsDivider()
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        Row(
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .height(PairShotSpacing.inputRow)
+                                                    .padding(horizontal = PairShotSpacing.cardPadding),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Text(
+                                                text = stringResource(R.string.settings_item_overlay_opacity),
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier.weight(1f),
+                                            )
+                                            Switch(
+                                                checked = uiState.overlayEnabled,
+                                                onCheckedChange = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    onOverlayEnabledChange(it)
+                                                },
+                                                colors =
+                                                    SwitchDefaults.colors(
+                                                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    ),
+                                                modifier =
+                                                    Modifier
+                                                        .wrapContentHeight(unbounded = true)
+                                                        .scale(SWITCH_SCALE),
+                                            )
+                                        }
+                                        AnimatedVisibility(
+                                            visible = uiState.overlayEnabled,
+                                            enter = expandVertically(),
+                                            exit = shrinkVertically(),
+                                        ) {
+                                            SettingsSliderItem(
+                                                label = "",
+                                                value = currentAlpha,
+                                                valueRange = 0f..1.0f,
+                                                steps = 99,
+                                                valueLabel = { "${(it * 100).roundToInt()}%" },
+                                                onValueChange = onOverlayAlphaChange,
+                                                footer = {
+                                                    AnimatedVisibility(
+                                                        visible = currentAlpha > 0.75f,
+                                                        enter = expandVertically() + fadeIn(),
+                                                        exit = shrinkVertically() + fadeOut(),
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth().padding(bottom = PairShotSpacing.xs),
+                                                            horizontalArrangement = Arrangement.End,
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                        ) {
+                                                            WarningBadge(text = stringResource(R.string.settings_warning_opacity_high))
+                                                        }
+                                                    }
+                                                },
+                                            )
+                                        }
+                                    }
+                                    SettingsDivider()
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_file_name_prefix),
+                                        trailing = prefixDisplay,
+                                        onClick = { showPrefixDialog = true },
+                                    )
+                                }
+                            }
+
+                            item(key = "gap_1") {
+                                Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                            }
+
+                            item(key = "label_watermark") {
+                                SettingsSectionLabel(label = stringResource(R.string.settings_section_watermark))
+                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                            }
+
+                            item(key = "card_watermark") {
+                                HighlightableSettingsCard(
+                                    pulse = highlightPulse && highlight == SettingsHighlight.WATERMARK,
+                                ) {
                                     Row(
                                         modifier =
                                             Modifier
@@ -309,22 +438,17 @@ fun SettingsScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Text(
-                                            text = stringResource(R.string.settings_item_overlay_opacity),
+                                            text = stringResource(R.string.settings_item_watermark_use),
                                             style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurface,
                                             modifier = Modifier.weight(1f),
                                         )
                                         Switch(
-                                            checked = uiState.overlayEnabled,
-                                            onCheckedChange = {
+                                            checked = watermarkConfig.enabled,
+                                            onCheckedChange = { checked ->
                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                onOverlayEnabledChange(it)
+                                                onWatermarkConfigChange(watermarkConfig.copy(enabled = checked))
                                             },
-                                            colors =
-                                                SwitchDefaults.colors(
-                                                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                                    uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                ),
                                             modifier =
                                                 Modifier
                                                     .wrapContentHeight(unbounded = true)
@@ -332,158 +456,89 @@ fun SettingsScreen(
                                         )
                                     }
                                     AnimatedVisibility(
-                                        visible = uiState.overlayEnabled,
+                                        visible = watermarkConfig.enabled,
                                         enter = expandVertically(),
                                         exit = shrinkVertically(),
                                     ) {
-                                        SettingsSliderItem(
-                                            label = "",
-                                            value = currentAlpha,
-                                            valueRange = 0f..1.0f,
-                                            steps = 99,
-                                            valueLabel = { "${(it * 100).roundToInt()}%" },
-                                            onValueChange = onOverlayAlphaChange,
-                                            footer = {
-                                                AnimatedVisibility(
-                                                    visible = currentAlpha > 0.75f,
-                                                    enter = expandVertically() + fadeIn(),
-                                                    exit = shrinkVertically() + fadeOut(),
-                                                ) {
-                                                    Row(
-                                                        modifier = Modifier.fillMaxWidth().padding(bottom = PairShotSpacing.xs),
-                                                        horizontalArrangement = Arrangement.End,
-                                                        verticalAlignment = Alignment.CenterVertically,
-                                                    ) {
-                                                        WarningBadge(text = stringResource(R.string.settings_warning_opacity_high))
-                                                    }
-                                                }
-                                            },
-                                        )
-                                    }
-                                }
-                                SettingsDivider()
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_file_name_prefix),
-                                    trailing = prefixDisplay,
-                                    onClick = { showPrefixDialog = true },
-                                )
-                            }
-                        }
-
-                        item(key = "gap_1") {
-                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-                        }
-
-                        item(key = "label_watermark") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_watermark))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
-
-                        item(key = "card_watermark") {
-                            SettingsCard {
-                                Row(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .height(PairShotSpacing.inputRow)
-                                            .padding(horizontal = PairShotSpacing.cardPadding),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = stringResource(R.string.settings_item_watermark_use),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    Switch(
-                                        checked = watermarkConfig.enabled,
-                                        onCheckedChange = { checked ->
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            onWatermarkConfigChange(watermarkConfig.copy(enabled = checked))
-                                        },
-                                        modifier =
-                                            Modifier
-                                                .wrapContentHeight(unbounded = true)
-                                                .scale(SWITCH_SCALE),
-                                    )
-                                }
-                                AnimatedVisibility(
-                                    visible = watermarkConfig.enabled,
-                                    enter = expandVertically(),
-                                    exit = shrinkVertically(),
-                                ) {
-                                    Column {
-                                        SettingsDivider()
-                                        SettingsItem(
-                                            label = stringResource(R.string.settings_item_user_settings),
-                                            trailing =
-                                                if (watermarkConfig.isContentMissing()) {
-                                                    stringResource(R.string.settings_warning_required)
-                                                } else {
-                                                    null
-                                                },
-                                            trailingIsError = watermarkConfig.isContentMissing(),
-                                            onClick = onWatermarkSettingsClick,
-                                        )
+                                        Column {
+                                            SettingsDivider()
+                                            SettingsItem(
+                                                label = stringResource(R.string.settings_item_user_settings),
+                                                trailing =
+                                                    if (watermarkConfig.isContentMissing()) {
+                                                        stringResource(R.string.settings_warning_required)
+                                                    } else {
+                                                        null
+                                                    },
+                                                trailingIsError = watermarkConfig.isContentMissing(),
+                                                onClick = onWatermarkSettingsClick,
+                                            )
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        item(key = "gap_2") {
-                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-                        }
-
-                        item(key = "label_combine") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_combine))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
-
-                        item(key = "card_combine") {
-                            SettingsCard {
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_user_settings),
-                                    onClick = onCombineSettingsClick,
-                                )
+                            item(key = "gap_2") {
+                                Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
                             }
-                        }
 
-                        item(key = "gap_combine") {
-                            Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
-                        }
+                            item(key = "label_combine") {
+                                SettingsSectionLabel(label = stringResource(R.string.settings_section_combine))
+                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                            }
 
-                        item(key = "label_storage_info") {
-                            SettingsSectionLabel(label = stringResource(R.string.settings_section_storage_and_info))
-                            Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
-                        }
+                            item(key = "card_combine") {
+                                HighlightableSettingsCard(
+                                    pulse = highlightPulse && highlight == SettingsHighlight.COMBINE,
+                                ) {
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_user_settings),
+                                        onClick = onCombineSettingsClick,
+                                    )
+                                }
+                            }
 
-                        item(key = "card_storage_info") {
-                            SettingsCard {
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_photo_storage),
-                                    trailing = formatBytes(uiState.usedStorageBytes),
-                                )
-                                SettingsDivider()
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_cache),
-                                    trailing = formatBytes(uiState.cacheBytes),
-                                    onClick = { showClearCacheDialog = true },
-                                )
-                                SettingsDivider()
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_app_version),
-                                    trailing = uiState.appVersion,
-                                )
-                                SettingsDivider()
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_license),
-                                    onClick = onLicenseClick,
-                                )
-                                SettingsDivider()
-                                SettingsItem(
-                                    label = stringResource(R.string.settings_item_privacy_policy),
-                                    onClick = onPrivacyPolicyClick,
-                                )
+                            item(key = "gap_combine") {
+                                Spacer(modifier = Modifier.height(PairShotSpacing.cardPadding))
+                            }
+
+                            item(key = "section_coupon") {
+                                couponSection()
+                            }
+
+                            item(key = "label_storage_info") {
+                                SettingsSectionLabel(label = stringResource(R.string.settings_section_storage_and_info))
+                                Spacer(modifier = Modifier.height(PairShotSpacing.iconTextGap))
+                            }
+
+                            item(key = "card_storage_info") {
+                                SettingsCard {
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_photo_storage),
+                                        trailing = formatBytes(uiState.usedStorageBytes),
+                                    )
+                                    SettingsDivider()
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_cache),
+                                        trailing = formatBytes(uiState.cacheBytes),
+                                        onClick = { showClearCacheDialog = true },
+                                    )
+                                    SettingsDivider()
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_app_version),
+                                        trailing = uiState.appVersion,
+                                    )
+                                    SettingsDivider()
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_license),
+                                        onClick = onLicenseClick,
+                                    )
+                                    SettingsDivider()
+                                    SettingsItem(
+                                        label = stringResource(R.string.settings_item_privacy_policy),
+                                        onClick = onPrivacyPolicyClick,
+                                    )
+                                }
                             }
                         }
                     }
@@ -499,5 +554,33 @@ fun SettingsScreen(
                     .statusBarsPadding()
                     .padding(top = PairShotSpacing.snackbarTopOffset),
         )
+    }
+}
+
+@Composable
+private fun HighlightableSettingsCard(
+    pulse: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val targetColor =
+        if (pulse) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = HIGHLIGHT_COLOR_ALPHA)
+        } else {
+            MaterialTheme.colorScheme.surface
+        }
+    val backgroundColor: State<Color> =
+        animateColorAsState(
+            targetValue = targetColor,
+            animationSpec = tween(durationMillis = HIGHLIGHT_PULSE_ON_MS.toInt()),
+            label = "settings_highlight_bg",
+        )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        color = backgroundColor.value,
+    ) {
+        Column {
+            content()
+        }
     }
 }

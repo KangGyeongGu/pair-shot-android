@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,7 +44,7 @@ internal fun WatermarkPreviewSection(
         }
 
     var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var aspectRatio by remember { mutableStateOf(1f) }
+    var aspectRatio by remember { mutableFloatStateOf(1f) }
 
     LaunchedEffect(previewConfig) {
         val sample = previewSampleProvider.get()

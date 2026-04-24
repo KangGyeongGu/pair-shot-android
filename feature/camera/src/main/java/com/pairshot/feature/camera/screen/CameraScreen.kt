@@ -4,11 +4,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -25,14 +25,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.pairshot.core.designsystem.PairShotCameraTokens
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.pairshot.core.ads.component.PairShotBannerAd
+import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.PairShotSnackbarController
@@ -145,28 +145,10 @@ internal fun CameraScreen(
         }
     }
 
-    val density = LocalDensity.current
-    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(PairShotCameraTokens.Letterbox)) {
-        val safeTopPx = WindowInsets.safeDrawing.getTop(density)
-        val safeBottomPx = WindowInsets.safeDrawing.getBottom(density)
-        val fullHeightPx = with(density) { maxHeight.roundToPx() }
-        val safeAvailableHeightPx = (fullHeightPx - safeTopPx - safeBottomPx).coerceAtLeast(0)
-        val safeAvailableHeightDp = with(density) { safeAvailableHeightPx.toDp() }
+    Box(modifier = Modifier.fillMaxSize().background(PairShotCameraTokens.Letterbox)) {
         val stripSectionHeight = BeforeStripHeight
         val shutterSectionHeight = CameraShutterHeight
-        val bottomSpacerDesired = 32.dp
-        val minPreviewHeight = 180.dp
-
-        val reservedHeight = stripSectionHeight + shutterSectionHeight + bottomSpacerDesired
-        val previewHeightRaw = safeAvailableHeightDp - reservedHeight
-        val previewSectionHeight = if (previewHeightRaw >= minPreviewHeight) previewHeightRaw else minPreviewHeight
-        val bottomSpacerHeight =
-            if (previewHeightRaw >= minPreviewHeight) {
-                bottomSpacerDesired
-            } else {
-                (safeAvailableHeightDp - (stripSectionHeight + shutterSectionHeight + previewSectionHeight))
-                    .coerceAtLeast(0.dp)
-            }
+        val bottomSpacerHeight = 32.dp
 
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -175,6 +157,7 @@ internal fun CameraScreen(
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.safeDrawing),
             ) {
+                PairShotBannerAd(modifier = Modifier.fillMaxWidth())
                 CameraPreviewPane(
                     surfaceRequest = surfaceRequest,
                     zoomUiState = zoomUiState,
@@ -187,7 +170,7 @@ internal fun CameraScreen(
                     currentExposureIndex = settingsState.exposureIndex,
                     exposureStepNumerator = capabilities.exposureStepNumerator,
                     exposureStepDenominator = capabilities.exposureStepDenominator,
-                    height = previewSectionHeight,
+                    modifier = Modifier.fillMaxWidth(),
                     onZoomRatioChanged = { newRatio ->
                         viewModel.updateZoomRatio(newRatio)
                         cameraSession.setZoom(newRatio)

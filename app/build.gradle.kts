@@ -14,6 +14,11 @@ val localProperties =
         if (file.exists()) load(file.inputStream())
     }
 
+val appVersionTriple = resolveAppVersionFromGitTag(rootProject.projectDir)
+val appVersionName = "${appVersionTriple.first}.${appVersionTriple.second}.${appVersionTriple.third}"
+val appVersionCode =
+    appVersionTriple.first * 10_000 + appVersionTriple.second * 100 + appVersionTriple.third
+
 android {
     namespace = "com.pairshot"
     compileSdk = 36
@@ -22,8 +27,8 @@ android {
         applicationId = "com.pairshot"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -79,6 +84,35 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+fun resolveAppVersionFromGitTag(projectRoot: java.io.File): Triple<Int, Int, Int> {
+    val fallback = Triple(0, 0, 0)
+    val tag =
+        runCatching {
+            val process =
+                ProcessBuilder(
+                    "git",
+                    "describe",
+                    "--tags",
+                    "--abbrev=0",
+                    "--match",
+                    "v[0-9]*.[0-9]*.[0-9]*",
+                ).directory(projectRoot)
+                    .redirectErrorStream(false)
+                    .start()
+            val text =
+                process.inputStream
+                    .bufferedReader()
+                    .readText()
+                    .trim()
+            process.waitFor()
+            if (process.exitValue() == 0) text else null
+        }.getOrNull() ?: return fallback
+
+    val match = Regex("^v(\\d+)\\.(\\d+)\\.(\\d+)$").matchEntire(tag) ?: return fallback
+    val (major, minor, patch) = match.destructured
+    return Triple(major.toInt(), minor.toInt(), patch.toInt())
+}
+
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:domain"))
@@ -91,6 +125,8 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:ads"))
+    implementation(project(":core:coupon"))
 
     implementation(project(":feature:camera"))
     implementation(project(":feature:settings"))
@@ -133,6 +169,7 @@ dependencies {
 
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.process)
 
     implementation(libs.concurrent.futures.ktx)
 

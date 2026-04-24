@@ -14,4 +14,5 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:rendering"))
     implementation(project(":core:infra"))
+    implementation(project(":core:ads"))
 }

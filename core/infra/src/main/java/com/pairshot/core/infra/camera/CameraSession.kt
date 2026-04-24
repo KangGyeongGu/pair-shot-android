@@ -43,6 +43,11 @@ interface CameraSession {
         lensFacing: LensFacing,
     ): OverlayBitmap?
 
+    suspend fun readBeforeRotation(
+        beforePhotoUri: String,
+        lensFacing: LensFacing,
+    ): Float
+
     fun playShutterSound()
 
     fun release()

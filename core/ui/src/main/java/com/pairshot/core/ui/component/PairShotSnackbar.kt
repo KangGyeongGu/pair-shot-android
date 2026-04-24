@@ -48,10 +48,10 @@ private fun dotColor(variant: SnackbarVariant): Color =
 @Composable
 fun PairShotSnackbar(
     message: String,
+    modifier: Modifier = Modifier,
     variant: SnackbarVariant = SnackbarVariant.INFO,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     val haptic = LocalHapticFeedback.current
     LaunchedEffect(message, variant) {

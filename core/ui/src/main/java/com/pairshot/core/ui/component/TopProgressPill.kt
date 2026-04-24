@@ -30,8 +30,8 @@ import com.pairshot.core.designsystem.PairShotSpacing
 fun TopProgressPill(
     label: String,
     progress: Float,
-    progressText: String = "",
     modifier: Modifier = Modifier,
+    progressText: String = "",
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),

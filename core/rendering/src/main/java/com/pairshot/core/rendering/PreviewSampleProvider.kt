@@ -23,18 +23,7 @@ class PreviewSampleProvider
                 cached?.takeIf { !it.isRecycled } ?: loadSample().also { cached = it }
             }
 
-        private fun loadSample(): Bitmap {
-            val resources = context.resources
-            val resId =
-                resources.getIdentifier(
-                    "watermark_preview_sample",
-                    "drawable",
-                    context.packageName,
-                )
-            if (resId == 0) {
-                error("watermark_preview_sample drawable not found")
-            }
-            return BitmapFactory.decodeResource(resources, resId)
+        private fun loadSample(): Bitmap =
+            BitmapFactory.decodeResource(context.resources, R.drawable.watermark_preview_sample)
                 ?: error("Failed to decode watermark_preview_sample")
-        }
     }

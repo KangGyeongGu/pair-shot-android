@@ -43,7 +43,9 @@
     </plurals>
 
     <!-- ViewModel events -->
-    <string name="home_event_delete_result">%1$d개 삭제 · %2$d개 실패</string>
+    <plurals name="home_event_delete_result">
+        <item quantity="other">%1$d개 삭제 · %2$d개 실패</item>
+    </plurals>
     <string name="home_event_album_create_failed">앨범 생성에 실패했습니다</string>
 
 </resources>

@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.infra.location.LocationResult
 import com.pairshot.core.model.Album
 import com.pairshot.core.model.PhotoPair
@@ -144,6 +145,7 @@ fun HomeScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
+            PairShotBannerAd()
             Spacer(modifier = Modifier.height(8.dp))
             HomeFilterRow(
                 selectedMode = mode,

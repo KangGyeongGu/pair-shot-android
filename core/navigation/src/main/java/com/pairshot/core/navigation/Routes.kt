@@ -37,7 +37,15 @@ data class AfterCamera(
 )
 
 @Serializable
-data object Settings
+enum class SettingsHighlight {
+    WATERMARK,
+    COMBINE,
+}
+
+@Serializable
+data class Settings(
+    val highlight: SettingsHighlight? = null,
+)
 
 @Serializable
 data object WatermarkSettings

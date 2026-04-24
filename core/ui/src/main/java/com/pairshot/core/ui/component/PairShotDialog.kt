@@ -5,7 +5,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -17,19 +18,25 @@ private val DialogOptionMaxWidth = 480.dp
 
 @Composable
 fun confirmDialogWidth(): Dp {
-    val sw = LocalConfiguration.current.screenWidthDp.dp
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val sw = with(density) { windowInfo.containerSize.width.toDp() }
     return (sw - DialogHorizontalMargin).coerceAtMost(DialogConfirmMaxWidth)
 }
 
 @Composable
 fun optionDialogWidth(): Dp {
-    val sw = LocalConfiguration.current.screenWidthDp.dp
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val sw = with(density) { windowInfo.containerSize.width.toDp() }
     return (sw - DialogHorizontalMargin).coerceAtMost(DialogOptionMaxWidth)
 }
 
 @Composable
 fun inputDialogWidth(): Dp {
-    val sw = LocalConfiguration.current.screenWidthDp.dp
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val sw = with(density) { windowInfo.containerSize.width.toDp() }
     return (sw - DialogHorizontalMargin).coerceAtMost(DialogOptionMaxWidth)
 }
 

@@ -11,7 +11,10 @@
     <string name="camera_strip_empty">No Before photos yet</string>
     <string name="camera_strip_empty_after">No Before photos to shoot</string>
     <string name="camera_strip_thumbnail_desc">Before thumbnail %1$d</string>
-    <string name="camera_strip_progress">%1$d / %2$d complete</string>
+    <plurals name="camera_strip_progress">
+        <item quantity="one">%1$d / %2$d complete</item>
+        <item quantity="other">%1$d / %2$d complete</item>
+    </plurals>
 
     <!-- Permission -->
     <string name="camera_permission_title">Camera permission required</string>
@@ -28,7 +31,12 @@
     <string name="camera_settings_overlay">Overlay</string>
     <string name="camera_settings_level">Level</string>
     <string name="camera_settings_overlay_opacity">Overlay opacity</string>
-    <string name="camera_settings_overlay_opacity_hint">75% or lower recommended</string>
+    <string name="camera_settings_overlay_opacity_hint">75%% or lower recommended</string>
     <string name="camera_settings_sort">Preview</string>
+
+    <string name="camera_hint_rotate_left_message">Rotate the device left</string>
+    <string name="camera_hint_rotate_right_message">Rotate the device right</string>
+    <string name="camera_hint_rotate_left_desc">Rotate counter-clockwise</string>
+    <string name="camera_hint_rotate_right_desc">Rotate clockwise</string>
 
 </resources>

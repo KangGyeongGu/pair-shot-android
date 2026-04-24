@@ -254,9 +254,10 @@ class HomeViewModel
                 if (result.failed > 0) {
                     _events.emit(
                         HomeEvent.ShowError(
-                            UiText.Resource(
-                                R.string.home_event_delete_result,
-                                listOf(result.deleted, result.failed),
+                            UiText.Plural(
+                                resId = R.plurals.home_event_delete_result,
+                                count = result.deleted + result.failed,
+                                args = listOf(result.deleted, result.failed),
                             ),
                         ),
                     )

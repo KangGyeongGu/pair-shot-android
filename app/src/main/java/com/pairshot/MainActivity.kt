@@ -1,6 +1,7 @@
 package com.pairshot
 
 import android.os.Bundle
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -30,12 +32,14 @@ import com.pairshot.app.navigation.SelectionActionViewModel
 import com.pairshot.app.navigation.SelectionMessage
 import com.pairshot.app.navigation.effect.ExportShareEffect
 import com.pairshot.app.navigation.effect.SaveZipToDocumentEffect
+import com.pairshot.core.ads.di.AdsEntryPoint
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.designsystem.PairShotTheme
 import com.pairshot.core.ui.component.PairShotSnackbar
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.component.TopProgressPill
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
@@ -93,6 +97,17 @@ private fun AppRootContent(onRouteChanged: (String) -> Unit) {
     val progress by selectionVm.progress.collectAsStateWithLifecycle()
     var selectionMessage by remember { mutableStateOf<SelectionMessage?>(null) }
 
+    val context = LocalContext.current
+    val activity = LocalActivity.current
+    val interstitialAdController =
+        remember(context) {
+            EntryPointAccessors
+                .fromApplication(
+                    context.applicationContext,
+                    AdsEntryPoint::class.java,
+                ).interstitialAdController()
+        }
+
     LaunchedEffect(Unit) {
         selectionVm.messages.collect { msg -> selectionMessage = msg }
     }
@@ -103,6 +118,20 @@ private fun AppRootContent(onRouteChanged: (String) -> Unit) {
             selectionMessage = null
         }
     }
+
+    val saveSelectedToDevice =
+        remember(interstitialAdController, activity, selectionVm) {
+            { ids: Set<Long> ->
+                val act = activity
+                if (act == null) {
+                    selectionVm.saveSelectionToDevice(ids)
+                } else {
+                    interstitialAdController.showIfAvailable(act) {
+                        selectionVm.saveSelectionToDevice(ids)
+                    }
+                }
+            }
+        }
 
     ExportShareEffect(actions = selectionVm.exportAction)
 
@@ -115,7 +144,7 @@ private fun AppRootContent(onRouteChanged: (String) -> Unit) {
         PairShotNavHost(
             onDestinationChanged = onRouteChanged,
             onShareSelected = selectionVm::shareSelection,
-            onSaveSelectedToDevice = selectionVm::saveSelectionToDevice,
+            onSaveSelectedToDevice = saveSelectedToDevice,
         )
 
         progress?.let { p ->

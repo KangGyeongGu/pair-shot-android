@@ -12,6 +12,7 @@ import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.model.CameraCapabilities
 import com.pairshot.core.model.FlashMode
 import com.pairshot.core.model.LensFacing
+import com.pairshot.core.model.PairStatus
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.SortOrder
 import com.pairshot.core.navigation.AfterCamera
@@ -81,6 +82,14 @@ class AfterCameraViewModel
 
         private val _targetBeforeDate = MutableStateFlow<LocalDate?>(null)
 
+        private val _retakeTargetPair = MutableStateFlow<PhotoPair?>(null)
+        val isRetakeMode: StateFlow<Boolean> =
+            _retakeTargetPair
+                .map { it != null }
+                .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+        private val _retakeResolved = MutableStateFlow(initialPairId == null)
+
         val sortOrder: StateFlow<SortOrder> =
             if (albumId != null) {
                 appSettingsRepository.albumSortOrderFlow
@@ -104,27 +113,40 @@ class AfterCameraViewModel
         }
 
         val totalPairCount: StateFlow<Int> =
-            when {
-                albumId != null -> {
-                    albumRepository.observePairs(albumId).map { it.size }
-                }
-
-                initialPairId != null -> {
-                    combine(photoPairRepository.observeAll(), _targetBeforeDate) { all, date ->
-                        if (date == null) 0 else all.count { it.beforeTimestamp.toLocalDate() == date }
+            combine(
+                when {
+                    albumId != null -> {
+                        albumRepository.observePairs(albumId).map { it.size }
                     }
-                }
 
-                else -> {
-                    photoPairRepository.countAll()
-                }
+                    initialPairId != null -> {
+                        combine(photoPairRepository.observeAll(), _targetBeforeDate) { all, date ->
+                            if (date == null) 0 else all.count { it.beforeTimestamp.toLocalDate() == date }
+                        }
+                    }
+
+                    else -> {
+                        photoPairRepository.countAll()
+                    }
+                },
+                _retakeTargetPair,
+            ) { count, retake ->
+                if (retake != null) 1 else count
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(SUBSCRIPTION_TIMEOUT_MS), 0)
 
         init {
-            if (isDateFilterActive) {
+            if (initialPairId != null) {
                 viewModelScope.launch {
-                    val pair = photoPairRepository.getById(initialPairId!!)
-                    _targetBeforeDate.value = pair?.beforeTimestamp?.toLocalDate()
+                    try {
+                        val pair = photoPairRepository.getById(initialPairId)
+                        if (pair != null && pair.status == PairStatus.PAIRED) {
+                            _retakeTargetPair.value = pair
+                        } else if (isDateFilterActive) {
+                            _targetBeforeDate.value = pair?.beforeTimestamp?.toLocalDate()
+                        }
+                    } finally {
+                        _retakeResolved.value = true
+                    }
                 }
             }
         }
@@ -138,7 +160,9 @@ class AfterCameraViewModel
                 },
                 sortOrder,
                 _targetBeforeDate,
-            ) { list, order, targetDate ->
+                _retakeTargetPair,
+            ) { list, order, targetDate, retake ->
+                if (retake != null) return@combine listOf(retake)
                 val filtered =
                     when {
                         !isDateFilterActive -> list
@@ -244,8 +268,10 @@ class AfterCameraViewModel
             _pairsLoaded.value = true
             if (!initialIndexSet && photos.isNotEmpty() && initialPairId != null) {
                 val idx = photos.indexOfFirst { it.id == initialPairId }
-                if (idx >= 0) _currentIndex.value = idx
-                initialIndexSet = true
+                if (idx >= 0) {
+                    _currentIndex.value = idx
+                    initialIndexSet = true
+                }
             }
             if (photos.isNotEmpty() && _currentIndex.value >= photos.size) {
                 _currentIndex.value = photos.size - 1
@@ -319,16 +345,26 @@ class AfterCameraViewModel
 
         fun emitAllCompleted() {
             viewModelScope.launch {
+                if (!_retakeResolved.value) return@launch
+                if (_retakeTargetPair.value != null) return@launch
                 _events.emit(AfterCameraEvent.AllCompleted)
             }
         }
 
         fun toggleOverlay() {
-            _overlayEnabled.value = !_overlayEnabled.value
+            val next = !_overlayEnabled.value
+            _overlayEnabled.value = next
+            viewModelScope.launch {
+                appSettingsRepository.updateOverlayEnabled(next)
+            }
         }
 
         fun updateOverlayAlpha(alpha: Float) {
-            _overlayAlpha.value = alpha.coerceIn(0f, 1f)
+            val clamped = alpha.coerceIn(0f, 1f)
+            _overlayAlpha.value = clamped
+            viewModelScope.launch {
+                appSettingsRepository.updateOverlayAlpha(clamped)
+            }
         }
 
         fun toggleLensFacing(): LensFacing {

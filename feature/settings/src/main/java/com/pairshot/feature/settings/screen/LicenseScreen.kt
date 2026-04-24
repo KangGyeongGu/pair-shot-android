@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.feature.settings.R
 import com.pairshot.core.ui.R as CoreR
@@ -152,40 +153,45 @@ fun LicenseScreen(onNavigateBack: () -> Unit) {
             )
         },
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .padding(innerPadding),
         ) {
-            items(
-                items = licenseItems,
-                key = { it.name },
-            ) { item ->
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(item.url))
-                                context.startActivity(intent)
-                            }.padding(
-                                horizontal = PairShotSpacing.screenPadding,
-                                vertical = PairShotSpacing.cardPadding,
-                            ),
-                ) {
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Text(
-                        text = "${item.author} · ${item.license}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            PairShotBannerAd()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(
+                    items = licenseItems,
+                    key = { it.name },
+                ) { item ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(item.url))
+                                    context.startActivity(intent)
+                                }.padding(
+                                    horizontal = PairShotSpacing.screenPadding,
+                                    vertical = PairShotSpacing.cardPadding,
+                                ),
+                    ) {
+                        Text(
+                            text = item.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "${item.author} · ${item.license}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             }
         }
     }
