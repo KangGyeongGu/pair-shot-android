@@ -12,9 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -51,21 +51,32 @@ fun PairShotBannerAd(
     val adsConfig = remember(entryPoint) { entryPoint.adsConfig() }
     val adFreeStatusProvider = remember(entryPoint) { entryPoint.adFreeStatusProvider() }
 
-    val isAdFree by adFreeStatusProvider
+    val isAdFree: Boolean? by adFreeStatusProvider
         .observeIsAdFree()
-        .collectAsStateWithLifecycle(initialValue = false)
+        .collectAsStateWithLifecycle(initialValue = null)
 
-    if (isAdFree) return
-
-    val configuration = LocalConfiguration.current
+    val windowInfo = LocalWindowInfo.current
     val density = LocalDensity.current
-    val adWidth = configuration.screenWidthDp
+    val adWidth =
+        with(density) {
+            windowInfo.containerSize.width
+                .toDp()
+                .value
+                .toInt()
+        }
     val activity = remember(context) { context.asActivityOrNull() }
 
     val slotHeight =
         remember(height, activity, adWidth, density) {
             height ?: resolveAdaptiveBannerHeight(activity, adWidth, density)
         }
+
+    if (isAdFree == null) {
+        Box(modifier = modifier.fillMaxWidth().height(slotHeight))
+        return
+    }
+
+    if (isAdFree == true) return
 
     val adView =
         remember(context, adsConfig, adWidth) {

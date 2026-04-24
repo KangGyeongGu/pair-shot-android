@@ -34,7 +34,7 @@ import com.pairshot.feature.settings.screen.SettingsScreen
 import com.pairshot.feature.settings.viewmodel.SettingsViewModel
 import com.pairshot.core.coupon.R as CouponR
 
-private const val PRIVACY_POLICY_URL = "https://www.kangkyeonggu.com/pairshot/privacy"
+private const val PRIVACY_POLICY_URL = "https://pairshot.kangkyeonggu.com/privacy"
 
 @Composable
 fun SettingsRoute(
@@ -50,6 +50,8 @@ fun SettingsRoute(
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
     val couponStatus by couponViewModel.status.collectAsStateWithLifecycle()
     val activationState by couponViewModel.activationState.collectAsStateWithLifecycle()
+    val myCoupons by couponViewModel.myCoupons.collectAsStateWithLifecycle()
+    val myCouponsLoading by couponViewModel.myCouponsLoading.collectAsStateWithLifecycle()
     val snackbarController = remember { PairShotSnackbarController() }
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -82,8 +84,6 @@ fun SettingsRoute(
                     )
                 }
             snackbarController.show(event)
-            showCouponDialog = false
-            couponViewModel.resetActivationState()
         }
     }
 
@@ -96,7 +96,10 @@ fun SettingsRoute(
     if (showCouponDialog) {
         CouponRegisterDialog(
             activationState = activationState,
+            myCoupons = myCoupons,
+            myCouponsLoading = myCouponsLoading,
             onActivate = { code -> couponViewModel.activate(code) },
+            onLoadMyCoupons = { couponViewModel.loadMyCoupons() },
             onDismiss = {
                 showCouponDialog = false
                 couponViewModel.resetActivationState()

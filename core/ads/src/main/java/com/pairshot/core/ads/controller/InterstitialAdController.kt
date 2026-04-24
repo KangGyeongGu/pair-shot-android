@@ -39,7 +39,12 @@ class InterstitialAdController
         private var lastShownAt: Long = 0L
 
         fun preload() {
-            loadInternal()
+            scope.launch {
+                val isAdFree =
+                    runCatching { adFreeStatusProvider.observeIsAdFree().first() }
+                        .getOrDefault(false)
+                if (!isAdFree) loadInternal()
+            }
         }
 
         fun showIfAvailable(
@@ -66,6 +71,11 @@ class InterstitialAdController
                 if (ad == null) {
                     onFinished()
                     loadInternal()
+                    return@launch
+                }
+
+                if (activity.isFinishing || activity.isDestroyed) {
+                    onFinished()
                     return@launch
                 }
 
@@ -124,6 +134,6 @@ class InterstitialAdController
 
         private companion object {
             const val TAG = "InterstitialAdCtrl"
-            const val COOLDOWN_MS = 15_000L
+            const val COOLDOWN_MS = 5_000L
         }
     }
