@@ -30,7 +30,6 @@ import com.pairshot.core.ui.component.SettingsSectionLabel
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.text.UiText
-import com.pairshot.feature.settings.R
 import com.pairshot.feature.settings.screen.SettingsScreen
 import com.pairshot.feature.settings.viewmodel.SettingsViewModel
 import com.pairshot.core.coupon.R as CouponR
@@ -43,9 +42,6 @@ fun SettingsRoute(
     onNavigateToLicense: () -> Unit,
     onNavigateToWatermarkSettings: () -> Unit,
     onNavigateToCombineSettings: () -> Unit,
-    onNavigateToCouponScanner: () -> Unit,
-    pendingCouponCode: String? = null,
-    onConsumeCouponCode: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     couponViewModel: CouponViewModel = hiltViewModel(),
 ) {
@@ -59,19 +55,11 @@ fun SettingsRoute(
     val context = LocalContext.current
 
     var showCouponDialog by remember { mutableStateOf(false) }
-    var prefilledCode by remember { mutableStateOf("") }
 
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             viewModel.refresh()
         }
-    }
-
-    LaunchedEffect(pendingCouponCode) {
-        val code = pendingCouponCode ?: return@LaunchedEffect
-        prefilledCode = code
-        showCouponDialog = true
-        onConsumeCouponCode()
     }
 
     LaunchedEffect(activationState) {
@@ -95,7 +83,6 @@ fun SettingsRoute(
                 }
             snackbarController.show(event)
             showCouponDialog = false
-            prefilledCode = ""
             couponViewModel.resetActivationState()
         }
     }
@@ -109,16 +96,9 @@ fun SettingsRoute(
     if (showCouponDialog) {
         CouponRegisterDialog(
             activationState = activationState,
-            initialCode = prefilledCode,
             onActivate = { code -> couponViewModel.activate(code) },
-            onScanQr = {
-                showCouponDialog = false
-                couponViewModel.resetActivationState()
-                onNavigateToCouponScanner()
-            },
             onDismiss = {
                 showCouponDialog = false
-                prefilledCode = ""
                 couponViewModel.resetActivationState()
             },
         )
@@ -151,7 +131,6 @@ fun SettingsRoute(
             CouponSection(
                 status = couponStatus,
                 onClick = {
-                    prefilledCode = ""
                     couponViewModel.resetActivationState()
                     showCouponDialog = true
                 },

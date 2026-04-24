@@ -47,6 +47,3 @@ data object CombineSettings
 
 @Serializable
 data object License
-
-@Serializable
-data object CouponQrScanner

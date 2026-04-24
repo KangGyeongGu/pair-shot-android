@@ -1,7 +1,9 @@
 package com.pairshot.core.coupon.local
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
+import com.pairshot.core.coupon.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -13,10 +15,14 @@ class DeviceHashProvider
     constructor(
         @ApplicationContext private val context: Context,
     ) {
+        @SuppressLint("HardwareIds")
         fun deviceHash(): String {
             val androidId =
                 Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID).orEmpty()
-            val input = (androidId + DEVICE_HASH_SALT).toByteArray(Charsets.UTF_8)
+            val salt =
+                BuildConfig.COUPON_DEVICE_HASH_SALT
+                    .ifBlank { DEFAULT_DEVICE_HASH_SALT }
+            val input = (androidId + salt).toByteArray(Charsets.UTF_8)
             val digest = MessageDigest.getInstance("SHA-256").digest(input)
             return digest.toHex()
         }
@@ -32,7 +38,7 @@ class DeviceHashProvider
         }
 
         private companion object {
-            const val DEVICE_HASH_SALT = "pairshot-coupon-v1-device-salt"
+            const val DEFAULT_DEVICE_HASH_SALT = "pairshot-coupon-v1-device-salt"
             const val BYTE_MASK = 0xFF
             const val HIGH_NIBBLE_SHIFT = 4
             const val LOW_NIBBLE_MASK = 0x0F

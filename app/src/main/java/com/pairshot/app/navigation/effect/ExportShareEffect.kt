@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.pairshot.app.di.AdsHostEntryPoint
+import com.pairshot.core.ads.di.AdsEntryPoint
 import com.pairshot.core.domain.export.ExportAction
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +27,7 @@ fun ExportShareEffect(actions: Flow<ExportAction>) {
             EntryPointAccessors
                 .fromApplication(
                     context.applicationContext,
-                    AdsHostEntryPoint::class.java,
+                    AdsEntryPoint::class.java,
                 ).interstitialAdController()
         }
     LaunchedEffect(actions) {

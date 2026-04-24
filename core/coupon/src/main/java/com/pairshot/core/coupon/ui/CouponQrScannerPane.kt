@@ -11,15 +11,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -42,11 +34,10 @@ import com.pairshot.core.coupon.R
 import timber.log.Timber
 import java.util.concurrent.Executors
 
-@OptIn(ExperimentalMaterial3Api::class, androidx.camera.core.ExperimentalGetImage::class)
 @Composable
-fun CouponQrScannerScreen(
+fun CouponQrScannerPane(
     onResult: (String) -> Unit,
-    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     var permissionGranted by remember {
@@ -66,43 +57,26 @@ fun CouponQrScannerScreen(
         if (!permissionGranted) permissionLauncher.launch(Manifest.permission.CAMERA)
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = stringResource(R.string.coupon_qr_scanner_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = null,
-                        )
-                    }
-                },
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center,
+    ) {
+        if (!permissionGranted) {
+            Text(
+                text = stringResource(R.string.coupon_qr_camera_permission_required),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
             )
-        },
-    ) { padding ->
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (!permissionGranted) {
-                Text(text = stringResource(R.string.coupon_qr_camera_permission_required))
-                return@Box
-            }
-            QrScannerCameraPreview(
-                onBarcode = { value ->
-                    if (value.isNotBlank()) onResult(value.trim())
-                },
-            )
+            return@Box
         }
+        QrScannerCameraPreview(
+            onBarcode = { value ->
+                if (value.isNotBlank()) onResult(value.trim())
+            },
+        )
     }
 }
 
-@OptIn(androidx.camera.core.ExperimentalGetImage::class)
 @Composable
 private fun QrScannerCameraPreview(onBarcode: (String) -> Unit) {
     val context = LocalContext.current
@@ -172,7 +146,6 @@ private fun QrScannerCameraPreview(onBarcode: (String) -> Unit) {
     )
 }
 
-@androidx.camera.core.ExperimentalGetImage
 private fun processImageProxy(
     imageProxy: ImageProxy,
     scanner: com.google.mlkit.vision.barcode.BarcodeScanner,

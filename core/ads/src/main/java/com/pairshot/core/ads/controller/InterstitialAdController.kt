@@ -31,7 +31,11 @@ class InterstitialAdController
     ) {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         private val loading = AtomicBoolean(false)
+
+        @Volatile
         private var currentAd: InterstitialAd? = null
+
+        @Volatile
         private var lastShownAt: Long = 0L
 
         fun preload() {

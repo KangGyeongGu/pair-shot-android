@@ -15,13 +15,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.compose.rememberNavController
-import com.pairshot.core.coupon.ui.CouponQrScannerScreen
 import com.pairshot.core.designsystem.PairShotMotionTokens
 import com.pairshot.core.navigation.AfterCamera
 import com.pairshot.core.navigation.AlbumDetail
 import com.pairshot.core.navigation.Camera
 import com.pairshot.core.navigation.CombineSettings
-import com.pairshot.core.navigation.CouponQrScanner
 import com.pairshot.core.navigation.ExportSettings
 import com.pairshot.core.navigation.Home
 import com.pairshot.core.navigation.License
@@ -40,8 +38,6 @@ import com.pairshot.feature.settings.route.CombineSettingsRoute
 import com.pairshot.feature.settings.route.SettingsRoute
 import com.pairshot.feature.settings.route.WatermarkSettingsRoute
 import com.pairshot.feature.settings.screen.LicenseScreen
-
-private const val COUPON_CODE_RESULT_KEY = "coupon_code_result"
 
 @Composable
 fun PairShotNavHost(
@@ -161,31 +157,12 @@ fun PairShotNavHost(
                 onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
             )
         }
-        composable<Settings> { entry ->
-            val pendingCouponCode =
-                entry.savedStateHandle.get<String>(COUPON_CODE_RESULT_KEY)
+        composable<Settings> {
             SettingsRoute(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLicense = { navController.navigate(License) },
                 onNavigateToWatermarkSettings = { navController.navigate(WatermarkSettings) },
                 onNavigateToCombineSettings = { navController.navigate(CombineSettings) },
-                onNavigateToCouponScanner = { navController.navigate(CouponQrScanner) },
-                pendingCouponCode = pendingCouponCode,
-                onConsumeCouponCode = {
-                    entry.savedStateHandle.remove<String>(COUPON_CODE_RESULT_KEY)
-                },
-            )
-        }
-        composable<CouponQrScanner> {
-            CouponQrScannerScreen(
-                onResult = { value ->
-                    navController
-                        .previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.set(COUPON_CODE_RESULT_KEY, value)
-                    navController.popBackStack()
-                },
-                onNavigateBack = { navController.popBackStack() },
             )
         }
         composable<License> {

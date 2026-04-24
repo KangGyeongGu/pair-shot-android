@@ -13,9 +13,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.pairshot.app.di.AdsHostEntryPoint
 import com.pairshot.app.navigation.SaveDocumentRequest
 import com.pairshot.app.navigation.SaveDocumentResult
+import com.pairshot.core.ads.di.AdsEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +40,7 @@ fun SaveZipToDocumentEffect(
             EntryPointAccessors
                 .fromApplication(
                     context.applicationContext,
-                    AdsHostEntryPoint::class.java,
+                    AdsEntryPoint::class.java,
                 ).interstitialAdController()
         }
 

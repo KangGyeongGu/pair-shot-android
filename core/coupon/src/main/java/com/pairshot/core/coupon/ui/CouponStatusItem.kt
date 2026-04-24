@@ -36,7 +36,11 @@ private fun CouponStatus.toDisplayText(nowMillis: Long): String =
                 stringResource(R.string.coupon_status_active_unlimited)
             } else {
                 val daysRemaining = computeDaysRemaining(expires, nowMillis)
-                stringResource(R.string.coupon_status_active_days_remaining, daysRemaining)
+                pluralStringResource(
+                    R.plurals.coupon_status_active_days_remaining,
+                    daysRemaining,
+                    daysRemaining,
+                )
             }
         }
 

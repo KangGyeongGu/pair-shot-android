@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
@@ -20,7 +19,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.PairShotCameraTokens
 import com.pairshot.feature.camera.component.CameraOverlayLayer
@@ -44,7 +42,7 @@ internal fun CameraPreviewPane(
     currentExposureIndex: Int,
     exposureStepNumerator: Int,
     exposureStepDenominator: Int,
-    height: Dp,
+    modifier: Modifier = Modifier,
     onZoomRatioChanged: (Float) -> Unit,
     onPresetTapped: (Float) -> Unit,
     onDragEnd: () -> Unit,
@@ -58,9 +56,9 @@ internal fun CameraPreviewPane(
 
     Box(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
-                .height(height)
+                .aspectRatio(FALLBACK_ASPECT_WIDTH / FALLBACK_ASPECT_HEIGHT)
                 .pointerInput(zoomUiState.minRatio, zoomUiState.maxRatio) {
                     detectTransformGestures { _, _, zoom, _ ->
                         val newRatio =

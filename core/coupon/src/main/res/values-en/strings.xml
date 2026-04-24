@@ -5,7 +5,10 @@
     <string name="coupon_item_label">Coupon</string>
 
     <string name="coupon_status_none">No coupon</string>
-    <string name="coupon_status_active_days_remaining">Ad-free · %1$d days left</string>
+    <plurals name="coupon_status_active_days_remaining">
+        <item quantity="one">Ad-free · %1$d day left</item>
+        <item quantity="other">Ad-free · %1$d days left</item>
+    </plurals>
     <string name="coupon_status_active_unlimited">Ad-free · Unlimited</string>
     <string name="coupon_status_expired">Coupon expired (register again)</string>
 

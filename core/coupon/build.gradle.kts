@@ -36,6 +36,11 @@ android {
             "COUPON_API_AUTH_KEY",
             "\"${localProperties["COUPON_API_AUTH_KEY"] ?: ""}\"",
         )
+        buildConfigField(
+            "String",
+            "COUPON_DEVICE_HASH_SALT",
+            "\"${localProperties["COUPON_DEVICE_HASH_SALT"] ?: ""}\"",
+        )
     }
 
     packaging {
@@ -88,7 +93,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.timber)
 

@@ -70,6 +70,9 @@ ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serializatio
 # CBOR (Coupon payload)
 kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version = "1.7.3" }
 
+# Coroutines
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version = "1.8.1" }
+
 # DataStore
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.4" }
 
