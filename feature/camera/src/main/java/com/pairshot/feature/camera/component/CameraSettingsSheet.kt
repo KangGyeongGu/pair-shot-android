@@ -46,7 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -86,13 +86,13 @@ fun CameraSettingsSheet(
     onToggleHdr: () -> Unit,
     onToggleLevel: () -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     overlayEnabled: Boolean? = null,
     onToggleOverlay: (() -> Unit)? = null,
     overlayAlpha: Float? = null,
     onOverlayAlphaChange: ((Float) -> Unit)? = null,
     sortOrder: SortOrder? = null,
     onToggleSortOrder: (() -> Unit)? = null,
-    modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -360,7 +360,7 @@ private fun OverlayAlphaSlider(
     enabled: Boolean,
     onAlphaChange: (Float) -> Unit,
 ) {
-    var localAlpha by remember { mutableStateOf(alpha) }
+    var localAlpha by remember { mutableFloatStateOf(alpha) }
     val interactionSource = remember { MutableInteractionSource() }
     val isDragged by interactionSource.collectIsDraggedAsState()
 

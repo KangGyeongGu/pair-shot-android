@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -100,7 +102,7 @@ fun BeforePreviewStrip(
         }
         val isDragging by listState.interactionSource.collectIsDraggedAsState()
         var userInteracting by remember { mutableStateOf(false) }
-        var lastHapticIndex by remember { mutableStateOf(-1) }
+        var lastHapticIndex by remember { mutableIntStateOf(-1) }
         LaunchedEffect(isDragging) {
             if (isDragging) {
                 userInteracting = true
@@ -251,7 +253,7 @@ private fun StripProgressIndicator(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = stringResource(R.string.camera_strip_progress, completed, total),
+            text = pluralStringResource(R.plurals.camera_strip_progress, total, completed, total),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
             color = PairShotCameraTokens.Foreground,

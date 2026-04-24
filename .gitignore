@@ -11,6 +11,7 @@
 .cxx
 local.properties
 .kotlin/
+.env
 
 # Claude Code & 프로젝트 문서 (로컬 전용)
 .claude/

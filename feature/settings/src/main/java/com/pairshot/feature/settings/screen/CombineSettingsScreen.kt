@@ -43,6 +43,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -975,8 +977,8 @@ private fun ColorPickerDialog(
     onConfirm: (Int) -> Unit,
 ) {
     val initialHsv = remember { FloatArray(HSV_COMPONENT_COUNT).also { android.graphics.Color.colorToHSV(initialColor, it) } }
-    var selectedIdx by remember { mutableStateOf(nearestPresetIdx(initialHsv)) }
-    var brightness by remember { mutableStateOf(initialHsv[2].coerceIn(0f, 1f)) }
+    var selectedIdx by remember { mutableIntStateOf(nearestPresetIdx(initialHsv)) }
+    var brightness by remember { mutableFloatStateOf(initialHsv[2].coerceIn(0f, 1f)) }
 
     val selectedHue = HUE_PRESETS[selectedIdx]
     val isGrayscale = selectedHue == null || selectedHue == -HSV_FULL_VALUE
@@ -1027,8 +1029,8 @@ private fun LabelBgColorPickerDialog(
     val haptic = LocalHapticFeedback.current
     var matchesBorder by remember { mutableStateOf(initialMatchesBorder) }
     val initialHsv = remember { FloatArray(HSV_COMPONENT_COUNT).also { android.graphics.Color.colorToHSV(initialColor, it) } }
-    var selectedIdx by remember { mutableStateOf(nearestPresetIdx(initialHsv)) }
-    var brightness by remember { mutableStateOf(initialHsv[2].coerceIn(0f, 1f)) }
+    var selectedIdx by remember { mutableIntStateOf(nearestPresetIdx(initialHsv)) }
+    var brightness by remember { mutableFloatStateOf(initialHsv[2].coerceIn(0f, 1f)) }
 
     val selectedHue = HUE_PRESETS[selectedIdx]
     val isGrayscale = selectedHue == null || selectedHue == -HSV_FULL_VALUE

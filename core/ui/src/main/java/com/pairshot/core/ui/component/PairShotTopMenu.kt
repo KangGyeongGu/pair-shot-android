@@ -14,7 +14,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.designsystem.ModalShape
 import com.pairshot.core.designsystem.PairShotSpacing
@@ -28,7 +29,9 @@ fun PairShotTopMenu(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp.dp
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
+    val screenWidthDp = with(density) { windowInfo.containerSize.width.toDp() }
     val menuWidth =
         (screenWidthDp * MENU_WIDTH_FRACTION)
             .coerceAtLeast(PairShotSpacing.menuMinWidth)
@@ -71,8 +74,8 @@ fun PairShotTopMenuItem(
 @Composable
 fun PairShotTopMenuItemText(
     title: String,
-    subtitle: String? = null,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     subtitleColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
 ) {

@@ -45,7 +45,10 @@
     </plurals>
 
     <!-- ViewModel events -->
-    <string name="home_event_delete_result">%1$d deleted · %2$d failed</string>
+    <plurals name="home_event_delete_result">
+        <item quantity="one">%1$d deleted · %2$d failed</item>
+        <item quantity="other">%1$d deleted · %2$d failed</item>
+    </plurals>
     <string name="home_event_album_create_failed">Couldn\'t create the album</string>
 
 </resources>
