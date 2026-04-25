@@ -44,6 +44,7 @@ import com.pairshot.feature.camera.chrome.CameraBottomBar
 import com.pairshot.feature.camera.component.BeforePreviewStrip
 import com.pairshot.feature.camera.component.BeforeStripHeight
 import com.pairshot.feature.camera.component.CameraSettingsSheet
+import com.pairshot.feature.camera.component.ImmersiveCameraEffect
 import com.pairshot.feature.camera.preview.CameraPreviewPane
 import com.pairshot.feature.camera.viewmodel.CameraEvent
 import com.pairshot.feature.camera.viewmodel.CameraSessionViewModel
@@ -58,6 +59,8 @@ internal fun CameraScreen(
     onNavigateBack: () -> Unit,
     sessionViewModel: CameraSessionViewModel = hiltViewModel(),
 ) {
+    ImmersiveCameraEffect()
+
     val haptic = LocalHapticFeedback.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
