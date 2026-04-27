@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
+import android.os.Trace
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.CombineLayout
 import com.pairshot.core.model.LabelAnchor
@@ -22,6 +23,12 @@ import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TRACE_COMPOSE = "ps.compose"
+private const val TRACE_LOAD_BEFORE = "ps.load-before"
+private const val TRACE_LOAD_AFTER = "ps.load-after"
+private const val TRACE_COMPOSE_INTERNAL = "ps.compose-internal"
+private const val INPUT_DOWNSAMPLE_DIVISOR = 2
 
 private const val OPAQUE_ALPHA = 255
 private const val ALPHA_MAX_FLOAT = 255f
@@ -63,13 +70,41 @@ class PairImageComposer
             profile: RenderProfile = RenderProfile.FULL,
         ): Bitmap =
             withContext(Dispatchers.Default) {
-                val before = withContext(Dispatchers.IO) { exifBitmapLoader.loadBitmapWithExifCorrection(beforeUri) }
-                val after = withContext(Dispatchers.IO) { exifBitmapLoader.loadBitmapWithExifCorrection(afterUri) }
+                Trace.beginSection(TRACE_COMPOSE)
                 try {
-                    composeInternal(before, after, combineConfig, watermarkConfig, profile)
+                    val inputMaxPx =
+                        if (profile.maxOutputPx > 0) profile.maxOutputPx / INPUT_DOWNSAMPLE_DIVISOR else 0
+                    val before =
+                        withContext(Dispatchers.IO) {
+                            Trace.beginSection(TRACE_LOAD_BEFORE)
+                            try {
+                                exifBitmapLoader.loadBitmapDownscaled(beforeUri, inputMaxPx)
+                            } finally {
+                                Trace.endSection()
+                            }
+                        }
+                    val after =
+                        withContext(Dispatchers.IO) {
+                            Trace.beginSection(TRACE_LOAD_AFTER)
+                            try {
+                                exifBitmapLoader.loadBitmapDownscaled(afterUri, inputMaxPx)
+                            } finally {
+                                Trace.endSection()
+                            }
+                        }
+                    try {
+                        Trace.beginSection(TRACE_COMPOSE_INTERNAL)
+                        try {
+                            composeInternal(before, after, combineConfig, watermarkConfig, profile)
+                        } finally {
+                            Trace.endSection()
+                        }
+                    } finally {
+                        if (!before.isRecycled) before.recycle()
+                        if (!after.isRecycled) after.recycle()
+                    }
                 } finally {
-                    if (!before.isRecycled) before.recycle()
-                    if (!after.isRecycled) after.recycle()
+                    Trace.endSection()
                 }
             }
 

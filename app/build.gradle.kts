@@ -181,6 +181,8 @@ dependencies {
 
     implementation(libs.jankstats)
 
+    debugImplementation(libs.leakcanary.android)
+
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.coroutines.test)

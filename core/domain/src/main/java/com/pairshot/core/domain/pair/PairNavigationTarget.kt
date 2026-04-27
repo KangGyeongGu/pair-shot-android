@@ -5,6 +5,10 @@ sealed interface PairNavigationTarget {
         val pairId: Long,
     ) : PairNavigationTarget
 
+    data class BeforeRetakeCamera(
+        val pairId: Long,
+    ) : PairNavigationTarget
+
     data class PairPreview(
         val pairId: Long,
     ) : PairNavigationTarget

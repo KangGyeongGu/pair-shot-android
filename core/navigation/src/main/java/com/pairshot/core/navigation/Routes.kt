@@ -28,6 +28,7 @@ data class ExportSettings(
 @Serializable
 data class Camera(
     val albumId: Long? = null,
+    val replaceBeforeForPairId: Long? = null,
 )
 
 @Serializable

@@ -1,6 +1,7 @@
 package com.pairshot
 
 import android.app.Application
+import android.os.StrictMode
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -10,6 +11,7 @@ import com.pairshot.core.ads.controller.RewardedAdController
 import com.pairshot.core.ads.initializer.AdsInitializer
 import com.pairshot.core.ads.lifecycle.AppOpenAdLifecycleObserver
 import com.pairshot.core.coupon.domain.CouponRepository
+import com.pairshot.core.domain.pair.SyncMissingSourcesUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.feature.settings.theme.AppTheme
 import dagger.hilt.android.HiltAndroidApp
@@ -45,12 +47,16 @@ class PairShotApplication : Application() {
     @Inject
     lateinit var couponRepository: CouponRepository
 
+    @Inject
+    lateinit var syncMissingSourcesUseCase: SyncMissingSourcesUseCase
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
+            installStrictMode()
         }
         applicationScope.launch {
             val name = appSettingsRepository.appThemeNameFlow.first()
@@ -65,11 +71,42 @@ class PairShotApplication : Application() {
             runCatching { withContext(Dispatchers.IO) { couponRepository.retryPendingIfAny() } }
         }
 
+        registerForegroundObservers()
+    }
+
+    private fun installStrictMode() {
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy
+                .Builder()
+                .detectDiskReads()
+                .detectDiskWrites()
+                .detectNetwork()
+                .detectCustomSlowCalls()
+                .penaltyLog()
+                .build(),
+        )
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy
+                .Builder()
+                .detectLeakedClosableObjects()
+                .detectLeakedRegistrationObjects()
+                .detectActivityLeaks()
+                .detectFileUriExposure()
+                .penaltyLog()
+                .build(),
+        )
+    }
+
+    private fun registerForegroundObservers() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStart(owner: LifecycleOwner) {
                     applicationScope.launch {
                         runCatching { withContext(Dispatchers.IO) { couponRepository.syncStatus() } }
+                    }
+                    applicationScope.launch {
+                        runCatching { withContext(Dispatchers.IO) { syncMissingSourcesUseCase() } }
+                            .onFailure { Timber.w(it, "syncMissingSources failed on app foreground") }
                     }
                 }
             },

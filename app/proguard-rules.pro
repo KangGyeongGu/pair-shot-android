@@ -52,6 +52,32 @@
 
 -keep class kotlinx.serialization.** { *; }
 
+-keepclassmembers, allowobfuscation class **$$serializer {
+    public static ** INSTANCE;
+    *** serializer(...);
+}
+-keep, allowobfuscation, allowoptimization class **$$serializer { *; }
+
+# Ktor client + OkHttp engine
+-keep class io.ktor.** { *; }
+-keep interface io.ktor.** { *; }
+-dontwarn io.ktor.**
+-keep class kotlinx.io.** { *; }
+-dontwarn kotlinx.io.**
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
+-keep class okio.** { *; }
+-dontwarn okio.**
+-dontwarn org.slf4j.**
+
+# Coupon DTOs (kotlinx.serialization)
+-keep class com.pairshot.core.coupon.remote.dto.** { *; }
+-keepclassmembers class com.pairshot.core.coupon.remote.dto.** {
+    *** Companion;
+    static *** $serializer;
+}
+
 -keep class com.pairshot.**.route.** { *; }
 -keep class com.pairshot.**.navigation.** { *; }
 

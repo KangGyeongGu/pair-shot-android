@@ -58,7 +58,6 @@ internal fun CameraPreviewPane(
         modifier =
             modifier
                 .fillMaxWidth()
-                .aspectRatio(FALLBACK_ASPECT_WIDTH / FALLBACK_ASPECT_HEIGHT)
                 .pointerInput(zoomUiState.minRatio, zoomUiState.maxRatio) {
                     detectTransformGestures { _, _, zoom, _ ->
                         val newRatio =

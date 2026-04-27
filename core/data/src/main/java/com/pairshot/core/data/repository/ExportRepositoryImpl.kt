@@ -417,6 +417,9 @@ class ExportRepositoryImpl
         }
     }
 
-private fun PhotoPairEntity.validBeforeUriOrNull(): String? = beforePhotoUri.takeIf { it.isNotBlank() && Uri.parse(it).scheme == "content" }
+private fun PhotoPairEntity.validBeforeUriOrNull(): String? =
+    beforePhotoUri?.takeIf {
+        it.isNotBlank() && Uri.parse(it).scheme == "content"
+    }
 
 private fun PhotoPairEntity.validAfterUriOrNull(): String? = afterPhotoUri?.takeIf { it.isNotBlank() && Uri.parse(it).scheme == "content" }

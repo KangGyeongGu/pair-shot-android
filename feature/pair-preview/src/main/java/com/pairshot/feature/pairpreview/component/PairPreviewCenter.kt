@@ -3,10 +3,14 @@ package com.pairshot.feature.pairpreview.component
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -22,6 +26,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.pairshot.feature.pairpreview.R
 
@@ -31,6 +36,8 @@ private const val MAX_ZOOM_SCALE = 4f
 @Composable
 fun PairPreviewCenter(
     livePreviewBitmap: Bitmap?,
+    livePreviewFailed: Boolean,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var scale by remember { mutableFloatStateOf(MIN_ZOOM_SCALE) }
@@ -57,6 +64,8 @@ fun PairPreviewCenter(
     ) {
         LivePreviewContent(
             bitmap = livePreviewBitmap,
+            failed = livePreviewFailed,
+            onRetry = onRetry,
             modifier =
                 Modifier
                     .fillMaxSize()
@@ -73,22 +82,49 @@ fun PairPreviewCenter(
 @Composable
 private fun LivePreviewContent(
     bitmap: Bitmap?,
+    failed: Boolean,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (bitmap != null && !bitmap.isRecycled) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = stringResource(R.string.pair_preview_desc_combined_preview),
-            contentScale = ContentScale.Fit,
-            filterQuality = FilterQuality.High,
-            modifier = modifier,
-        )
-    } else {
-        Box(
-            modifier = modifier,
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    when {
+        bitmap != null && !bitmap.isRecycled -> {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = stringResource(R.string.pair_preview_desc_combined_preview),
+                contentScale = ContentScale.Fit,
+                filterQuality = FilterQuality.High,
+                modifier = modifier.testTag("live_preview_image"),
+            )
+        }
+
+        failed -> {
+            Box(
+                modifier = modifier,
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.pair_preview_error_compose_failed),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    TextButton(onClick = onRetry) {
+                        Text(text = stringResource(R.string.pair_preview_action_retry))
+                    }
+                }
+            }
+        }
+
+        else -> {
+            Box(
+                modifier = modifier,
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
         }
     }
 }

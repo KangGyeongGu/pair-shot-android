@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -40,6 +41,10 @@ fun PairShotBannerAd(
     modifier: Modifier = Modifier,
     height: Dp? = null,
 ) {
+    if (LocalInspectionMode.current) {
+        Box(modifier = modifier.fillMaxWidth().height(height ?: DefaultAdaptiveBannerFallbackHeight))
+        return
+    }
     val context = LocalContext.current
     val entryPoint =
         remember(context) {

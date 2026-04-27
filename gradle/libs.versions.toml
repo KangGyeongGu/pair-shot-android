@@ -14,6 +14,11 @@ timber = "5.0.1"
 archunit = "1.4.1"
 profileinstaller = "1.4.1"
 jankstats = "1.0.0-beta01"
+benchmark = "1.3.4"
+androidx-test-ext-junit = "1.2.1"
+leakcanary = "2.14"
+roborazzi = "1.40.1"
+robolectric = "4.13"
 play-services-ads = "23.6.0"
 bouncycastle = "1.79"
 mlkit-barcode = "17.3.0"
@@ -113,6 +118,17 @@ archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref
 compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 jankstats = { group = "androidx.metrics", name = "metrics-performance", version.ref = "jankstats" }
+
+# Performance benchmarking
+benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version.ref = "benchmark" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary" }
+
+# Visual regression (Roborazzi)
+roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

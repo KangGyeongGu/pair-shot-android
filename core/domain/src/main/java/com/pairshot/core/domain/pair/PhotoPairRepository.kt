@@ -12,6 +12,8 @@ interface PhotoPairRepository {
 
     suspend fun getById(id: Long): PhotoPair?
 
+    fun observeById(id: Long): Flow<PhotoPair?>
+
     suspend fun getByIds(ids: List<Long>): List<PhotoPair>
 
     suspend fun delete(pair: PhotoPair)
@@ -28,4 +30,13 @@ interface PhotoPairRepository {
         pairId: Long,
         tempFileUri: String,
     )
+
+    suspend fun replaceBeforePhoto(
+        pairId: Long,
+        tempFileUri: String,
+    )
+
+    suspend fun pruneMissingSources(pairId: Long): PrunePairResult
+
+    suspend fun pruneAllMissingSources(): List<PrunePairResult>
 }

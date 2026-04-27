@@ -10,6 +10,7 @@ class ResolvePairNavigationTargetUseCase
         operator fun invoke(pair: PhotoPair): PairNavigationTarget =
             when (pair.status) {
                 PairStatus.BEFORE_ONLY -> PairNavigationTarget.AfterCamera(pair.id)
+                PairStatus.AFTER_ONLY -> PairNavigationTarget.BeforeRetakeCamera(pair.id)
                 PairStatus.PAIRED -> PairNavigationTarget.PairPreview(pair.id)
             }
     }

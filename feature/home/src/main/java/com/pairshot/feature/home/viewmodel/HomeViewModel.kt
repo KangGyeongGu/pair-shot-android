@@ -11,6 +11,7 @@ import com.pairshot.core.domain.pair.DeletePairsUseCase
 import com.pairshot.core.domain.pair.PairNavigationTarget
 import com.pairshot.core.domain.pair.PhotoPairRepository
 import com.pairshot.core.domain.pair.ResolvePairNavigationTargetUseCase
+import com.pairshot.core.domain.pair.SyncMissingSourcesUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.infra.location.LocationProvider
 import com.pairshot.core.infra.location.LocationResult
@@ -48,6 +49,10 @@ sealed interface HomeEvent {
         val pairId: Long,
     ) : HomeEvent
 
+    data class NavigateToBeforeRetake(
+        val pairId: Long,
+    ) : HomeEvent
+
     data class NavigateToExportSettings(
         val pairIds: Set<Long>,
     ) : HomeEvent
@@ -79,9 +84,13 @@ class HomeViewModel
         private val deletePairsUseCase: DeletePairsUseCase,
         private val deleteCombinedPhotosUseCase: DeleteCombinedPhotosUseCase,
         private val resolvePairNavigationTargetUseCase: ResolvePairNavigationTargetUseCase,
+        private val syncMissingSourcesUseCase: SyncMissingSourcesUseCase,
         private val locationProvider: LocationProvider,
         private val appSettingsRepository: AppSettingsRepository,
     ) : ViewModel() {
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
         private val _mode = MutableStateFlow(HomeMode.PAIRS)
         val mode: StateFlow<HomeMode> = _mode.asStateFlow()
 
@@ -195,6 +204,7 @@ class HomeViewModel
                 val event =
                     when (val target = resolvePairNavigationTargetUseCase(pair)) {
                         is PairNavigationTarget.AfterCamera -> HomeEvent.NavigateToAfterCamera(target.pairId)
+                        is PairNavigationTarget.BeforeRetakeCamera -> HomeEvent.NavigateToBeforeRetake(target.pairId)
                         is PairNavigationTarget.PairPreview -> HomeEvent.NavigateToPairPreview(target.pairId)
                     }
                 _events.emit(event)
@@ -327,5 +337,14 @@ class HomeViewModel
         fun cleanupStaleSelections() {
             val validIds = pairs.value.map { it.id }.toSet()
             _selectedIds.update { current -> current.intersect(validIds) }
+        }
+
+        fun refresh() {
+            if (_isRefreshing.value) return
+            viewModelScope.launch {
+                _isRefreshing.value = true
+                runCatching { syncMissingSourcesUseCase() }
+                _isRefreshing.value = false
+            }
         }
     }

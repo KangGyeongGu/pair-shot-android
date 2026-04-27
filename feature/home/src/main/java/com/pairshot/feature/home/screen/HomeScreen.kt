@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +41,7 @@ import com.pairshot.feature.home.dialog.CreateAlbumDialog
 import com.pairshot.feature.home.viewmodel.HomeMode
 import com.pairshot.core.ui.R as CoreR
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     mode: HomeMode,
@@ -74,6 +77,8 @@ fun HomeScreen(
     onFetchLocation: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -170,30 +175,36 @@ fun HomeScreen(
                         top = 0.dp,
                         bottom = 8.dp,
                     )
-                when (mode) {
-                    HomeMode.PAIRS -> {
-                        HomePairGridSection(
-                            pairs = pairs,
-                            selectedIds = selectedIds,
-                            selectionMode = selectionMode,
-                            sortOrder = sortOrder,
-                            onPairClick = onPairClick,
-                            onPairLongClick = onPairLongClick,
-                            contentPadding = contentPadding,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    when (mode) {
+                        HomeMode.PAIRS -> {
+                            HomePairGridSection(
+                                pairs = pairs,
+                                selectedIds = selectedIds,
+                                selectionMode = selectionMode,
+                                sortOrder = sortOrder,
+                                onPairClick = onPairClick,
+                                onPairLongClick = onPairLongClick,
+                                contentPadding = contentPadding,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
 
-                    HomeMode.ALBUMS -> {
-                        HomeAlbumGridSection(
-                            albums = albums,
-                            isSelectionMode = albumSelectionMode,
-                            selectedAlbumIds = selectedAlbumIds,
-                            onAlbumClick = onAlbumClick,
-                            onAlbumLongPress = onAlbumLongPress,
-                            contentPadding = contentPadding,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        HomeMode.ALBUMS -> {
+                            HomeAlbumGridSection(
+                                albums = albums,
+                                isSelectionMode = albumSelectionMode,
+                                selectedAlbumIds = selectedAlbumIds,
+                                onAlbumClick = onAlbumClick,
+                                onAlbumLongPress = onAlbumLongPress,
+                                contentPadding = contentPadding,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
             }

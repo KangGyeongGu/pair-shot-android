@@ -17,6 +17,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.ads.component.PairShotNativeAdCard
@@ -74,26 +76,38 @@ fun HomePairGridSection(
             }
         }
 
+    val isInspection = LocalInspectionMode.current
     val context = LocalContext.current
     val entryPoint =
-        remember(context) {
-            EntryPointAccessors.fromApplication(
-                context.applicationContext,
-                AdsEntryPoint::class.java,
-            )
+        if (isInspection) {
+            null
+        } else {
+            remember(context) {
+                EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    AdsEntryPoint::class.java,
+                )
+            }
         }
-    val adFreeStatusProvider = remember(entryPoint) { entryPoint.adFreeStatusProvider() }
-    val poolProvider = remember(entryPoint) { entryPoint.nativeAdPoolProvider() }
+    val adFreeStatusProvider = remember(entryPoint) { entryPoint?.adFreeStatusProvider() }
+    val poolProvider = remember(entryPoint) { entryPoint?.nativeAdPoolProvider() }
 
-    val isAdFree: Boolean? by adFreeStatusProvider
-        .observeIsAdFree()
-        .collectAsStateWithLifecycle(initialValue = null)
+    val isAdFree: Boolean? =
+        if (isInspection) {
+            true
+        } else {
+            adFreeStatusProvider
+                ?.observeIsAdFree()
+                ?.collectAsStateWithLifecycle(initialValue = null)
+                ?.value
+        }
 
-    val nativeAdPool = remember(poolProvider) { poolProvider.get() }
+    val nativeAdPool = remember(poolProvider) { poolProvider?.get() }
     DisposableEffect(nativeAdPool) {
-        onDispose { nativeAdPool.close() }
+        onDispose { nativeAdPool?.close() }
     }
-    val nativeAds by nativeAdPool.observeAds().collectAsStateWithLifecycle()
+    val nativeAds: List<com.google.android.gms.ads.nativead.NativeAd> =
+        nativeAdPool?.observeAds()?.collectAsStateWithLifecycle()?.value ?: emptyList()
 
     val items =
         remember(sortedPairs, isAdFree) {
@@ -103,13 +117,13 @@ fun HomePairGridSection(
 
     LaunchedEffect(totalAdSlots, isAdFree) {
         if (isAdFree == false && totalAdSlots > 0) {
-            nativeAdPool.ensurePreloaded(totalAdSlots)
+            nativeAdPool?.ensurePreloaded(totalAdSlots)
         }
     }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().testTag("home_grid"),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap),
         horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap),
@@ -150,6 +164,7 @@ fun HomePairGridSection(
                             isSelectionMode = selectionMode,
                             onClick = { onPairClick(pair.id) },
                             onLongPress = { onPairLongClick(pair.id) },
+                            modifier = Modifier.testTag("pair_card_${pair.id}"),
                         )
                     }
                 }

@@ -9,6 +9,7 @@ import com.pairshot.core.domain.export.HasSavableSelectionUseCase
 import com.pairshot.core.domain.export.SaveSelectionToDeviceUseCase
 import com.pairshot.core.domain.export.SaveToDeviceResult
 import com.pairshot.core.domain.export.ShareSelectionUseCase
+import com.pairshot.core.domain.pair.SyncMissingSourcesUseCase
 import com.pairshot.core.domain.settings.AppSettingsRepository
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.CombineConfig
@@ -75,6 +76,7 @@ class SelectionActionViewModel
         private val shareSelectionUseCase: ShareSelectionUseCase,
         private val saveSelectionToDeviceUseCase: SaveSelectionToDeviceUseCase,
         private val hasSavableSelectionUseCase: HasSavableSelectionUseCase,
+        private val syncMissingSourcesUseCase: SyncMissingSourcesUseCase,
         private val exportRepository: ExportRepository,
         private val combineSettingsRepository: CombineSettingsRepository,
         private val watermarkRepository: WatermarkRepository,
@@ -95,6 +97,8 @@ class SelectionActionViewModel
         fun shareSelection(ids: Set<Long>) {
             if (ids.isEmpty()) return
             viewModelScope.launch {
+                runCatching { syncMissingSourcesUseCase() }
+                    .onFailure { Timber.w(it, "syncMissingSources before share failed") }
                 val shareLabel = UiText.Resource(com.pairshot.R.string.progress_sharing)
                 _progress.value = Progress(shareLabel, 0, ids.size)
                 runCatching {
@@ -120,6 +124,8 @@ class SelectionActionViewModel
         fun saveSelectionToDevice(ids: Set<Long>) {
             if (ids.isEmpty()) return
             viewModelScope.launch {
+                runCatching { syncMissingSourcesUseCase() }
+                    .onFailure { Timber.w(it, "syncMissingSources before save failed") }
                 val (preset, combine, watermark) = loadConfig()
                 val hasWork =
                     runCatching {

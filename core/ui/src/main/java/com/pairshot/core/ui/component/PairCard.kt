@@ -24,7 +24,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.model.PairStatus
 import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.ui.R
 
@@ -68,37 +67,16 @@ fun PairCard(
                 ),
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
-            ProfiledAsyncImage(
-                data = pair.beforePhotoUri,
-                profile = ImageProfile.THUMBNAIL,
-                contentDescription = "Before",
-                contentScale = ContentScale.Crop,
+            PairCardSlot(
+                uri = pair.beforePhotoUri,
+                contentDescription = stringResource(R.string.pair_card_desc_before),
                 modifier = Modifier.weight(1f).fillMaxSize(),
             )
-            if (pair.status == PairStatus.PAIRED && pair.afterPhotoUri != null) {
-                ProfiledAsyncImage(
-                    data = pair.afterPhotoUri,
-                    profile = ImageProfile.THUMBNAIL,
-                    contentDescription = "After",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.weight(1f).fillMaxSize(),
-                )
-            } else {
-                Box(
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.CameraAlt,
-                        contentDescription = stringResource(R.string.pair_card_desc_scheduled),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    )
-                }
-            }
+            PairCardSlot(
+                uri = pair.afterPhotoUri,
+                contentDescription = stringResource(R.string.pair_card_desc_after),
+                modifier = Modifier.weight(1f).fillMaxSize(),
+            )
         }
 
         if (pair.hasCombined) {
@@ -118,6 +96,34 @@ fun PairCard(
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
             )
         }
+    }
+}
+
+@Composable
+private fun PairCardSlot(
+    uri: String?,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+) {
+    if (uri.isNullOrBlank()) {
+        Box(
+            modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.CameraAlt,
+                contentDescription = stringResource(R.string.pair_card_desc_scheduled),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+            )
+        }
+    } else {
+        ProfiledAsyncImage(
+            data = uri,
+            profile = ImageProfile.THUMBNAIL,
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier,
+        )
     }
 }
 

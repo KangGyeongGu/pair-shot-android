@@ -18,6 +18,14 @@ class ExifBitmapLoader
     ) {
         fun loadBitmapWithExifCorrection(uri: Uri): Bitmap = loadBitmapWithExifCorrection(uri, inSampleSize = 1)
 
+        fun loadBitmapDownscaled(
+            uri: Uri,
+            maxLongestSide: Int,
+        ): Bitmap {
+            val sampleSize = if (maxLongestSide > 0) calculateInSampleSize(uri, maxLongestSide) else 1
+            return loadBitmapWithExifCorrection(uri, sampleSize)
+        }
+
         fun loadBitmapWithExifCorrection(
             uri: Uri,
             inSampleSize: Int,
@@ -42,6 +50,33 @@ class ExifBitmapLoader
             val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
             if (rotated !== bitmap) bitmap.recycle()
             return rotated
+        }
+
+        private fun calculateInSampleSize(
+            uri: Uri,
+            maxLongestSide: Int,
+        ): Int {
+            val bounds = readBitmapBounds(uri) ?: return 1
+            val (width, height) = bounds
+            val longest = maxOf(width, height)
+            if (longest <= maxLongestSide) return 1
+            var sample = 1
+            while (longest / (sample * 2) >= maxLongestSide) {
+                sample *= 2
+            }
+            return sample
+        }
+
+        private fun readBitmapBounds(uri: Uri): Pair<Int, Int>? {
+            val options =
+                BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
+            } ?: return null
+            if (options.outWidth <= 0 || options.outHeight <= 0) return null
+            return options.outWidth to options.outHeight
         }
 
         fun readExifDegrees(uri: Uri): Int {

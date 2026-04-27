@@ -102,7 +102,7 @@ internal fun AfterCameraScreen(
     val currentPair = unpairedPhotos.getOrNull(currentIndex)
     val totalCount = unpairedPhotos.size
     val completedCount = (totalPairCount - totalCount).coerceAtLeast(0)
-    val beforePreviewUris = unpairedPhotos.map { it.beforePhotoUri }
+    val beforePreviewUris = unpairedPhotos.mapNotNull { it.beforePhotoUri }
 
     val snackbarController = remember { PairShotSnackbarController() }
     val thumbnailListState = rememberLazyListState()
@@ -112,22 +112,24 @@ internal fun AfterCameraScreen(
 
     LaunchedEffect(overlayInputs.pair?.beforePhotoUri, overlayInputs.lensFacing) {
         val pair = overlayInputs.pair
+        val beforeUri = pair?.beforePhotoUri
         overlayRotation =
-            if (pair == null) {
+            if (beforeUri == null) {
                 0f
             } else {
-                cameraSession.readBeforeRotation(pair.beforePhotoUri, overlayInputs.lensFacing)
+                cameraSession.readBeforeRotation(beforeUri, overlayInputs.lensFacing)
             }
     }
 
     LaunchedEffect(overlayInputs) {
         val inputs = overlayInputs
         val pair = inputs.pair
+        val beforeUri = pair?.beforePhotoUri
         val next: Bitmap? =
-            if (pair == null || !inputs.enabled || inputs.alpha <= 0f) {
+            if (beforeUri == null || !inputs.enabled || inputs.alpha <= 0f) {
                 null
             } else {
-                cameraSession.prepareOverlay(pair.beforePhotoUri, inputs.lensFacing)?.bitmap
+                cameraSession.prepareOverlay(beforeUri, inputs.lensFacing)?.bitmap
             }
         val previous = overlayBitmap
         overlayBitmap = next
@@ -280,7 +282,7 @@ internal fun AfterCameraScreen(
                     currentExposureIndex = settingsState.exposureIndex,
                     exposureStepNumerator = capabilities.exposureStepNumerator,
                     exposureStepDenominator = capabilities.exposureStepDenominator,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     onZoomRatioChanged = { newRatio ->
                         viewModel.updateZoomRatio(newRatio)
                         cameraSession.setZoom(newRatio)

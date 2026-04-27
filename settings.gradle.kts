@@ -46,3 +46,7 @@ include(":feature:home")
 include(":feature:album")
 include(":feature:pair-preview")
 include(":feature:export-settings")
+
+include(":microbenchmark:rendering")
+
+include(":screenshot-test")

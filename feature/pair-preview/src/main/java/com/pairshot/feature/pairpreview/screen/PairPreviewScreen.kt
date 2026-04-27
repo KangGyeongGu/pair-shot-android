@@ -13,18 +13,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.model.PairStatus
 import com.pairshot.core.ui.component.DeletePairConfirmDialog
+import com.pairshot.feature.pairpreview.component.MissingSlotPlaceholder
+import com.pairshot.feature.pairpreview.component.MissingSlotSide
 import com.pairshot.feature.pairpreview.component.PairPreviewCenter
 import com.pairshot.feature.pairpreview.component.PairPreviewTopBar
 
 @Composable
 fun PairPreviewScreen(
     hasCombined: Boolean,
+    pairStatus: PairStatus,
     livePreviewBitmap: Bitmap?,
+    livePreviewFailed: Boolean,
+    onLivePreviewRetry: () -> Unit,
     showDeleteDialog: Boolean,
     onClose: () -> Unit,
     onShareSelected: () -> Unit,
     onNavigateToAfterCamera: () -> Unit,
+    onNavigateToBeforeRetake: () -> Unit,
     onDeleteRequested: () -> Unit,
     onDeleteAll: () -> Unit,
     onDeleteCombinedOnly: () -> Unit,
@@ -55,7 +62,29 @@ fun PairPreviewScreen(
                 )
 
                 Box(modifier = Modifier.weight(1f)) {
-                    PairPreviewCenter(livePreviewBitmap = livePreviewBitmap)
+                    when (pairStatus) {
+                        PairStatus.PAIRED -> {
+                            PairPreviewCenter(
+                                livePreviewBitmap = livePreviewBitmap,
+                                livePreviewFailed = livePreviewFailed,
+                                onRetry = onLivePreviewRetry,
+                            )
+                        }
+
+                        PairStatus.BEFORE_ONLY -> {
+                            MissingSlotPlaceholder(
+                                side = MissingSlotSide.AFTER,
+                                onCapture = onNavigateToAfterCamera,
+                            )
+                        }
+
+                        PairStatus.AFTER_ONLY -> {
+                            MissingSlotPlaceholder(
+                                side = MissingSlotSide.BEFORE,
+                                onCapture = onNavigateToBeforeRetake,
+                            )
+                        }
+                    }
                 }
 
                 PairShotBannerAd()

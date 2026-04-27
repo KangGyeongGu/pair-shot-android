@@ -1,0 +1,10 @@
+{
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composeFull_4MP#allocationCount": 31.0,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composeFull_4MP#timeNs": 22969296.833333336,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composePreview_16MP#allocationCount": 61.0,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composePreview_16MP#timeNs": 74243150.5,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composePreview_4MP#allocationCount": 57.0,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composePreview_4MP#timeNs": 37070573,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composePreview_8MP#allocationCount": 61.0,
+  "com.pairshot.microbenchmark.rendering.PairImageComposerBenchmark#composePreview_8MP#timeNs": 43658516
+}

@@ -16,6 +16,7 @@ import com.pairshot.feature.home.viewmodel.HomeViewModel
 fun HomeRoute(
     onNavigateToPairPreview: (Long) -> Unit,
     onNavigateToAfterCamera: (Long) -> Unit,
+    onNavigateToBeforeRetake: (Long) -> Unit,
     onNavigateToAlbumDetail: (Long) -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -33,6 +34,7 @@ fun HomeRoute(
     val selectedAlbumIds by viewModel.selectedAlbumIds.collectAsStateWithLifecycle()
     val currentLocation by viewModel.currentLocation.collectAsStateWithLifecycle()
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     var showCreateAlbumDialog by remember { mutableStateOf(false) }
 
@@ -45,6 +47,7 @@ fun HomeRoute(
             when (event) {
                 is HomeEvent.NavigateToPairPreview -> onNavigateToPairPreview(event.pairId)
                 is HomeEvent.NavigateToAfterCamera -> onNavigateToAfterCamera(event.pairId)
+                is HomeEvent.NavigateToBeforeRetake -> onNavigateToBeforeRetake(event.pairId)
                 is HomeEvent.NavigateToAlbumDetail -> onNavigateToAlbumDetail(event.albumId)
                 is HomeEvent.NavigateToExportSettings -> onNavigateToExportSettings(event.pairIds)
                 is HomeEvent.ShareSelected -> onShareSelected(event.pairIds)
@@ -98,5 +101,7 @@ fun HomeRoute(
         onFetchLocation = viewModel::fetchCurrentLocation,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToCamera = onNavigateToCamera,
+        isRefreshing = isRefreshing,
+        onRefresh = viewModel::refresh,
     )
 }

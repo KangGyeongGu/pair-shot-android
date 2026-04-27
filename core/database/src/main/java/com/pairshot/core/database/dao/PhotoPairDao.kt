@@ -28,6 +28,9 @@ interface PhotoPairDao {
     @Query("SELECT * FROM photo_pairs WHERE id = :id")
     suspend fun getById(id: Long): PhotoPairEntity?
 
+    @Query("SELECT * FROM photo_pairs WHERE id = :id")
+    fun observeById(id: Long): Flow<PhotoPairEntity?>
+
     @Query("SELECT * FROM photo_pairs WHERE id IN (:ids) ORDER BY beforeTimestamp ASC")
     suspend fun getByIds(ids: List<Long>): List<PhotoPairEntity>
 

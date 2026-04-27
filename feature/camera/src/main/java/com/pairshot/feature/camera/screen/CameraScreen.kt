@@ -2,18 +2,6 @@ package com.pairshot.feature.camera.screen
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,36 +10,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.core.ads.component.PairShotBannerAd
-import com.pairshot.core.designsystem.PairShotCameraTokens
-import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.ui.R
 import com.pairshot.core.ui.component.PairShotSnackbarController
-import com.pairshot.core.ui.component.PairShotSnackbarHost
 import com.pairshot.core.ui.component.SnackbarEvent
 import com.pairshot.core.ui.component.SnackbarVariant
 import com.pairshot.core.ui.text.UiText
-import com.pairshot.feature.camera.chrome.CameraBottomBar
-import com.pairshot.feature.camera.component.BeforePreviewStrip
-import com.pairshot.feature.camera.component.BeforeStripHeight
-import com.pairshot.feature.camera.component.CameraSettingsSheet
 import com.pairshot.feature.camera.component.ImmersiveCameraEffect
-import com.pairshot.feature.camera.preview.CameraPreviewPane
 import com.pairshot.feature.camera.viewmodel.CameraEvent
 import com.pairshot.feature.camera.viewmodel.CameraSessionViewModel
 import com.pairshot.feature.camera.viewmodel.CameraViewModel
 import kotlinx.coroutines.launch
-
-private val CameraShutterHeight = 116.dp
 
 @Composable
 internal fun CameraScreen(
@@ -114,11 +87,16 @@ internal fun CameraScreen(
         viewModel.observeBeforeUris()
     }
 
+    val isReplaceBeforeMode = viewModel.replaceBeforeForPairId != null
+
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is CameraEvent.PhotoSaved -> {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    if (isReplaceBeforeMode) {
+                        onNavigateBack()
+                    }
                 }
 
                 is CameraEvent.CaptureError -> {
@@ -148,130 +126,86 @@ internal fun CameraScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(PairShotCameraTokens.Letterbox)) {
-        val stripSectionHeight = BeforeStripHeight
-        val shutterSectionHeight = CameraShutterHeight
-        val bottomSpacerHeight = 32.dp
+    val callbacks =
+        CameraScreenCallbacks(
+            onZoomRatioChanged = { newRatio ->
+                viewModel.updateZoomRatio(newRatio)
+                cameraSession.setZoom(newRatio)
+            },
+            onPresetTapped = { preset ->
+                viewModel.onPresetTapped(preset)
+                cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
+            },
+            onDragEnd = { viewModel.applyCustomRatio() },
+            onExposureReset = {
+                viewModel.setExposureIndex(0)
+                cameraSession.setExposureIndex(0)
+            },
+            onExposureAdjust = { index ->
+                viewModel.setExposureIndex(index)
+                cameraSession.setExposureIndex(index)
+            },
+            onTapToFocus = { x, y, w, h ->
+                cameraSession.startFocusAndMetering(x, y, w.toFloat(), h.toFloat())
+            },
+            onToggleLens = {
+                val next = viewModel.toggleLensFacing()
+                cameraSession.setLensFacing(next)
+                cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
+            },
+            onToggleSettings = { viewModel.toggleSettingsPanel() },
+            onShutter = {
+                if (isSaving) return@CameraScreenCallbacks
+                showBlackout = true
+                scope.launch {
+                    viewModel.startCapturing()
+                    val captureResult = cameraSession.capture()
+                    val tempUri = captureResult.getOrNull()
+                    if (captureResult.isFailure || tempUri == null) {
+                        viewModel.emitCaptureError(
+                            captureResult.exceptionOrNull()?.message ?: "capture failed",
+                        )
+                        viewModel.finishCapturing()
+                        return@launch
+                    }
+                    viewModel.saveBeforePhoto(
+                        tempUri = tempUri,
+                        zoomLevel = viewModel.zoomUiState.value.currentRatio,
+                    )
+                }
+            },
+            onThumbnailClick = onNavigateBack,
+            onToggleGrid = viewModel::toggleGrid,
+            onCycleFlash = {
+                val next = viewModel.cycleFlash()
+                cameraSession.setFlash(next)
+            },
+            onToggleNightMode = {
+                val next = viewModel.toggleNightMode()
+                cameraSession.setNightMode(next)
+                if (next) cameraSession.setHdrMode(false)
+            },
+            onToggleHdr = {
+                val next = viewModel.toggleHdr()
+                cameraSession.setHdrMode(next)
+                if (next) cameraSession.setNightMode(false)
+            },
+            onToggleLevel = viewModel::toggleLevel,
+            onDismissSettings = viewModel::dismissSettingsPanel,
+        )
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .windowInsetsPadding(WindowInsets.safeDrawing),
-            ) {
-                PairShotBannerAd(modifier = Modifier.fillMaxWidth())
-                CameraPreviewPane(
-                    surfaceRequest = surfaceRequest,
-                    zoomUiState = zoomUiState,
-                    blackoutAlpha = blackoutAlpha,
-                    gridEnabled = settingsState.gridEnabled,
-                    levelEnabled = settingsState.levelEnabled,
-                    roll = roll,
-                    exposureIndexMin = capabilities.exposureIndexMin,
-                    exposureIndexMax = capabilities.exposureIndexMax,
-                    currentExposureIndex = settingsState.exposureIndex,
-                    exposureStepNumerator = capabilities.exposureStepNumerator,
-                    exposureStepDenominator = capabilities.exposureStepDenominator,
-                    modifier = Modifier.fillMaxWidth(),
-                    onZoomRatioChanged = { newRatio ->
-                        viewModel.updateZoomRatio(newRatio)
-                        cameraSession.setZoom(newRatio)
-                    },
-                    onPresetTapped = { preset ->
-                        viewModel.onPresetTapped(preset)
-                        cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
-                    },
-                    onDragEnd = { viewModel.applyCustomRatio() },
-                    onExposureReset = {
-                        viewModel.setExposureIndex(0)
-                        cameraSession.setExposureIndex(0)
-                    },
-                    onExposureAdjust = { index ->
-                        viewModel.setExposureIndex(index)
-                        cameraSession.setExposureIndex(index)
-                    },
-                    onTapToFocus = { x, y, w, h ->
-                        cameraSession.startFocusAndMetering(x, y, w.toFloat(), h.toFloat())
-                    },
-                    onToggleLens = {
-                        val next = viewModel.toggleLensFacing()
-                        cameraSession.setLensFacing(next)
-                        cameraSession.setZoom(viewModel.zoomUiState.value.currentRatio)
-                    },
-                )
-
-                BeforePreviewStrip(
-                    beforePreviewUris = beforePreviewUris,
-                    modifier = Modifier.height(stripSectionHeight),
-                    listState = thumbnailListState,
-                    stripHeight = stripSectionHeight,
-                    allActiveSize = true,
-                )
-
-                CameraBottomBar(
-                    isSaving = isSaving,
-                    shutterEnabled = true,
-                    height = shutterSectionHeight,
-                    onToggleSettings = { viewModel.toggleSettingsPanel() },
-                    onShutterClick = {
-                        if (isSaving) return@CameraBottomBar
-                        showBlackout = true
-                        scope.launch {
-                            viewModel.startCapturing()
-                            val captureResult = cameraSession.capture()
-                            val tempUri = captureResult.getOrNull()
-                            if (captureResult.isFailure || tempUri == null) {
-                                viewModel.emitCaptureError(
-                                    captureResult.exceptionOrNull()?.message ?: "capture failed",
-                                )
-                                viewModel.finishCapturing()
-                                return@launch
-                            }
-                            viewModel.saveBeforePhoto(
-                                tempUri = tempUri,
-                                zoomLevel = viewModel.zoomUiState.value.currentRatio,
-                            )
-                        }
-                    },
-                    lastPairThumbnailUri = lastPairThumbnailUri,
-                    onThumbnailClick = onNavigateBack,
-                )
-
-                Spacer(modifier = Modifier.height(bottomSpacerHeight))
-            }
-
-            CameraSettingsSheet(
-                visible = settingsState.showPanel,
-                settingsState = settingsState,
-                capabilities = capabilities,
-                onToggleGrid = viewModel::toggleGrid,
-                onCycleFlash = {
-                    val next = viewModel.cycleFlash()
-                    cameraSession.setFlash(next)
-                },
-                onToggleNightMode = {
-                    val next = viewModel.toggleNightMode()
-                    cameraSession.setNightMode(next)
-                    if (next) cameraSession.setHdrMode(false)
-                },
-                onToggleHdr = {
-                    val next = viewModel.toggleHdr()
-                    cameraSession.setHdrMode(next)
-                    if (next) cameraSession.setNightMode(false)
-                },
-                onToggleLevel = viewModel::toggleLevel,
-                onDismiss = viewModel::dismissSettingsPanel,
-            )
-
-            PairShotSnackbarHost(
-                controller = snackbarController,
-                modifier =
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .statusBarsPadding()
-                        .padding(top = PairShotSpacing.snackbarTopOffset),
-            )
-        }
-    }
+    CameraScreenContent(
+        surfaceRequest = surfaceRequest,
+        zoomUiState = zoomUiState,
+        isSaving = isSaving,
+        settingsState = settingsState,
+        capabilities = capabilities,
+        roll = roll,
+        blackoutAlpha = blackoutAlpha,
+        beforePreviewUris = beforePreviewUris,
+        lastPairThumbnailUri = lastPairThumbnailUri,
+        callbacks = callbacks,
+        snackbarController = snackbarController,
+        thumbnailListState = thumbnailListState,
+    )
 }

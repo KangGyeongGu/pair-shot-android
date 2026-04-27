@@ -54,7 +54,9 @@ class CameraViewModel
         private val getLatestBeforeThumbnailUseCase: GetLatestBeforeThumbnailUseCase,
         private val cameraSettings: CameraSettingsStateHolder,
     ) : ViewModel() {
-        private val albumId: Long? = savedStateHandle.toRoute<Camera>().albumId
+        private val cameraRoute = savedStateHandle.toRoute<Camera>()
+        private val albumId: Long? = cameraRoute.albumId
+        val replaceBeforeForPairId: Long? = cameraRoute.replaceBeforeForPairId
         private val sessionStartTimestamp: Long = System.currentTimeMillis()
 
         private val _events = MutableSharedFlow<CameraEvent>()
@@ -128,11 +130,19 @@ class CameraViewModel
             viewModelScope.launch {
                 try {
                     val pairId =
-                        photoPairRepository.saveBeforePhoto(
-                            tempFileUri = tempUri,
-                            zoomLevel = zoomLevel,
-                            albumId = albumId,
-                        )
+                        if (replaceBeforeForPairId != null) {
+                            photoPairRepository.replaceBeforePhoto(
+                                pairId = replaceBeforeForPairId,
+                                tempFileUri = tempUri,
+                            )
+                            replaceBeforeForPairId
+                        } else {
+                            photoPairRepository.saveBeforePhoto(
+                                tempFileUri = tempUri,
+                                zoomLevel = zoomLevel,
+                                albumId = albumId,
+                            )
+                        }
                     _events.emit(CameraEvent.PhotoSaved(pairId))
                 } catch (e: IOException) {
                     _events.emit(CameraEvent.SaveError(e.message ?: "save failed"))
@@ -165,7 +175,7 @@ class CameraViewModel
                         _beforePreviewUris.value =
                             pairs
                                 .filter { it.beforeTimestamp >= sessionStartTimestamp }
-                                .map { it.beforePhotoUri }
+                                .mapNotNull { it.beforePhotoUri }
                     }
                 }
         }

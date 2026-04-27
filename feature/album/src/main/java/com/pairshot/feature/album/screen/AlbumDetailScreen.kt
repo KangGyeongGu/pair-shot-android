@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,6 +24,7 @@ import com.pairshot.feature.album.dialog.RenameAlbumDialog
 import com.pairshot.feature.album.viewmodel.AlbumDetailUiState
 import com.pairshot.core.ui.R as CoreR
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlbumDetailScreen(
     uiState: AlbumDetailUiState.Success,
@@ -46,6 +49,8 @@ fun AlbumDetailScreen(
     onDeleteCombinedOnly: () -> Unit,
     onDeletePairsDismiss: () -> Unit,
     onToggleSortOrder: () -> Unit,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pairsEmpty = uiState.pairs.isEmpty()
@@ -98,22 +103,28 @@ fun AlbumDetailScreen(
                     sortOrder = uiState.sortOrder,
                     onToggleSortOrder = onToggleSortOrder,
                 )
-                AlbumPairGridSection(
-                    pairs = uiState.pairs,
-                    selectedIds = uiState.selectedIds,
-                    isSelectionMode = uiState.isSelectionMode,
-                    sortOrder = uiState.sortOrder,
-                    onPairClick = onPairClick,
-                    onPairLongPress = onPairLongPress,
-                    contentPadding =
-                        PaddingValues(
-                            top = 0.dp,
-                            bottom = 12.dp,
-                            start = 12.dp,
-                            end = 12.dp,
-                        ),
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = onRefresh,
                     modifier = Modifier.fillMaxSize(),
-                )
+                ) {
+                    AlbumPairGridSection(
+                        pairs = uiState.pairs,
+                        selectedIds = uiState.selectedIds,
+                        isSelectionMode = uiState.isSelectionMode,
+                        sortOrder = uiState.sortOrder,
+                        onPairClick = onPairClick,
+                        onPairLongPress = onPairLongPress,
+                        contentPadding =
+                            PaddingValues(
+                                top = 0.dp,
+                                bottom = 12.dp,
+                                start = 12.dp,
+                                end = 12.dp,
+                            ),
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
             }
         }
     }

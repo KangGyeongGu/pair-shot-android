@@ -7,6 +7,7 @@ import com.pairshot.core.database.dao.AlbumDao
 import com.pairshot.core.database.dao.ExportHistoryDao
 import com.pairshot.core.database.dao.PairAlbumCrossRefDao
 import com.pairshot.core.database.dao.PhotoPairDao
+import com.pairshot.core.database.migration.MIGRATION_1_2
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,6 +25,7 @@ object DatabaseModule {
     ): PairShotDatabase =
         Room
             .databaseBuilder(context, PairShotDatabase::class.java, "pairshot.db")
+            .addMigrations(MIGRATION_1_2)
             .build()
 
     @Provides

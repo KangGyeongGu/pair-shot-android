@@ -2,7 +2,7 @@ package com.pairshot.core.model
 
 data class PhotoPair(
     val id: Long = 0,
-    val beforePhotoUri: String,
+    val beforePhotoUri: String? = null,
     val afterPhotoUri: String? = null,
     val beforeTimestamp: Long,
     val afterTimestamp: Long? = null,

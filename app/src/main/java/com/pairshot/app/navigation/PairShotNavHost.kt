@@ -87,6 +87,9 @@ fun PairShotNavHost(
                 onNavigateToAfterCamera = { pairId ->
                     navController.navigate(AfterCamera(initialPairId = pairId))
                 },
+                onNavigateToBeforeRetake = { pairId ->
+                    navController.navigate(Camera(replaceBeforeForPairId = pairId))
+                },
                 onNavigateToAlbumDetail = { albumId -> navController.navigate(AlbumDetail(albumId)) },
                 onNavigateToCamera = { navController.navigate(Camera()) },
                 onNavigateToSettings = { navController.navigate(Settings()) },
@@ -103,6 +106,9 @@ fun PairShotNavHost(
                 onNavigateToPairPreview = { pairId -> navController.navigate(PairPreview(pairId)) },
                 onNavigateToAfterCamera = { pairId, albumId ->
                     navController.navigate(AfterCamera(initialPairId = pairId, albumId = albumId))
+                },
+                onNavigateToBeforeRetake = { pairId ->
+                    navController.navigate(Camera(replaceBeforeForPairId = pairId))
                 },
                 onNavigateToCamera = { albumId ->
                     navController.navigate(Camera(albumId = albumId))
@@ -149,6 +155,9 @@ fun PairShotNavHost(
                 onShareSelected = { pairId -> onShareSelected(setOf(pairId)) },
                 onNavigateToAfterCamera = { pairId ->
                     navController.navigate(AfterCamera(initialPairId = pairId))
+                },
+                onNavigateToBeforeRetake = { pairId ->
+                    navController.navigate(Camera(replaceBeforeForPairId = pairId))
                 },
             )
         }

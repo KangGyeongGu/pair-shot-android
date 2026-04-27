@@ -19,7 +19,7 @@ class HasSavableSelectionUseCase
             if (pairIds.isEmpty()) return false
             val pairs = photoPairRepository.getByIds(pairIds)
             return pairs.any { pair ->
-                val beforeValid = pair.beforePhotoUri.isNotBlank()
+                val beforeValid = !pair.beforePhotoUri.isNullOrBlank()
                 val afterValid = !pair.afterPhotoUri.isNullOrBlank()
                 canProduceOutput(preset, watermarkConfig, beforeValid, afterValid)
             }

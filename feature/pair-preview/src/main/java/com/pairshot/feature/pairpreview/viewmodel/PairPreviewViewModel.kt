@@ -8,6 +8,7 @@ import com.pairshot.core.domain.combine.CombineSettingsRepository
 import com.pairshot.core.domain.combine.DeleteCombinedPhotosUseCase
 import com.pairshot.core.domain.combine.ExportHistoryRepository
 import com.pairshot.core.domain.pair.PhotoPairRepository
+import com.pairshot.core.domain.pair.PrunePairResult
 import com.pairshot.core.domain.settings.WatermarkRepository
 import com.pairshot.core.model.CombineConfig
 import com.pairshot.core.model.ExportHistoryKind
@@ -15,6 +16,7 @@ import com.pairshot.core.model.PhotoPair
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.navigation.PairPreview
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -60,9 +62,17 @@ class PairPreviewViewModel
         private val route = savedStateHandle.toRoute<PairPreview>()
         val pairId: Long = route.pairId
 
-        private val _pair = MutableStateFlow<PhotoPair?>(null)
-        private val _hasCombined = MutableStateFlow(false)
-        private val _showDeleteDialog = MutableStateFlow(false)
+        private val hasCombinedState = MutableStateFlow(false)
+        private val deleteDialogVisible = MutableStateFlow(false)
+
+        private val pairFlow: StateFlow<PhotoPair?> =
+            photoPairRepository
+                .observeById(pairId)
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
+                    initialValue = null,
+                )
 
         private val configFlow: StateFlow<CombineConfig> =
             combineSettingsRepository.configFlow.stateIn(
@@ -80,9 +90,9 @@ class PairPreviewViewModel
 
         val uiState: StateFlow<PairPreviewUiState> =
             combine(
-                _pair,
-                _hasCombined,
-                _showDeleteDialog,
+                pairFlow,
+                hasCombinedState,
+                deleteDialogVisible,
                 configFlow,
                 watermarkFlow,
             ) { pair, hasCombined, showDialog, config, watermark ->
@@ -107,23 +117,56 @@ class PairPreviewViewModel
                 initialValue = PairPreviewUiState.Loading,
             )
 
-        private val _deleteComplete = MutableSharedFlow<Unit>()
+        private val _deleteComplete =
+            MutableSharedFlow<Unit>(
+                replay = 0,
+                extraBufferCapacity = 1,
+                onBufferOverflow = BufferOverflow.DROP_OLDEST,
+            )
         val deleteComplete: SharedFlow<Unit> = _deleteComplete.asSharedFlow()
 
+        private val _pruneNotice =
+            MutableSharedFlow<PrunePairResult>(
+                replay = 0,
+                extraBufferCapacity = 1,
+                onBufferOverflow = BufferOverflow.DROP_OLDEST,
+            )
+        val pruneNotice: SharedFlow<PrunePairResult> = _pruneNotice.asSharedFlow()
+
         init {
-            loadPair()
+            verifyAndLoadPair()
             refreshHasCombined()
         }
 
-        private fun loadPair() {
+        private fun verifyAndLoadPair() {
             viewModelScope.launch {
-                _pair.value = photoPairRepository.getById(pairId)
+                val pruneResult =
+                    runCatching { photoPairRepository.pruneMissingSources(pairId) }
+                        .onFailure { Timber.w(it, "pruneMissingSources failed for pair=%d", pairId) }
+                        .getOrDefault(PrunePairResult.Healthy)
+
+                when (pruneResult) {
+                    PrunePairResult.DeletedEntirely, PrunePairResult.NotFound -> {
+                        _pruneNotice.emit(pruneResult)
+                        _deleteComplete.emit(Unit)
+                    }
+
+                    PrunePairResult.BeforeDropped,
+                    PrunePairResult.AfterDropped,
+                    -> {
+                        _pruneNotice.emit(pruneResult)
+                    }
+
+                    PrunePairResult.Healthy -> {
+                        Unit
+                    }
+                }
             }
         }
 
         private fun refreshHasCombined() {
             viewModelScope.launch {
-                _hasCombined.value =
+                hasCombinedState.value =
                     exportHistoryRepository
                         .findByPairIdsAndKind(listOf(pairId), ExportHistoryKind.COMBINED)
                         .isNotEmpty()
@@ -131,22 +174,25 @@ class PairPreviewViewModel
         }
 
         fun showDeleteDialog() {
-            _showDeleteDialog.value = true
+            deleteDialogVisible.value = true
         }
 
         fun dismissDeleteDialog() {
-            _showDeleteDialog.value = false
+            deleteDialogVisible.value = false
         }
 
         fun deletePair() {
             viewModelScope.launch {
-                val currentPair = _pair.value ?: return@launch
+                val currentPair = pairFlow.value ?: return@launch
                 runCatching { exportHistoryRepository.deleteByPairIds(listOf(currentPair.id)) }
                     .onFailure { error ->
                         Timber.w(error, "failed to clear export history for pair ${currentPair.id}")
                     }
-                photoPairRepository.delete(currentPair)
-                _showDeleteDialog.value = false
+                runCatching { photoPairRepository.delete(currentPair) }
+                    .onFailure { error ->
+                        Timber.w(error, "failed to delete pair ${currentPair.id}")
+                    }
+                deleteDialogVisible.value = false
                 _deleteComplete.emit(Unit)
             }
         }
@@ -154,8 +200,8 @@ class PairPreviewViewModel
         fun deleteCombinedOnly() {
             viewModelScope.launch {
                 deleteCombinedPhotosUseCase(listOf(pairId))
-                _hasCombined.value = false
-                _showDeleteDialog.value = false
+                hasCombinedState.value = false
+                deleteDialogVisible.value = false
             }
         }
     }

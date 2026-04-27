@@ -22,6 +22,7 @@ fun AlbumDetailRoute(
     onNavigateBack: () -> Unit,
     onNavigateToPairPreview: (pairId: Long) -> Unit,
     onNavigateToAfterCamera: (pairId: Long, albumId: Long) -> Unit,
+    onNavigateToBeforeRetake: (pairId: Long) -> Unit,
     onNavigateToCamera: (albumId: Long) -> Unit,
     onNavigateToPairPicker: (albumId: Long) -> Unit,
     onNavigateToExportSettings: (pairIds: Set<Long>) -> Unit,
@@ -31,6 +32,7 @@ fun AlbumDetailRoute(
     viewModel: AlbumDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     LaunchedEffect(viewModel.events) {
         viewModel.events.collect { event ->
@@ -38,6 +40,7 @@ fun AlbumDetailRoute(
                 is AlbumDetailEvent.NavigateBack -> onNavigateBack()
                 is AlbumDetailEvent.NavigateToPairPreview -> onNavigateToPairPreview(event.pairId)
                 is AlbumDetailEvent.NavigateToAfterCamera -> onNavigateToAfterCamera(event.pairId, event.albumId)
+                is AlbumDetailEvent.NavigateToBeforeRetake -> onNavigateToBeforeRetake(event.pairId)
                 is AlbumDetailEvent.NavigateToCamera -> onNavigateToCamera(event.albumId)
                 is AlbumDetailEvent.NavigateToPairPicker -> onNavigateToPairPicker(event.albumId)
             }
@@ -85,6 +88,8 @@ fun AlbumDetailRoute(
                 onDeleteCombinedOnly = viewModel::deleteSelectedCombinedOnly,
                 onDeletePairsDismiss = viewModel::dismissDeletePairsDialog,
                 onToggleSortOrder = viewModel::toggleSortOrder,
+                isRefreshing = isRefreshing,
+                onRefresh = viewModel::refresh,
                 modifier = modifier,
             )
         }

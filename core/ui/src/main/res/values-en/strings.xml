@@ -26,6 +26,8 @@
     <!-- PairCard -->
     <string name="pair_card_desc_scheduled">Scheduled</string>
     <string name="pair_card_desc_combined">Combined</string>
+    <string name="pair_card_desc_before">Before</string>
+    <string name="pair_card_desc_after">After</string>
 
     <!-- ProfiledAsyncImage -->
     <string name="image_file_missing">No file</string>

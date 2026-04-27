@@ -26,6 +26,8 @@
     <!-- PairCard -->
     <string name="pair_card_desc_scheduled">촬영 예정</string>
     <string name="pair_card_desc_combined">합성 완료</string>
+    <string name="pair_card_desc_before">Before</string>
+    <string name="pair_card_desc_after">After</string>
 
     <!-- ProfiledAsyncImage -->
     <string name="image_file_missing">파일 없음</string>
