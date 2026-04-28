@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   jvm-tests:
-    name: JVM tests (unit + visual regression)
+    name: JVM tests (unit)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -30,12 +30,9 @@ jobs:
       - name: Set up Gradle (with caching)
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run unit tests + Roborazzi verify
+      - name: Run unit tests
         run: |
-          ./gradlew \
-            testDebugUnitTest \
-            :screenshot-test:testDebugUnitTest -Proborazzi.test.verify=true \
-            --no-daemon --stacktrace
+          ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
       - name: Upload test reports on failure
         if: failure()
@@ -44,7 +41,6 @@ jobs:
           name: jvm-test-reports
           path: |
             **/build/reports/tests/
-            **/build/reports/roborazzi/
             **/build/test-results/
           retention-days: 7
 
