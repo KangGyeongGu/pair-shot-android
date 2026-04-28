@@ -19,6 +19,6 @@ local.properties
 CLAUDE.md
 CLAUDE.local.md
 /AGENTS.md
-/docs/00-*.md
+docs/
 archive/
 report/

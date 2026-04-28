@@ -1,0 +1,116 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main, release/v1.x]
+  push:
+    branches: [main, release/v1.x]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  jvm-tests:
+    name: JVM tests (unit + visual regression)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle (with caching)
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run unit tests + Roborazzi verify
+        run: |
+          ./gradlew \
+            testDebugUnitTest \
+            :screenshot-test:testDebugUnitTest -Proborazzi.test.verify=true \
+            --no-daemon --stacktrace
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-test-reports
+          path: |
+            **/build/reports/tests/
+            **/build/reports/roborazzi/
+            **/build/test-results/
+          retention-days: 7
+
+  migration-test:
+    name: Instrumented migration tests (emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Enable KVM (hardware acceleration for emulator)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Set up Gradle (with caching)
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: AVD cache key
+        id: avd-key
+        run: echo "key=avd-api30-default-x86_64" >> "$GITHUB_OUTPUT"
+
+      - name: Cache AVD
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: ${{ steps.avd-key.outputs.key }}
+
+      - name: Create AVD snapshot (first run only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: default
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching"
+
+      - name: Run :core:database:connectedDebugAndroidTest
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: default
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: ./gradlew :core:database:connectedDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload migration test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-test-reports
+          path: |
+            core/database/build/reports/androidTests/
+            core/database/build/outputs/androidTest-results/
+          retention-days: 7
