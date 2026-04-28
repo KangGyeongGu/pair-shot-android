@@ -80,8 +80,6 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 600
           script: ./gradlew :core:database:connectedDebugAndroidTest --no-daemon --stacktrace
-          disable-animations: true
-          script: ./gradlew :core:database:connectedDebugAndroidTest --no-daemon --stacktrace
 
       - name: Upload migration test reports on failure
         if: failure()
