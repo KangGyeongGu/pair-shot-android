@@ -111,7 +111,11 @@ fun HomePairGridSection(
 
     val items =
         remember(sortedPairs, isAdFree) {
-            buildPairListWithAds(sortedPairs, isAdFree == true)
+            buildPairListWithAds(
+                pairs = sortedPairs,
+                adFree = isAdFree == true,
+                sectionKeyOf = { it.beforeTimestamp.toLocalDate() },
+            )
         }
     val totalAdSlots = remember(items) { items.count { it is PairListItem.Ad } }
 
