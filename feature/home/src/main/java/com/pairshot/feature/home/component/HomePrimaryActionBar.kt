@@ -12,7 +12,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -38,8 +37,7 @@ fun HomePrimaryActionBar(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
-                        .testTag("home_primary_action"),
+                        .height(52.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(

@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pairshot.core.ads.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotCameraTokens
@@ -92,7 +91,7 @@ fun CameraScreenContent(
                     currentExposureIndex = settingsState.exposureIndex,
                     exposureStepNumerator = capabilities.exposureStepNumerator,
                     exposureStepDenominator = capabilities.exposureStepDenominator,
-                    modifier = Modifier.fillMaxWidth().weight(1f).testTag("camera_preview"),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     onZoomRatioChanged = callbacks.onZoomRatioChanged,
                     onPresetTapped = callbacks.onPresetTapped,
                     onDragEnd = callbacks.onDragEnd,

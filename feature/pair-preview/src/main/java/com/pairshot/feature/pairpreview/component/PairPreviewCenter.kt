@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.pairshot.feature.pairpreview.R
 
@@ -93,7 +92,7 @@ private fun LivePreviewContent(
                 contentDescription = stringResource(R.string.pair_preview_desc_combined_preview),
                 contentScale = ContentScale.Fit,
                 filterQuality = FilterQuality.High,
-                modifier = modifier.testTag("live_preview_image"),
+                modifier = modifier,
             )
         }
 

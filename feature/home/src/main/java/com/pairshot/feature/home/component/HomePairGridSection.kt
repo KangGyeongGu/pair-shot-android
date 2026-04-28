@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pairshot.core.ads.component.PairShotNativeAdCard
@@ -127,7 +126,7 @@ fun HomePairGridSection(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        modifier = modifier.fillMaxSize().testTag("home_grid"),
+        modifier = modifier.fillMaxSize(),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap),
         horizontalArrangement = Arrangement.spacedBy(PairShotSpacing.iconTextGap),
@@ -168,7 +167,6 @@ fun HomePairGridSection(
                             isSelectionMode = selectionMode,
                             onClick = { onPairClick(pair.id) },
                             onLongPress = { onPairLongClick(pair.id) },
-                            modifier = Modifier.testTag("pair_card_${pair.id}"),
                         )
                     }
                 }
