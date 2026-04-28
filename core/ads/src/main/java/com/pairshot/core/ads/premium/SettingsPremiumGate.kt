@@ -1,5 +1,6 @@
 package com.pairshot.core.ads.premium
 
+import com.pairshot.core.domain.premium.PremiumFeature
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject

@@ -1,4 +1,4 @@
-package com.pairshot.core.ads.premium
+package com.pairshot.core.domain.premium
 
 enum class PremiumFeature {
     WATERMARK_DETAIL,

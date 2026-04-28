@@ -1,4 +1,4 @@
-package com.pairshot.core.ads.util
+package com.pairshot.core.domain.pair
 
 import com.pairshot.core.model.PhotoPair
 

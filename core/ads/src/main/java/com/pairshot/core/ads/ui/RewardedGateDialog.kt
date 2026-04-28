@@ -6,7 +6,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.pairshot.core.ads.R
-import com.pairshot.core.ads.premium.PremiumFeature
+import com.pairshot.core.domain.premium.PremiumFeature
 import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.core.ui.R as CoreUiR
 

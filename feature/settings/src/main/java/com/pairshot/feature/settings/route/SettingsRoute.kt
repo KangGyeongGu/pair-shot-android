@@ -21,7 +21,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.pairshot.core.ads.di.AdsEntryPoint
-import com.pairshot.core.ads.premium.PremiumFeature
 import com.pairshot.core.ads.ui.RewardedGateDialog
 import com.pairshot.core.coupon.domain.CouponStatus
 import com.pairshot.core.coupon.ui.CouponActivationUiState
@@ -29,6 +28,7 @@ import com.pairshot.core.coupon.ui.CouponRegisterDialog
 import com.pairshot.core.coupon.ui.CouponStatusItem
 import com.pairshot.core.coupon.ui.CouponViewModel
 import com.pairshot.core.designsystem.PairShotSpacing
+import com.pairshot.core.domain.premium.PremiumFeature
 import com.pairshot.core.navigation.SettingsHighlight
 import com.pairshot.core.ui.component.PairShotSnackbarController
 import com.pairshot.core.ui.component.SettingsCard

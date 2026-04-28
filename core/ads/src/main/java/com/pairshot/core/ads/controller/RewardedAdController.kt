@@ -7,9 +7,9 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.pairshot.core.ads.config.AdsConfig
-import com.pairshot.core.ads.premium.PremiumFeature
 import com.pairshot.core.ads.premium.SettingsPremiumGate
 import com.pairshot.core.domain.coupon.AdFreeStatusProvider
+import com.pairshot.core.domain.premium.PremiumFeature
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
