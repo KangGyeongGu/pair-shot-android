@@ -20,7 +20,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.pairshot.core.ads.component.PairShotBannerAd
+import com.pairshot.core.adsui.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.WatermarkType

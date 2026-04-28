@@ -62,6 +62,8 @@ class LayerDependencyTest {
             .definedBy("com.pairshot.core.infra..")
             .layer("Ads")
             .definedBy("com.pairshot.core.ads..")
+            .layer("AdsUi")
+            .definedBy("com.pairshot.core.adsui..")
             .layer("Coupon")
             .definedBy("com.pairshot.core.coupon..")
             .layer("AppShell")
@@ -71,10 +73,12 @@ class LayerDependencyTest {
             .whereLayer("Data")
             .mayOnlyBeAccessedByLayers("AppShell")
             .whereLayer("Domain")
-            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "Ads", "Coupon", "AppShell")
+            .mayOnlyBeAccessedByLayers("Feature", "Data", "Infra", "Ads", "AdsUi", "Coupon", "AppShell")
             .whereLayer("Infra")
             .mayOnlyBeAccessedByLayers("Feature", "Data", "AppShell")
             .whereLayer("Ads")
+            .mayOnlyBeAccessedByLayers("Feature", "AdsUi", "AppShell")
+            .whereLayer("AdsUi")
             .mayOnlyBeAccessedByLayers("Feature", "AppShell")
             .whereLayer("Coupon")
             .mayOnlyBeAccessedByLayers("Feature", "AppShell")
@@ -147,5 +151,25 @@ class LayerDependencyTest {
                 "com.pairshot.core.designsystem..",
                 "com.pairshot.core.navigation..",
                 "com.pairshot.core.coupon..",
+                "com.pairshot.core.adsui..",
             ).because("Ads module may depend on core/domain only, not other core modules")
+
+    @ArchTest
+    val `L-11 AdsUi should depend only on ads, ui, designsystem, domain among core modules`: ArchRule =
+        noClasses()
+            .that()
+            .resideInAPackage("com.pairshot.core.adsui..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage(
+                "com.pairshot.core.infra..",
+                "com.pairshot.core.rendering..",
+                "com.pairshot.core.storage..",
+                "com.pairshot.core.datastore..",
+                "com.pairshot.core.database..",
+                "com.pairshot.core.model..",
+                "com.pairshot.core.navigation..",
+                "com.pairshot.core.coupon..",
+                "com.pairshot.core.data..",
+            ).because("AdsUi module may depend on core/ads + core/ui + core/designsystem + core/domain only")
 }

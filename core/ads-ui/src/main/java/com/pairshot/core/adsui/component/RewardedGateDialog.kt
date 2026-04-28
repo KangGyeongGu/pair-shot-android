@@ -1,11 +1,11 @@
-package com.pairshot.core.ads.ui
+package com.pairshot.core.adsui.component
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import com.pairshot.core.ads.R
+import com.pairshot.core.adsui.R
 import com.pairshot.core.domain.premium.PremiumFeature
 import com.pairshot.core.ui.component.PairShotDialog
 import com.pairshot.core.ui.R as CoreUiR

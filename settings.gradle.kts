@@ -38,6 +38,7 @@ include(":core:storage")
 include(":core:datastore")
 include(":core:data")
 include(":core:ads")
+include(":core:ads-ui")
 include(":core:coupon")
 
 include(":feature:camera")

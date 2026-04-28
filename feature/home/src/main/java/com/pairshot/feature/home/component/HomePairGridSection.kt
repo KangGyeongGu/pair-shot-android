@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.pairshot.core.ads.component.PairShotNativeAdCard
+import com.pairshot.core.adsui.component.PairShotNativeAdCard
 import com.pairshot.core.ads.di.AdsEntryPoint
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.domain.pair.PairListItem

@@ -52,7 +52,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.pairshot.core.ads.component.PairShotBannerAd
+import com.pairshot.core.adsui.component.PairShotBannerAd
 import com.pairshot.core.designsystem.PairShotSpacing
 import com.pairshot.core.model.WatermarkConfig
 import com.pairshot.core.model.isContentMissing

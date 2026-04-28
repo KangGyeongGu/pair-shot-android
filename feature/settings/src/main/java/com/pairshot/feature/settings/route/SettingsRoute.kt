@@ -21,7 +21,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.pairshot.core.ads.di.AdsEntryPoint
-import com.pairshot.core.ads.ui.RewardedGateDialog
+import com.pairshot.core.adsui.component.RewardedGateDialog
 import com.pairshot.core.coupon.domain.CouponStatus
 import com.pairshot.core.coupon.ui.CouponActivationUiState
 import com.pairshot.core.coupon.ui.CouponRegisterDialog
@@ -40,7 +40,7 @@ import com.pairshot.feature.settings.screen.SettingsScreen
 import com.pairshot.feature.settings.viewmodel.SettingsViewModel
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
-import com.pairshot.core.ads.R as AdsR
+import com.pairshot.core.adsui.R as AdsUiR
 import com.pairshot.core.coupon.R as CouponR
 
 private const val PRIVACY_POLICY_URL = "https://pairshot.kangkyeonggu.com/privacy"
@@ -154,7 +154,7 @@ fun SettingsRoute(
                         snackbarScope.launch {
                             snackbarController.show(
                                 SnackbarEvent(
-                                    UiText.Resource(AdsR.string.rewarded_gate_load_failed),
+                                    UiText.Resource(AdsUiR.string.rewarded_gate_load_failed),
                                     SnackbarVariant.WARNING,
                                 ),
                             )

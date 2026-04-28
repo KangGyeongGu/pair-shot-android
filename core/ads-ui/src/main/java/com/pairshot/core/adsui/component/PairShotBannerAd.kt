@@ -1,4 +1,4 @@
-package com.pairshot.core.ads.component
+package com.pairshot.core.adsui.component
 
 import android.app.Activity
 import android.content.Context

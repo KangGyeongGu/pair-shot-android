@@ -1,4 +1,4 @@
-package com.pairshot.core.ads.component
+package com.pairshot.core.adsui.component
 
 import android.content.Context
 import android.view.Gravity
@@ -27,7 +27,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
-import com.pairshot.core.ads.R
+import com.pairshot.core.adsui.R
 import com.pairshot.core.designsystem.PairShotSpacing
 
 @Composable
