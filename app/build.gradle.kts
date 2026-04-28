@@ -35,17 +35,20 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile =
-                file(
-                    System.getenv("KEYSTORE_PATH")
-                        ?: localProperties["KEYSTORE_PATH"] as String,
-                )
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-                ?: localProperties["KEYSTORE_PASSWORD"] as String
-            keyAlias = System.getenv("KEY_ALIAS")
-                ?: localProperties["KEY_ALIAS"] as String
-            keyPassword = System.getenv("KEY_PASSWORD")
-                ?: localProperties["KEY_PASSWORD"] as String
+            // CI / 키스토어 미보유 환경에서는 build.gradle.kts 평가 단계가 NPE 로
+            // 실패하지 않도록 키스토어 정보가 모두 갖춰진 경우에만 설정한다.
+            // release 빌드를 실제로 시도하면 미설정 사실이 그 시점에 명확히 드러남.
+            val keystorePath = System.getenv("KEYSTORE_PATH")
+                ?: localProperties.getProperty("KEYSTORE_PATH")
+            if (keystorePath != null) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                    ?: localProperties.getProperty("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                    ?: localProperties.getProperty("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+                    ?: localProperties.getProperty("KEY_PASSWORD")
+            }
         }
     }
 
