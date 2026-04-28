@@ -19,7 +19,6 @@ local.properties
 CLAUDE.md
 CLAUDE.local.md
 /AGENTS.md
-/scripts/claude-hooks/
 /docs/00-*.md
 archive/
 report/

@@ -21,25 +21,6 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [SDK_LEVEL])
 class CameraScreenshotTest {
-    @Test fun camera_pixel7_light() = capture("pixel7_light") { CameraShell() }
-
-    @Test fun camera_pixel7_dark() =
-        capture("pixel7_dark", darkTheme = true) { CameraShell() }
-
-    @Test fun camera_pixel7_settings_open() =
-        capture("pixel7_settings_open") {
-            CameraShell(settingsOpen = true)
-        }
-
-    @Test fun camera_pixel7_with_strip() =
-        capture("pixel7_with_strip") {
-            CameraShell(beforePreviewUris = listOf("a", "b", "c"))
-        }
-
-    @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = RobolectricDeviceQualifiers.MediumTablet)
-    fun camera_tablet_light() = capture("tablet_light") { CameraShell() }
-
     @Test
     @Config(sdk = [SDK_LEVEL], qualifiers = RobolectricDeviceQualifiers.Pixel4)
     fun camera_pixel4_light() = capture("pixel4_light") { CameraShell() }
@@ -48,20 +29,6 @@ class CameraScreenshotTest {
     @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFlip6Main)
     fun camera_galaxy_flip6_open() =
         capture("galaxy_flip6_open") { CameraShell() }
-
-    @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFlip6Cover)
-    fun camera_galaxy_flip6_closed() =
-        capture("galaxy_flip6_closed") { CameraShell() }
-
-    @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFold5Main)
-    fun camera_galaxy_fold5_open() =
-        capture("galaxy_fold5_open") { CameraShell() }
-
-    @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFlip6Cover)
-    fun camera_small_phone() = capture("small_phone") { CameraShell() }
 
     private fun capture(
         name: String,

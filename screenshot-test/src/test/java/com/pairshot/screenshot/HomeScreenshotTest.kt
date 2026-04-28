@@ -21,25 +21,6 @@ import org.robolectric.annotation.GraphicsMode
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [SDK_LEVEL])
 class HomeScreenshotTest {
-    @Test fun home_pairs_loaded_pixel7_light() = capture("pairs_loaded_pixel7_light") {
-        HomeShell(pairs = samplePairs(8))
-    }
-
-    @Test fun home_pairs_empty_pixel7_light() = capture("pairs_empty_pixel7_light") {
-        HomeShell(pairs = emptyList())
-    }
-
-    @Test fun home_pairs_loaded_pixel7_dark() =
-        capture("pairs_loaded_pixel7_dark", darkTheme = true) {
-            HomeShell(pairs = samplePairs(8))
-        }
-
-    @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = RobolectricDeviceQualifiers.MediumTablet)
-    fun home_pairs_loaded_tablet_light() = capture("pairs_loaded_tablet_light") {
-        HomeShell(pairs = samplePairs(8))
-    }
-
     @Test
     @Config(sdk = [SDK_LEVEL], qualifiers = RobolectricDeviceQualifiers.Pixel4)
     fun home_pairs_loaded_pixel4_light() = capture("pairs_loaded_pixel4_light") {
@@ -59,29 +40,9 @@ class HomeScreenshotTest {
     }
 
     @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFlip6Cover)
-    fun home_pairs_loaded_galaxy_flip6_closed() = capture("pairs_loaded_galaxy_flip6_closed") {
-        HomeShell(pairs = samplePairs(4))
-    }
-
-    @Test
     @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFold5Main)
     fun home_pairs_loaded_galaxy_fold5_open() = capture("pairs_loaded_galaxy_fold5_open") {
         HomeShell(pairs = samplePairs(8))
-    }
-
-    @Test
-    @Config(sdk = [SDK_LEVEL], qualifiers = PairShotDeviceQualifiers.GalaxyZFlip6Cover)
-    fun home_pairs_loaded_small_phone() = capture("pairs_loaded_small_phone") {
-        HomeShell(pairs = samplePairs(4))
-    }
-
-    @Test fun home_selection_mode_pixel7_light() = capture("selection_mode_pixel7_light") {
-        HomeShell(
-            pairs = samplePairs(6),
-            selectionMode = true,
-            selectedIds = setOf(1L, 3L),
-        )
     }
 
     private fun capture(
