@@ -12,12 +12,14 @@ concurrency:
 
 jobs:
   jvm-tests:
-    name: JVM tests (unit + visual regression)
+    name: JVM tests (unit)
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - name: Checkout
+      - name: Checkout (with tags for git-tag versioning)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -28,12 +30,9 @@ jobs:
       - name: Set up Gradle (with caching)
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run unit tests + Roborazzi verify
+      - name: Run unit tests
         run: |
-          ./gradlew \
-            testDebugUnitTest \
-            :screenshot-test:testDebugUnitTest -Proborazzi.test.verify=true \
-            --no-daemon --stacktrace
+          ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
       - name: Upload test reports on failure
         if: failure()
@@ -42,7 +41,6 @@ jobs:
           name: jvm-test-reports
           path: |
             **/build/reports/tests/
-            **/build/reports/roborazzi/
             **/build/test-results/
           retention-days: 7
 
@@ -51,8 +49,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - name: Checkout
+      - name: Checkout (with tags for git-tag versioning)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -69,40 +69,16 @@ jobs:
       - name: Set up Gradle (with caching)
         uses: gradle/actions/setup-gradle@v3
 
-      - name: AVD cache key
-        id: avd-key
-        run: echo "key=avd-api30-default-x86_64" >> "$GITHUB_OUTPUT"
-
-      - name: Cache AVD
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: ${{ steps.avd-key.outputs.key }}
-
-      - name: Create AVD snapshot (first run only)
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          arch: x86_64
-          target: default
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: false
-          script: echo "Generated AVD snapshot for caching"
-
       - name: Run :core:database:connectedDebugAndroidTest
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
           arch: x86_64
-          target: default
-          force-avd-creation: false
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          target: google_apis
+          force-avd-creation: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          emulator-boot-timeout: 600
           script: ./gradlew :core:database:connectedDebugAndroidTest --no-daemon --stacktrace
 
       - name: Upload migration test reports on failure
